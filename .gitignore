@@ -6,7 +6,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-package-lock.json
+# ❌ Đừng ignore cái này nữa:
+# package-lock.json
 .env
 .env.local
 .env.*.local

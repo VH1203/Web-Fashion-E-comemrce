@@ -18,4 +18,7 @@ Nền tảng thương mại điện tử tập trung vào **ngành thời trang*
 - **Deployment:** AWS / Docker / Nginx  
 - **Khác:** CDN (Cloudflare), JMeter (load test), StarUML/PlantUML (vẽ diagram)  
 
+## Run
+- npm install
+- npm start
 ---

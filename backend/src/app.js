@@ -13,14 +13,17 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+const productRoutes = require('./routes/productRoutes');
+app.use('/api/products', productRoutes);
+
 
 // (Optional) Enforce HTTPS behind proxy
 app.enable('trust proxy');
 app.use((req, res, next) => {
-if (process.env.NODE_ENV === 'production' && req.secure !== true) {
-return res.status(400).json({ message: 'HTTPS only' });
-}
-next();
+    if (process.env.NODE_ENV === 'production' && req.secure !== true) {
+        return res.status(400).json({ message: 'HTTPS only' });
+    }
+    next();
 });
 
 

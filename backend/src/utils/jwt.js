@@ -1,17 +1,24 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
-
-const ACCESS_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
-
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1h";
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
 
 function signAccessToken(payload) {
-return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 }
 
+function signRefreshToken(payload) {
+  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
+}
 
 function verifyAccessToken(token) {
-return jwt.verify(token, process.env.JWT_SECRET);
+  return jwt.verify(token, JWT_SECRET);
 }
 
+function verifyRefreshToken(token) {
+  return jwt.verify(token, JWT_REFRESH_SECRET);
+}
 
-module.exports = { signAccessToken, verifyAccessToken };
+module.exports = { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken };

@@ -31,6 +31,8 @@ export default function Login() {
       const res = await authApi.login(form);
       localStorage.setItem("access_token", res.access_token);
       localStorage.setItem("user", JSON.stringify(res.user));
+      localStorage.setItem("refresh_token", res.refresh_token);
+      localStorage.setItem("remember", form.remember ? "1" : "0");
 
       const redirect = roleRoutes[res.user.role] || "/";
       window.location.href = redirect;

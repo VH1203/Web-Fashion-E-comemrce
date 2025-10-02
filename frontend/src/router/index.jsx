@@ -17,10 +17,9 @@ import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
   return (
-    <BrowserRouter>
       <Routes>
         {/* Customer */}
-        <Route path="/" element={<HomePage />} />
+        <Route path="/home" element={<HomePage />} />
 
         {/* Shop Owner */}
         <Route
@@ -70,6 +69,6 @@ export default function AppRouter() {
         {/* 404 */}
         <Route path="*" element={<h1>404 - Not Found</h1>} />
       </Routes>
-    </BrowserRouter>
+
   );
 }

@@ -10,17 +10,37 @@ export default function ForgotPassword() {
   });
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const onChange = (e) =>
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-
-  const request = async () => {
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  }
+  
+  const requestOTP = async () => {
+    setLoading(true);
     setError("");
     try {
-      await authApi.forgotRequest({ identifier: form.identifier });
+      await authApi.forgotRequestOTP({ identifier: form.identifier });
       setStep(2);
     } catch (e) {
       setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOTP = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      await authApi.forgotVerify({ identifier: form.identifier, otp: form.otp, newPassword: form.newPassword });
+      alert("Đổi mật khẩu thành công.");
+      window.location.href = "/login";
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,11 +66,11 @@ export default function ForgotPassword() {
             placeholder="Email/SĐT/Tên đăng nhập"
             onChange={onChange}
           />
-          <button onClick={request}>Gửi OTP</button>
+          <button onClick={requestOTP}>Gửi OTP</button>
         </>
       )}
       {step === 2 && (
-        <>
+        <div className="card">
           <input name="otp" placeholder="Nhập OTP" onChange={onChange} />
           <input
             type="password"
@@ -58,8 +78,9 @@ export default function ForgotPassword() {
             placeholder="Mật khẩu mới"
             onChange={onChange}
           />
-          <button onClick={reset}>Xác nhận đổi mật khẩu</button>
-        </>
+          <button onClick={verifyOTP}>Xác nhận đổi mật khẩu</button>
+          <button onClick={requestOTP}>Gửi lại OTP</button>
+        </div>
       )}
     </div>
   );

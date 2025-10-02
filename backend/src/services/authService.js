@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
 const { hashPassword, comparePassword } = require('../utils/hash');
-const { signAccessToken } = require('../utils/jwt');
+const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const { normalizeIdentifier, isValidPassword } = require('../utils/validators');
 const { redis } = require('../config/redis');
 const { sendOtpEmail } = require('./notificationService');
@@ -86,8 +86,39 @@ async function login({ identifier, password }) {
   const ok = await comparePassword(password, user.password_hash);
   if (!ok) throw Object.assign(new Error('Sai mật khẩu'), { status: 401 });
 
-  const token = signAccessToken({ sub: user._id, role: user.role, username: user.username });
-  return { access_token: token, expires_in: 3600, user: { id: user._id, role: user.role, username: user.username } };
+  const payload = { sub: user._id, role: user.role, username: user.username };
+  const access_token = signAccessToken(payload);
+  const refresh_token = signRefreshToken(payload);
+
+  return {
+    access_token,
+    refresh_token,
+    expires_in: 3600,
+    user: { id: user._id, role: user.role, username: user.username }
+  };
+}
+
+// Refresh token
+async function refreshToken({ token }) {
+  try {
+    const decoded = verifyRefreshToken(token);
+
+    // Kiểm tra blacklist
+    const blacklisted = await redis.get(`blacklist:refresh:${token}`);
+    if (blacklisted) {
+      const err = new Error("Refresh token đã bị vô hiệu");
+      err.status = 401;
+      throw err;
+    }
+
+    const payload = { sub: decoded.sub, role: decoded.role, username: decoded.username };
+    const access_token = signAccessToken(payload);
+    return { access_token, expires_in: 3600 };
+  } catch (e) {
+    const err = new Error("Refresh token không hợp lệ hoặc đã hết hạn");
+    err.status = 401;
+    throw err;
+  }
 }
 
 // 1.3 Quên mật khẩu - gửi OTP
@@ -138,10 +169,28 @@ async function verifyForgotPassword({ identifier, otp, newPassword }) {
   return { reset: true };
 }
 
+// 1.4 Logout
+async function logout({ token }) {
+  if (!token) return { message: "Không có token để logout" };
+  try {
+    const decoded = verifyRefreshToken(token);
+    const key = `blacklist:refresh:${token}`;
+    const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+    await redis.setEx(key, ttl, "1"); // set "1" thay vì true
+    return { message: "Logout thành công" };
+  } catch (e) {
+    const err = new Error("Refresh token không hợp lệ hoặc đã hết hạn");
+    err.status = 401;
+    throw err;
+  }
+}
+
 module.exports = {
   requestRegisterOTP,
   verifyRegisterOTP,
   login,
   requestForgotPasswordOTP,
-  verifyForgotPassword
+  verifyForgotPassword,
+  refreshToken,
+  logout
 };

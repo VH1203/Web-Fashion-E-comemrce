@@ -76,6 +76,9 @@ export default function Register() {
           <button onClick={verifyOTP} disabled={loading}>
             {loading ? "Đang xác thực..." : "Xác thực & Tạo tài khoản"}
           </button>
+          <button onClick={requestOTP} disabled={loading} style={{ marginTop: 8 }}>
+            Gửi lại OTP
+          </button>
         </div>
       )}
     </div>

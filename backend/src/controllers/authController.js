@@ -48,10 +48,31 @@ async function forgotVerify(req, res, next) {
   }
 }
 
+async function refresh(req, res, next) {
+  try {
+    const result = await authService.refreshToken(req.body);
+    res.json(result);
+  } catch (e) {
+    next(e);
+  }
+}
+
+async function logout(req, res, next) { 
+  try {
+    const { token } = req.body;
+    const result = await authService.logout({ token });
+    res.json(result);
+  } catch (e) {
+    next(e);
+  }
+}
+
 module.exports = {
   registerRequestOTP,
   registerVerifyOTP,
   login,
   forgotRequestOTP,
-  forgotVerify
+  forgotVerify,
+  refresh,
+  logout
 };

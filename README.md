@@ -11,11 +11,14 @@ Nền tảng thương mại điện tử tập trung vào **ngành thời trang*
 ## 🚀 Tech Stack
 - **Frontend:** [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)  
 - **Backend:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/)  
-- **Database:** [MongoDB](https://www.mongodb.com/) (quản lý qua Mongo Compass)  
+- **Database:** [MongoDB](https://www.mongodb.com/) + [Redis](https://redis.io/downloads/)
 - **Authentication:** JWT (Access + Refresh token), mật khẩu băm bằng bcrypt/argon2 + SALT  
 - **Queue/Background Jobs:** BullMQ + Redis (retry, email, notification)  
 - **AI Recommendation:** ML model phân tích size từ dữ liệu khách hàng + bảng size sản phẩm  
 - **Deployment:** AWS / Docker / Nginx  
 - **Khác:** CDN (Cloudflare), JMeter (load test), StarUML/PlantUML (vẽ diagram)  
 
+## Run
+- npm install
+- npm start
 ---

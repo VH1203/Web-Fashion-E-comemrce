@@ -56,15 +56,16 @@ export default function Login() {
   };
 
   return (
-    <MDBContainer className="my-5">
+    <MDBContainer className="my-5 d-flex justify-content-center">
       <MDBCard>
-        <MDBRow className="g-0">
+        <MDBRow className="g-6">
           {/* Cột ảnh bên trái */}
           <MDBCol md="6">
             <MDBCardImage
               src="https://cdn.occtoo-media.com/995cf62a-7759-4681-a516-370aaabfd325/445f33e1-b55a-5121-9eed-e5a32a7ca2cc/239777-0014_03.jpg?format=large&outputFormat=webp"
               alt="login form"
               className="rounded-start w-100"
+              // style={{ objectFit: "cover", height: "10px" }}
             />
           </MDBCol>
 

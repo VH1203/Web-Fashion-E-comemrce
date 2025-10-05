@@ -13,6 +13,7 @@ import logo from "../../assets/icons/DFS-NonBG1.png";
 
 export default function Register() {
   const [form, setForm] = useState({
+    name: "",
     username: "",
     email: "",
     phone: "",
@@ -56,21 +57,33 @@ export default function Register() {
   };
 
   const verifyOTP = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      await authApi.registerVerify({ ...form });
-      alert("Đăng ký thành công! Hãy đăng nhập.");
-      window.location.href = "/login";
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  setError("");
+
+  try {
+    const payload = {
+      name: form.name,
+      username: form.username,
+      email: form.email,
+      phone: form.phone,
+      password: form.password, 
+      otp: form.otp,
+    };
+
+    const res = await authApi.registerVerify(payload);
+
+    alert("Đăng ký thành công! Hãy đăng nhập.");
+    window.location.href = "/login";
+  } catch (e) {
+    setError(e.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
-    <MDBContainer className="my-5">
+    <MDBContainer className="my-5 d-flex justify-content-center">
       <MDBCard>
         <MDBRow className="g-0">
           <MDBCol md="6" className="d-none d-md-block">
@@ -106,6 +119,15 @@ export default function Register() {
 
               {step === 1 && (
                 <>
+                  <MDBInput
+                    wrapperClass="mb-3"
+                    label="Họ và tên"
+                    name="name"
+                    type="text"
+                    value={form.name}
+                    onChange={onChange}
+                  />
+
                   <MDBInput
                     wrapperClass="mb-3"
                     label="Tên đăng nhập"

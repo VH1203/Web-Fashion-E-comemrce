@@ -11,6 +11,7 @@ import Dashboard from "../pages/shop/Dashboard";
 import SystemConfig from "../pages/admin/SystemConfig";
 import SalesOrders from "../pages/sales/SalesOrders";
 import Tickets from "../pages/support/Tickets";
+import Profile from "../pages/customer/Profile";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -64,6 +65,7 @@ export default function AppRouter() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/users/profile" element={<Profile />} />
 
         {/* 404 */}
         <Route path="*" element={<h1>404 - Not Found</h1>} />

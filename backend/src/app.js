@@ -12,11 +12,20 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
-
+app.use(express.json({ limit:"5mb" }));
+app.use(express.urlencoded({ extended:true }));
+app.use("/api/tickets", require("./routes/ticketRoutes"));
+app.use("/api/reviews", require("./routes/reviewRoutes"));
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
 
+app.use((err, req, res, next) => {
+  console.error(err);
+  const code = err.status || 400;
+  res.status(code).json({ message: err.message || "Bad request" });
+});
 
+module.exports = app;
 // (Optional) Enforce HTTPS behind proxy
 app.enable('trust proxy');
 app.use((req, res, next) => {

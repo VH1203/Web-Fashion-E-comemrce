@@ -47,29 +47,31 @@ async function requestRegisterOTP({ username, email, phone, password, confirmPas
 }
 
 // 1.1 Đăng ký - xác thực OTP & tạo user
-async function verifyRegisterOTP({ username, email, phone, password, otp }) {
+async function verifyRegisterOTP({ name, username, email, phone, password, otp }) {
   const key = `otp:register:${email.toLowerCase()}`;
   const cached = await redis.get(key);
-  if (!cached || cached !== otp) throw Object.assign(new Error('OTP không hợp lệ hoặc đã hết hạn'), { status: 400 });
+  if (!cached || cached !== otp)
+    throw Object.assign(new Error('OTP không hợp lệ hoặc đã hết hạn'), { status: 400 });
 
   await checkDuplicate({ username, email, phone });
 
   const password_hash = await hashPassword(password);
   const user = await User.create({
-    _id: uuidv4(),
-    username: username.toLowerCase(),
-    email: email.toLowerCase(),
-    phone,
-    password_hash,
-    role_id: CUSTOMER_ROLE_ID,
-    role: 'customer',
-    status: 'active',
-    created_at: new Date(),
-    updated_at: new Date()
-  });
+  name,
+  username: username.toLowerCase(),
+  email: email.toLowerCase(),
+  phone,
+  password_hash,
+  role: { _id: CUSTOMER_ROLE_ID, name: "customer" },
+});
+
   await redis.del(key);
-  return { registered: true, user: { id: user._id, username: user.username, email: user.email } };
+  return {
+    registered: true,
+    user: { id: user._id, username: user.username, email: user.email }
+  };
 }
+
 
 // 1.2 Đăng nhập
 async function login({ identifier, password }) {
@@ -142,31 +144,41 @@ async function requestForgotPasswordOTP({ identifier }) {
 
 // 1.3 Quên mật khẩu - xác thực & đổi mật khẩu
 async function verifyForgotPassword({ identifier, otp, newPassword }) {
-  if (!isValidPassword(newPassword)) throw Object.assign(new Error('Mật khẩu mới không đủ mạnh'), { status: 400 });
+  // Validate password đầu vào
+  if (!newPassword) throw Object.assign(new Error('Thiếu mật khẩu mới'), { status: 400 });
+  if (!isValidPassword(newPassword))
+    throw Object.assign(new Error('Mật khẩu mới không đủ mạnh'), { status: 400 });
 
+  // Chuẩn hoá identifier
   const { type, value } = normalizeIdentifier(identifier);
-  const query = type === 'email'
-    ? { email: value }
-    : type === 'phone'
-      ? { phone: value }
-      : { username: value };
+  const query =
+    type === 'email' ? { email: value } :
+    type === 'phone' ? { phone: value } :
+    { username: value };
 
   const user = await User.findOne(query);
   if (!user) throw Object.assign(new Error('Tài khoản không tồn tại'), { status: 404 });
 
+  // Lấy OTP trong Redis
   const key = `otp:forgot:${user.email.toLowerCase()}`;
   const cached = await redis.get(key);
-  if (!cached || cached !== otp) throw Object.assign(new Error('OTP không hợp lệ hoặc đã hết hạn'), { status: 400 });
+  if (!cached) throw Object.assign(new Error('OTP đã hết hạn'), { status: 400 });
+  if (cached !== otp) throw Object.assign(new Error('OTP không hợp lệ'), { status: 400 });
 
-  const same = await comparePassword(newPassword, user.password_hash);
-  if (same) throw Object.assign(new Error('Mật khẩu mới không được trùng mật khẩu cũ'), { status: 400 });
+  if (user.password_hash) {
+    const same = await comparePassword(newPassword, user.password_hash).catch(() => false);
+    if (same) throw Object.assign(new Error('Mật khẩu mới không được trùng mật khẩu cũ'), { status: 400 });
+  }
 
+  // ✅ Hash mật khẩu mới và lưu lại
   user.password_hash = await hashPassword(newPassword);
   user.updated_at = new Date();
   await user.save();
+
+  // Xoá OTP trong Redis
   await redis.del(key);
 
-  return { reset: true };
+  return { reset: true, message: "Đổi mật khẩu thành công" };
 }
 
 // 1.4 Logout

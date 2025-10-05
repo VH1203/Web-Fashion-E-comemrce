@@ -19,14 +19,13 @@ app.use("/api/reviews", require("./routes/reviewRoutes"));
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
 
-app.use((err, req, res, next) => {
-  console.error(err);
-  const code = err.status || 400;
-  res.status(code).json({ message: err.message || "Bad request" });
-});
+const bannerRoutes = require('./routes/bannerRoutes');
+app.use('/api/banners', bannerRoutes);
 
-module.exports = app;
-// (Optional) Enforce HTTPS behind proxy
+const uploadRoutes = require('./routes/uploadRoutes');
+app.use('/api/uploads', uploadRoutes);
+
+
 app.enable('trust proxy');
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'production' && req.secure !== true) {

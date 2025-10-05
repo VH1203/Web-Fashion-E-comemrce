@@ -5,8 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Register from "../pages/auth/Register";
 import Login from "../pages/auth/Login";
 import ForgotPassword from "../pages/auth/ForgotPassword";
-
-// Role pages
+import "mdb-react-ui-kit/dist/css/mdb.min.css";
 import HomePage from "../pages/customer/HomePage";
 import Dashboard from "../pages/shop/Dashboard";
 import SystemConfig from "../pages/admin/SystemConfig";
@@ -19,7 +18,7 @@ export default function AppRouter() {
   return (
       <Routes>
         {/* Customer */}
-        <Route path="/home" element={<HomePage />} />
+        <Route path="/" element={<HomePage />} />
 
         {/* Shop Owner */}
         <Route

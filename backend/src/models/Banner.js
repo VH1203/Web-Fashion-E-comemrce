@@ -40,6 +40,8 @@ const bannerSchema = new mongoose.Schema(
       type: String, // userId của Admin/Shop Owner tạo banner
       ref: "User",
     },
+    image_url: String,
+    image_public_id: String
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );

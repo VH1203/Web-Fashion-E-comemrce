@@ -23,9 +23,10 @@ username: { type: String, required: true, unique: true, trim: true, lowercase: t
 email: { type: String, required: true, unique: true, trim: true, lowercase: true },
 phone: { type: String, required: true, unique: true, trim: true },
 password_hash: { type: String, required: true },
+avatar: String,
+avatar_public_id: String,
 role_id: { type: String, required: true },
 role: { type: String, enum: ['customer','shop_owner','system_admin','sales','support'], required: true },
-avatar: String,
 gender: { type: String, enum: ['male','female','other'], default: 'other' },
 dob: { type: String },
 preferences: PreferencesSchema,
@@ -34,6 +35,7 @@ status: { type: String, enum: ['active','inactive','banned'], default: 'active' 
 created_at: { type: Date, default: Date.now },
 updated_at: { type: Date, default: Date.now }
 }, { collection: 'users' });
+
 
 
 

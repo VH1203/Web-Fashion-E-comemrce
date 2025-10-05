@@ -16,8 +16,13 @@ app.use(morgan('dev'));
 const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
 
+const bannerRoutes = require('./routes/bannerRoutes');
+app.use('/api/banners', bannerRoutes);
 
-// (Optional) Enforce HTTPS behind proxy
+const uploadRoutes = require('./routes/uploadRoutes');
+app.use('/api/uploads', uploadRoutes);
+
+
 app.enable('trust proxy');
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'production' && req.secure !== true) {

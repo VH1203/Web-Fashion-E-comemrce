@@ -1,164 +1,230 @@
 import React, { useEffect, useState } from "react";
 import { productApi } from "../../services/productService";
 import { categoryApi } from "../../services/categoryService";
+import { bannerApi } from "../../services/bannerService";
+import "../../assets/styles/Homepage.css";
 
 export default function HomePage() {
-  const [banner] = useState([
-    "/assets/images/banner1.jpg",
-    "/assets/images/banner2.jpg",
-  ]);
+  const [banners, setBanners] = useState([]);
   const [categories, setCategories] = useState([]);
   const [flashSale, setFlashSale] = useState([]);
   const [newProducts, setNewProducts] = useState([]);
   const [menProducts, setMenProducts] = useState([]);
   const [womenProducts, setWomenProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+
+  // Auto slide banner
+  const [currentSlide, setCurrentSlide] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % banners.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [banners]);
 
   useEffect(() => {
-    // Load categories
+    bannerApi.getAll().then(setBanners).catch(console.error);
     categoryApi.getAll().then(setCategories).catch(console.error);
-
-    // Load product sections
     productApi.getByTag("flash-sale").then(setFlashSale).catch(console.error);
     productApi.getNew().then(setNewProducts).catch(console.error);
     productApi.getByCategory("men").then(setMenProducts).catch(console.error);
-    productApi.getByCategory("women").then(setWomenProducts).catch(console.error);
+    productApi
+      .getByCategory("women")
+      .then(setWomenProducts)
+      .catch(console.error);
   }, []);
 
   return (
-    <div style={{ maxWidth: 1200, margin: "0 auto", padding: 20 }}>
-      {/* Banner */}
-      <div style={{ display: "flex", overflow: "auto", gap: 10, marginBottom: 20 }}>
-        {banner.map((img, i) => (
-          <img
-            key={i}
-            src={img}
-            alt="banner"
-            style={{ width: "100%", borderRadius: 12 }}
-          />
-        ))}
-      </div>
+    <div className="homepage-container">
+      {/* ==== Banner ==== */}
+      {banners.length > 0 && (
+        <div className="banner-slider">
+          <div
+            className="banner-track"
+            style={{
+              transform: `translateX(-${currentSlide * 100}%)`,
+            }}
+          >
+            {banners.map((b, i) => (
+              <div key={b._id} className="banner-slide">
+                <a href={b.link_url || "#"}>
+                  <img src={b.image_url} alt={b.title} />
+                </a>
+              </div>
+            ))}
+          </div>
 
-      {/* Categories */}
-      <div style={{ marginBottom: 20 }}>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          style={{
-            padding: 10,
-            borderRadius: 6,
-            border: "1px solid #ccc",
-          }}
-        >
-          <option value="">Chọn danh mục</option>
-          {categories.map((c) => (
-            <option key={c._id} value={c._id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
+          <button
+            className="banner-nav left"
+            onClick={() =>
+              setCurrentSlide(
+                currentSlide === 0 ? banners.length - 1 : currentSlide - 1
+              )
+            }
+          >
+            ‹
+          </button>
+          <button
+            className="banner-nav right"
+            onClick={() => setCurrentSlide((currentSlide + 1) % banners.length)}
+          >
+            ›
+          </button>
 
-      {/* Sections */}
-      <Section title="🔥 Flash Sale" products={flashSale} />
-      <Section title="✨ Sản phẩm mới" products={newProducts} />
-      <Section title="👔 Thời trang Nam" products={menProducts} />
-      <Section title="👗 Thời trang Nữ" products={womenProducts} />
+          <div className="banner-dots">
+            {banners.map((_, i) => (
+              <span
+                key={i}
+                className={`dot ${i === currentSlide ? "active" : ""}`}
+                onClick={() => setCurrentSlide(i)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ==== Danh mục ==== */}
+      <section className="category-section">
+        <h2>Danh mục</h2>
+
+        <div className="category-wrapper">
+          <button
+            className="scroll-btn left"
+            onClick={() => {
+              const scroll = document.getElementById("category-scroll");
+              scroll.scrollBy({ left: -300, behavior: "smooth" });
+            }}
+          >
+            ‹
+          </button>
+
+          <div id="category-scroll" className="category-scroll">
+            {categories.map((c) => (
+              <div key={c._id} className="category-card">
+                <img
+                  src={
+                    c.image_url ||
+                    `https://picsum.photos/100/100?random=${c._id}`
+                  }
+                  alt={c.name}
+                />
+                <p>{c.name}</p>
+              </div>
+            ))}
+          </div>
+
+          <button
+            className="scroll-btn right"
+            onClick={() => {
+              const scroll = document.getElementById("category-scroll");
+              scroll.scrollBy({ left: 300, behavior: "smooth" });
+            }}
+          >
+            ›
+          </button>
+        </div>
+      </section>
+
+      {/* ==== Flash Sale ==== */}
+      <Section title="FLASH SALE 🔥" products={flashSale} highlight />
+
+      {/* ==== Sản phẩm mới ==== */}
+      <Section
+        title="Sản phẩm mới"
+        products={newProducts}
+        viewAllLink="/products/new"
+      />
+
+      {/* ==== Thời trang Nam ==== */}
+      <Section
+        title="Thời trang Nam"
+        products={menProducts}
+        viewAllLink="/products/men"
+      />
+
+      {/* ==== Thời trang Nữ ==== */}
+      <Section
+        title="Thời trang Nữ"
+        products={womenProducts}
+        viewAllLink="/products/women"
+      />
     </div>
   );
 }
 
-function Section({ title, products }) {
-  // Hàm tính giá sale
+function Section({ title, products, highlight, viewAllLink }) {
+  const [scrollX, setScrollX] = useState(0);
+
+  const scroll = (offset) => {
+    const container = document.getElementById(`scroll-${title}`);
+    if (container) container.scrollBy({ left: offset, behavior: "smooth" });
+  };
+
   const getSalePrice = (p) => {
     if (p.tags?.includes("sale")) {
-      return Math.round(p.base_price * 0.8); // giảm 20%
+      return Math.round(p.base_price * 0.8);
     }
     return p.base_price;
   };
 
-  // Fallback ảnh ngẫu nhiên nếu lỗi
-  const getImage = (p) => {
-    const id = Math.floor(Math.random() * 1000);
-    return (
-      p.images?.[0] ||
-      `https://picsum.photos/300/400?random=${id}`
-    );
-  };
+  const displayedProducts = products.slice(0, 5);
 
   return (
-    <div style={{ marginBottom: 30 }}>
-      <h2 style={{ marginBottom: 15 }}>{title}</h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          gap: 20,
-        }}
-      >
-        {products.map((p) => {
-          const salePrice = getSalePrice(p);
-          const isSale = salePrice < p.base_price;
-
-          return (
-            <div
-              key={p._id}
-              style={{
-                border: "1px solid #eee",
-                borderRadius: 8,
-                padding: 10,
-                textAlign: "center",
-              }}
-            >
-              <img
-                src={getImage(p)}
-                alt={p.name}
-                onError={(e) =>
-                  (e.currentTarget.src = `https://picsum.photos/300/400?random=${Math.floor(
-                    Math.random() * 1000
-                  )}`)
-                }
-                style={{
-                  width: "100%",
-                  height: 200,
-                  objectFit: "cover",
-                  borderRadius: 8,
-                }}
-              />
-              <h3 style={{ fontSize: 16, margin: "10px 0" }}>{p.name}</h3>
-
-              {/* Giá */}
-              {isSale ? (
-                <div>
-                  <p style={{ color: "red", fontWeight: "bold", margin: 0 }}>
-                    {salePrice.toLocaleString()} đ
-                  </p>
-                  <p
-                    style={{
-                      textDecoration: "line-through",
-                      color: "#888",
-                      margin: 0,
-                      fontSize: 14,
-                    }}
-                  >
-                    {p.base_price.toLocaleString()} đ
-                  </p>
-                </div>
-              ) : (
-                <p style={{ color: "red", fontWeight: "bold", margin: 0 }}>
-                  {p.base_price.toLocaleString()} đ
-                </p>
-              )}
-
-              {/* Lượt bán */}
-              <p style={{ fontSize: 13, color: "#555", marginTop: 5 }}>
-                Đã bán: {p.sold_count}
-              </p>
-            </div>
-          );
-        })}
+    <section className={`product-section ${highlight ? "highlight" : ""}`}>
+      <div className="section-header">
+        <h2>{title}</h2>
+        {highlight ? (
+          <div className="countdown">
+            <span>⏰ Kết thúc sau: 02:15:45</span>
+          </div>
+        ) : (
+          viewAllLink && (
+            <a href={viewAllLink} className="view-all">
+              Xem tất cả →
+            </a>
+          )
+        )}
       </div>
-    </div>
+
+      <div className="scroll-wrapper">
+        <button className="scroll-btn left" onClick={() => scroll(-500)}>
+          ‹
+        </button>
+
+        <div id={`scroll-${title}`} className="product-scroll">
+          {displayedProducts.map((p) => {
+            const salePrice = getSalePrice(p);
+            const isSale = salePrice < p.base_price;
+            const image =
+              p.images?.[0] || `https://picsum.photos/300/400?random=${p._id}`;
+
+            return (
+              <div key={p._id} className="product-card">
+                <img src={image} alt={p.name} />
+                <h3>{p.name}</h3>
+                {isSale ? (
+                  <div className="price-group">
+                    <span className="sale-price">
+                      {salePrice.toLocaleString()} đ
+                    </span>
+                    <span className="old-price">
+                      {p.base_price.toLocaleString()} đ
+                    </span>
+                  </div>
+                ) : (
+                  <span className="sale-price">
+                    {p.base_price.toLocaleString()} đ
+                  </span>
+                )}
+                <p className="sold-count">Đã bán: {p.sold_count}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <button className="scroll-btn right" onClick={() => scroll(300)}>
+          ›
+        </button>
+      </div>
+    </section>
   );
 }
-

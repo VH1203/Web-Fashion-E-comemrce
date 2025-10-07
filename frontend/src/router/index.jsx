@@ -17,58 +17,57 @@ import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
   return (
-      <Routes>
-        {/* Customer */}
-        <Route path="/home" element={<HomePage />} />
+    <Routes>
+      {/* Customer */}
+      <Route path="/home" element={<HomePage />} />
+      <Route path="/dashboard" element={<Dashboard />} />
 
-        {/* Shop Owner */}
-        <Route
-          path="/shop/*"
-          element={
-            <ProtectedRoute allowedRoles={["shop_owner"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+      {/* <Route
+        path="/shop/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["shop_owner"]}>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      /> */}
 
-        {/* System Admin */}
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute allowedRoles={["system_admin"]}>
-              <SystemConfig />
-            </ProtectedRoute>
-          }
-        />
+      {/* System Admin */}
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute allowedRoles={["system_admin"]}>
+            <SystemConfig />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Sales */}
-        <Route
-          path="/sales/*"
-          element={
-            <ProtectedRoute allowedRoles={["sales"]}>
-              <SalesOrders />
-            </ProtectedRoute>
-          }
-        />
+      {/* Sales */}
+      <Route
+        path="/sales/*"
+        element={
+          <ProtectedRoute allowedRoles={["sales"]}>
+            <SalesOrders />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Support */}
-        <Route
-          path="/support/*"
-          element={
-            <ProtectedRoute allowedRoles={["support"]}>
-              <Tickets />
-            </ProtectedRoute>
-          }
-        />
+      {/* Support */}
+      <Route
+        path="/support/*"
+        element={
+          <ProtectedRoute allowedRoles={["support"]}>
+            <Tickets />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* Auth */}
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+      {/* Auth */}
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* 404 */}
-        <Route path="*" element={<h1>404 - Not Found</h1>} />
-      </Routes>
-
+      {/* 404 */}
+      <Route path="*" element={<h1>404 - Not Found</h1>} />
+    </Routes>
   );
 }

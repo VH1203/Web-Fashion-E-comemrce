@@ -1,0 +1,499 @@
+/* 📌 Layout Container — quan trọng để sidebar & voucher nằm ngang */
+.voucher-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-color, #f4f7fa);
+}
+
+/* 📌 Scope toàn bộ style cho trang Voucher */
+.voucher-page {
+  background-color: var(--bg-color, #f4f7fa);
+  padding: 2rem;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Container */
+.voucher-page .order-list-container {
+  background: var(--main-bg, #ffffff);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Header */
+.voucher-page .order-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.voucher-page .order-list-header h1 {
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+.voucher-page .search-input {
+  padding: 0.7rem 1rem;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  min-width: 250px;
+  font-size: 0.9rem;
+}
+
+/* Table */
+.voucher-page .table-wrapper {
+  overflow-x: auto;
+}
+
+.voucher-page table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.voucher-page thead th {
+  text-align: left;
+  padding: 1rem;
+  color: #888;
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.voucher-page tbody tr {
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.voucher-page tbody tr:last-child {
+  border-bottom: none;
+}
+
+.voucher-page tbody td {
+  padding: 1.2rem 1rem;
+  vertical-align: middle;
+  font-weight: 500;
+}
+
+/* Status Badge */
+.voucher-page .status-badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Màu trạng thái */
+.voucher-page .status-badge.completed {
+  background-color: #e0f5ea;
+  color: #34c759;
+}
+
+.voucher-page .status-badge.pending {
+  background-color: #fff5e0;
+  color: #ff9500;
+}
+
+.voucher-page .status-badge.approved {
+  background-color: #e0f8f0;
+  color: #00b894;
+}
+
+/* Create Button */
+.create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: var(--primary-color, #4a90e2);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  margin-left: 1rem;
+}
+
+.create-btn:hover {
+  background-color: #3a7ac5;
+}
+
+/* Action Buttons in table */
+.action-cell {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-btn.view {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.action-btn.edit {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.action-btn.delete {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.action-btn:hover {
+  opacity: 0.85;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+/* Nút Prev / Next */
+.pagination button {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: #f5f6fa;
+  border: 1px solid #dcdde1;
+  color: #333;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Hover hiệu ứng nhẹ + đổi màu border */
+.pagination button:hover {
+  background-color: #e9ecf3;
+  border-color: #b2b8c3;
+  transform: translateY(-1px);
+}
+
+/* Disabled */
+.pagination button:disabled {
+  background-color: #f0f0f0;
+  color: #aaa;
+  border-color: #e0e0e0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Text giữa (Page X of Y) */
+.pagination span {
+  color: #555;
+  font-weight: 500;
+}
+
+/* — Nếu bạn có biến màu chủ đạo (đẹp hơn) — */
+.pagination button.active,
+.pagination button:hover:not(:disabled) {
+  background-color: var(--primary-color, #2563eb);
+  color: #fff;
+  border-color: var(--primary-color, #2563eb);
+}
+
+/* Icon canh giữa */
+.pagination svg {
+  stroke-width: 2px;
+  margin-top: 1px;
+}
+
+/* ===== Modal Voucher Detail ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1200;
+}
+
+.modal-box {
+  background: #fff;
+  width: 400px;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-box h3 {
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}
+.voucher-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.voucher-form input {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-save {
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-save:hover {
+  background-color: #0b5ed7;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.voucher-detail-modal {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 480px;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  animation: slideUp 0.25s ease-in-out;
+}
+
+.voucher-detail-modal h2 {
+  margin-bottom: 1rem;
+  color: #222;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 600;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.75rem;
+}
+
+.voucher-detail-content {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.voucher-detail-content p {
+  margin: 0;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #444;
+  background: #fafafa;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.voucher-detail-content strong {
+  color: #111;
+  font-weight: 600;
+  min-width: 130px;
+}
+
+.voucher-detail-content h3 {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2563eb;
+  border-bottom: 2px solid #dce5ff;
+  padding-bottom: 0.4rem;
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.close-btn:hover {
+  transform: scale(1.15);
+  color: #111;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-btn {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--primary-color, #4a90e2);
+  color: #fff;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  margin-left: 1rem;
+}
+
+.search-btn:hover {
+  background-color: #3a7ac5;
+}
+
+.voucher-detail-content.form label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.voucher-detail-content.form input {
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.save-btn {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+/* ======= ANT DESIGN MESSAGE — FIX GÓC PHẢI ======= */
+
+.ant-message {
+  pointer-events: none;
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 80px !important;
+  right: 20px !important;
+  left: auto !important;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  background: transparent !important;
+  transform: none !important; /* ✅ Bỏ transform căn giữa */
+}
+
+/* Bỏ căn giữa của từng message wrapper */
+.ant-message-notice-wrapper {
+  transform: none !important; /* ✅ Không căn giữa nữa */
+  margin: 0 !important;
+}
+
+/* Toast item */
+.ant-message-notice {
+  pointer-events: all;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 8px 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #000 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 260px;
+  border-radius: 8px;
+  animation: fadeInRight 0.3s ease, fadeOut 0.3s ease 2.5s forwards;
+}
+
+/* Icon đổi màu theo trạng thái */
+.ant-message-success .anticon {
+  color: #28a745 !important;
+}
+
+.ant-message-error .anticon {
+  color: #dc3545 !important;
+}
+
+.ant-message-warning .anticon {
+  color: #ff9800 !important;
+}
+
+.ant-message-info .anticon {
+  color: #2196f3 !important;
+}
+
+/* Hiệu ứng mượt */
+@keyframes fadeInRight {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+
+

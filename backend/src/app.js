@@ -10,6 +10,7 @@ const productRoutes = require('./routes/productRoutes');
 const bannerRoutes = require('./routes/bannerRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const userRoutes = require("./routes/userRoutes");
+const voucherRouter = require("./routes/voucherRoutes");
 
 
 app.use(helmet());
@@ -20,6 +21,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/banners', bannerRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/vouchers", voucherRouter);
 
 
 app.enable('trust proxy');

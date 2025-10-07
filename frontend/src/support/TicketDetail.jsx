@@ -1,24 +1,26 @@
-import React, { useEffect, useState } from "react";
+// TicketDetail.jsx 
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import api from "../../utils/api";
+import api from "../../utils/api.js";
 import StatusBadge from "../../components/StatusBadge.jsx";
 import EventTimeline from "../../components/EventTimeline.jsx";
+
 
 export default function TicketDetail() {
   const { id } = useParams();
   const [t, setT] = useState(null);
   const [message, setMessage] = useState("");
-  const [proposal, setProposal] = useState({ kind:"refund", amount:0, reason:"" });
-  const [approv, setApprov] = useState({ reason:"" });
+  const [proposal, setProposal] = useState({ kind: "refund", amount: 0, reason: "" });
+  const [approv, setApprov] = useState({ reason: "" });
 
   async function load() {
     const res = await api.get(`/tickets/${id}`);
     setT(res.data);
   }
-  useEffect(()=>{ load(); }, [id]);
+  useEffect(() => { load(); }, [id]);
 
   if (!t) return <div>Loading...</div>;
-  async function call(path, body) { await api.post(`/tickets/${id}/${path}`, body||{}); await load(); }
+  async function call(path, body) { await api.post(`/tickets/${id}/${path}`, body || {}); await load(); }
 
   return (
     <div className="row g-4">
@@ -53,6 +55,7 @@ export default function TicketDetail() {
           <div className="card-body vstack gap-2">
             <button className="btn btn-sm btn-outline-primary" onClick={()=>call("claim")}>Claim</button>
             <button className="btn btn-sm btn-outline-secondary" onClick={()=>call("process")}>Start Processing</button>
+
             <div className="mt-2">
               <label className="form-label">Ask more</label>
               <div className="input-group">
@@ -60,6 +63,7 @@ export default function TicketDetail() {
                 <button className="btn btn-sm btn-outline-warning" onClick={()=>call("ask-more",{ message })}>Send</button>
               </div>
             </div>
+
             <div className="mt-2">
               <label className="form-label">Proposal</label>
               <select className="form-select form-select-sm" value={proposal.kind} onChange={e=>setProposal(p=>({...p, kind:e.target.value}))}>
@@ -68,7 +72,7 @@ export default function TicketDetail() {
                 <option value="warranty">Warranty</option>
                 <option value="reject">Reject</option>
               </select>
-              {proposal.kind==="refund" && (
+              {proposal.kind === "refund" && (
                 <input className="form-control form-control-sm mt-1" type="number" placeholder="Amount"
                   value={proposal.amount} onChange={e=>setProposal(p=>({...p, amount:Number(e.target.value)}))}/>
               )}
@@ -76,6 +80,7 @@ export default function TicketDetail() {
                 value={proposal.reason} onChange={e=>setProposal(p=>({...p, reason:e.target.value}))}/>
               <button className="btn btn-sm btn-primary mt-2" onClick={()=>call("propose", proposal)}>Send Proposal</button>
             </div>
+
             <hr/>
             <div className="mt-1">
               <button className="btn btn-sm btn-success me-2" onClick={()=>call("resolve",{ note:"Done" })}>Mark Resolved</button>
@@ -99,6 +104,7 @@ export default function TicketDetail() {
             )}
           </div>
         </div>
+
       </div>
     </div>
   );

@@ -156,3 +156,46 @@ exports.exportPdf = async (req, res, next) => {
     res.send(html);
   } catch (e) { next(e); }
 };
+exports.createIntake = async (req,res,next)=>{
+  try{
+    const actor = { id:req.user.id, role:req.user.role };
+    const doc = await ticketService.createIntake(req.body, actor, req);
+    res.status(201).json(doc);
+  }catch(e){ next(e); }
+};
+
+exports.routeToShop = async (req,res,next)=>{
+  try{
+    const actor = { id:req.user.id, role:req.user.role };
+    const doc = await ticketService.routeToShop(req.params.id, req.body, actor, req);
+    if(!doc) return res.status(404).json({message:"Not found"});
+    res.json(doc);
+  }catch(e){ next(e); }
+};
+
+exports.assignAgent = async (req,res,next)=>{
+  try{
+    const actor = { id:req.user.id, role:req.user.role };
+    const doc = await ticketService.assignAgent(req.params.id, req.body, actor, req);
+    if(!doc) return res.status(404).json({message:"Not found"});
+    res.json(doc);
+  }catch(e){ next(e); }
+};
+
+exports.claimTicket = async (req,res,next)=>{
+  try{
+    const actor = { id:req.user.id, role:req.user.role };
+    const doc = await ticketService.claimTicket(req.params.id, actor, req);
+    if(!doc) return res.status(404).json({message:"Not found"});
+    res.json(doc);
+  }catch(e){ next(e); }
+};
+
+exports.returnToSystem = async (req,res,next)=>{
+  try{
+    const actor = { id:req.user.id, role:req.user.role };
+    const doc = await ticketService.returnToSystem(req.params.id, req.body?.reason, actor, req);
+    if(!doc) return res.status(404).json({message:"Not found"});
+    res.json(doc);
+  }catch(e){ next(e); }
+};

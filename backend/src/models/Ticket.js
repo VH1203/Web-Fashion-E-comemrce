@@ -49,10 +49,35 @@ const TicketSchema = new mongoose.Schema({
   description: { type: String, maxlength: 4000 },
   status: { 
     type: String,
-    enum: ["pending","processing","waiting_customer","escalated","approved","rejected","resolved","closed"],
+     enum: [
+   "intake",               // ticket vào trung tâm (System)
+   "routed",               // đã route sang shop
+   "assigned",             // đã assign agent hoặc agent claim
+   "processing",
+   "waiting_customer",
+   "escalated",            // giữ để tương thích cũ
+   "escalated_to_owner",   // tên rõ ràng hơn cho flow mới
+   "approved",
+   "rejected",
+   "resolved",
+   "closed",
+   "returned_to_system",   // shop trả về System
+   "pending"               // giữ tương thích dữ liệu cũ
+ ],
+
     default: "pending",
     index: true
   },
+   ownerShopId: { type: String, index: true },   // shop nhận xử lý (khác với shop tạo ticket nếu có)
+ intakeBy: { id: String, role: String },       // ai tiếp nhận ban đầu (thường là system_admin)
+ assignee: {                                   
+   team: { type: String, enum: ["support", "system"] }, // đội đang “nắm” ticket
+   shopId: { type: String },                   // shop hiện tại “giữ” ticket
+   userId: { type: String }                    // agent (support) nếu đã assign cụ thể
+ },
+ queue: { type: String, enum: ["system_inbox","shop_inbox","agent_inbox","waiting_customer"], default: "system_inbox", index:true },
+ category: { type: String },                   // optional: phân loại (lost, damaged,...)
+ severity: { type: String, enum: ["low","medium","high","critical"], default: "medium" },
   priority: { type: String, enum:["low","medium","high","critical"], default:"medium", index:true },
   attachments: [AttachmentSchema],
   channel: { type: String, enum: ["web","zalo","hotline","email","chat_widget"], default: "web" },
@@ -65,7 +90,6 @@ const TicketSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 TicketSchema.index({ shopId: 1, status: 1, priority: 1, createdAt: -1 });
-TicketSchema.index({ code: 1 }, { unique: true });
 TicketSchema.index({ customerId: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Ticket", TicketSchema);

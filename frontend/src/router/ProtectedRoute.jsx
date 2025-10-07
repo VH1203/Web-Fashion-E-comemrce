@@ -1,19 +1,19 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 
-export default function ProtectedRoute({ children, allowedRoles }) {
-  const token = localStorage.getItem("access_token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+function getRole() {
+  return localStorage.getItem("devRole") || "system_admin"; // mặc định sys admin để thấy intake
+}
+function isAuthed() {
+  return localStorage.getItem("devAuth") === "1";
+}
 
-  // Chưa đăng nhập
-  if (!token) {
-    return <Navigate to="/login" replace />;
+export default function ProtectedRoute({ allowedRoles = [], children }) {
+  if (!isAuthed()) localStorage.setItem("devAuth", "1"); // coi như đã login khi dev
+
+  const role = getRole();
+  if (allowedRoles.length && !allowedRoles.includes(role)) {
+    return <h1 className="p-4">403 - Forbidden (role: {role})</h1>;
   }
-
-  // Nếu có giới hạn role
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
-  }
-
   return children;
 }

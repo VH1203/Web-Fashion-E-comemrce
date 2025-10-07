@@ -7,8 +7,8 @@ async function limitOtpSends(req, res, next) {
         if (!keyBase) return res.status(400).json({ message: 'Missing identifier' });
         const key = `otp:sends:${keyBase}`;
         const count = Number(await redis.get(key)) || 0;
-        if (count >= 3) {
-            return res.status(429).json({ message: 'OTP limit reached. Try again later (max 3/10 minutes).' });
+        if (count >= 10) {
+            return res.status(429).json({ message: 'OTP limit reached. Try again later (max 10/10 minutes).' });
         }
         await redis.multi().incr(key).expire(key, 600).exec();
         next();

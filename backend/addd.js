@@ -38,8 +38,9 @@ const User = require("./src/models/User");
 
     // Thêm avatar_url, avatar_public_id cho users
     await User.updateMany(
-      { $or: [{ avatar_url: { $exists: false } }, { avatar_public_id: { $exists: false } }] },
-      { $set: { avatar_url: "", avatar_public_id: "" } }
+      { $or: [{ avatar_url: { $exists: false } }, { avatar_public_id: { $exists: false } }, { dob: { $exists: false } }] },
+      { $set: { avatar_url: "", avatar_public_id: "", dob: null } }
+
     );
 
     console.log("✅ All collections updated with new image fields");

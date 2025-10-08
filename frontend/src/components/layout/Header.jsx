@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authApi } from "../../services/authService";
-import logo from "../../assets/icons/DFS-NonBG1.png";
+import logo from "../../assets/icons/DFS-NonBG.png";
 import "../../assets/styles/Header.css";
 
 const flagVN = "https://flagcdn.com/w20/vn.png";
@@ -122,7 +122,6 @@ export default function Header() {
                 >
                   Combos
                 </Link>
-                
               </nav>
 
               {/* Search bar */}
@@ -138,7 +137,12 @@ export default function Header() {
                 <div className="user-top">
                   {user ? (
                     <>
-                      <Link className="user-name" to="/users/profile">
+                      <Link
+                        className={`user-name ${
+                          location.pathname === "/users/profile" ? "active" : ""
+                        }`}
+                        to="/users/profile"
+                      >
                         <i className="fa-solid fa-user"></i> Hồ sơ
                       </Link>
                       <button className="logout-btn" onClick={handleLogout}>

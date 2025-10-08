@@ -1,78 +1,43 @@
-const authService = require('../services/authService');
+const authService = require("../services/authService");
 
-// 1.1 Đăng ký
-async function registerRequestOTP(req, res, next) {
-  try {
-    const result = await authService.requestRegisterOTP(req.body);
-    res.json(result);
-  } catch (e) {
-    next(e);
-  }
-}
+const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
 
-async function registerVerifyOTP(req, res, next) {
-  try {
-    const result = await authService.verifyRegisterOTP(req.body);
-    res.json(result);
-  } catch (e) {
-    next(e);
-  }
-}
+exports.registerRequestOTP = wrap(async (req, res) => {
+  res.json(await authService.requestRegisterOTP(req.body));
+});
 
-// 1.2 Đăng nhập
-async function login(req, res, next) {
-  try {
-    const result = await authService.login(req.body);
-    res.json(result);
-  } catch (e) {
-    next(e);
-  }
-}
+exports.registerVerifyOTP = wrap(async (req, res) => {
+  res.json(await authService.verifyRegisterOTP(req.body));
+});
 
-// 1.3 Quên mật khẩu
-async function forgotRequestOTP(req, res, next) {
-  try {
-    const result = await authService.requestForgotPasswordOTP(req.body);
-    res.json(result);
-  } catch (e) {
-    next(e);
-  }
-}
+exports.login = wrap(async (req, res) => {
+  res.json(await authService.login(req.body));
+});
 
-async function forgotVerify(req, res, next) {
-  try {
-    const result = await authService.verifyForgotPassword(req.body);
-    res.json(result);
-  } catch (e) {
-    next(e);
-  }
-}
+exports.loginWithGoogle = wrap(async (req, res) => {
+  res.json(await authService.loginWithGoogle(req.body));
+});
 
-async function refresh(req, res, next) {
-  try {
-    const result = await authService.refreshToken(req.body);
-    res.json(result);
-  } catch (e) {
-    next(e);
-  }
-}
+exports.forgotRequestOTP = wrap(async (req, res) => {
+  res.json(await authService.requestForgotPasswordOTP(req.body));
+});
 
-async function logout(req, res, next) { 
-  try {
-    const { token } = req.body;
-    const result = await authService.logout({ token });
-    res.json(result);
-  } catch (e) {
-    next(e);
-  }
-}
+exports.forgotVerify = wrap(async (req, res) => {
+  res.json(await authService.verifyForgotPassword(req.body));
+});
 
-module.exports = {
-  registerRequestOTP,
-  registerVerifyOTP,
-  login,
-  forgotRequestOTP,
-  forgotVerify,
-  refresh,
-  logout
-};
+exports.refresh = wrap(async (req, res) => {
+  res.json(await authService.refreshToken(req.body));
+});
+
+exports.logout = wrap(async (req, res) => {
+  res.json(await authService.logout(req.body));
+});
+
+exports.requestSetPasswordOTP = wrap(async (req, res) => {
+  res.json(await authService.requestSetPasswordOTP(req.body));
+});
+
+exports.verifySetPassword = wrap(async (req, res) => {
+  res.json(await authService.setPasswordForGoogleUser(req.body));
+});

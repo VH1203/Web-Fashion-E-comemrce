@@ -36,4 +36,7 @@ export const userApi = {
     });
     return res.data;
   },
+
+  changePassword: (payload) =>
+    apiClient.post("/users/change-password", payload).then((res) => res.data),
 };

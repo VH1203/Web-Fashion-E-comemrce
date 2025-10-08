@@ -1,17 +1,15 @@
-function rbacMiddleware(allowedRoles = []) {
+exports.rbacMiddleware = (allowedRoles = []) => {
   return (req, res, next) => {
     try {
       const role =
-        req.user?.role?.name || // kiểu object { name: "shop_owner" }
-        req.user?.role || // kiểu string "shop_owner"
-        req.user?.role_name; // fallback khác
+        req.user?.role?.name ||
+        req.user?.role ||
+        req.user?.role_name;
 
       console.log("RBAC DEBUG:", { role, allowedRoles });
 
       if (!allowedRoles.includes(role)) {
-        return res.status(403).json({
-          message: "Bạn không có quyền truy cập chức năng này.",
-        });
+        return res.status(403).json({ message: "Bạn không có quyền truy cập chức năng này." });
       }
 
       next();
@@ -20,6 +18,4 @@ function rbacMiddleware(allowedRoles = []) {
       res.status(500).json({ message: "Lỗi xác thực quyền truy cập" });
     }
   };
-}
-
-module.exports = { rbacMiddleware };
+};

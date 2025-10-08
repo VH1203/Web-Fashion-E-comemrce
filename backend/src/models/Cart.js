@@ -1,1 +1,40 @@
-// Cart.js 
+// src/models/Cart.js
+const mongoose = require("mongoose");
+const { v4: uuidv4 } = require("uuid");
+const CartItemSchema = require("./CartItemSchema");
+
+/**
+ * CartSchema
+ * - Giỏ hàng của khách hàng
+ * - Chỉ có 1 cart active / user (1 user_id)
+ * - items[] chứa thông tin snapshot sản phẩm
+ */
+const CartSchema = new mongoose.Schema(
+    {
+        _id: { type: String, default: () => `cart-${uuidv4()}` },
+        user_id: { type: String, ref: "User", required: true },
+        items: [CartItemSchema],
+        total_price: {
+            type: Number,
+            default: 0,
+        },
+        currency: { type: String, default: "VND" },
+        updated_at: { type: Date, default: Date.now },
+    },
+    { timestamps: { createdAt: "created_at", updatedAt: "updated_at" }, versionKey: false, collection: "carts" }
+);
+
+// Tự động cập nhật tổng tiền
+CartSchema.pre("save", function (next) {
+    if (this.items && this.items.length > 0) {
+        this.total_price = this.items.reduce((acc, it) => acc + (it.total || it.price * it.qty), 0);
+    } else {
+        this.total_price = 0;
+    }
+    this.updated_at = new Date();
+    next();
+});
+
+CartSchema.index({ user_id: 1 });
+
+module.exports = mongoose.model("Cart", CartSchema);

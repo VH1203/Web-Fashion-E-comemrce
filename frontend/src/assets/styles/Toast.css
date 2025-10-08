@@ -1,0 +1,57 @@
+.toast-wrapper {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.toast-box {
+  display: flex;
+  width: 320px;
+  max-width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  animation: slideIn 0.3s ease, fadeOut 0.5s ease 3s forwards;
+}
+
+.toast-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+}
+
+.toast-icon-box.success { background: #10b981; } /* xanh lá */
+.toast-icon-box.info    { background: #3b82f6; } /* xanh dương */
+.toast-icon-box.warning { background: #f59e0b; } /* vàng */
+.toast-icon-box.error   { background: #ef4444; } /* đỏ */
+
+.toast-text {
+  padding: 10px 14px;
+}
+
+.toast-title {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.toast-title.success { color: #10b981; }
+.toast-title.info    { color: #3b82f6; }
+.toast-title.warning { color: #f59e0b; }
+.toast-title.error   { color: #ef4444; }
+
+.toast-message {
+  font-size: 14px;
+  color: #444;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateX(100%); }
+}

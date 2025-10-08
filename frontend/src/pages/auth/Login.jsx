@@ -12,6 +12,8 @@ import {
 } from "mdb-react-ui-kit";
 import { authApi } from "../../services/authService";
 import logo from "../../assets/icons/DFS-NonBG1.png";
+import { GoogleLogin } from "@react-oauth/google";
+
 
 export default function Login() {
   const [form, setForm] = useState({
@@ -54,7 +56,24 @@ export default function Login() {
       setLoading(false);
     }
   };
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const token = credentialResponse.credential;
+      const res = await authApi.googleLogin({ token });
+      localStorage.setItem("access_token", res.access_token);
+      localStorage.setItem("refresh_token", res.refresh_token);
+      localStorage.setItem("user", JSON.stringify(res.user));
 
+      const redirect = roleRoutes[res.user.role.name] || "/";
+      window.location.href = redirect;
+    } catch (err) {
+      setError("Đăng nhập Google thất bại: " + err.message);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError("Đăng nhập Google thất bại!");
+  };
   return (
     <MDBContainer className="my-5 d-flex justify-content-center">
       <MDBCard>
@@ -166,12 +185,12 @@ export default function Login() {
                   </a>
                 </div>
 
-                <div className="d-flex justify-content-center" >
+                <div className="d-flex justify-content-center">
                   <MDBBtn
                     className="mb-4 px-5d-flex align-items-center justify-content-center"
                     color="primary"
                     size="lg"
-                    style={{ width: "60%" }} 
+                    style={{ width: "60%" }}
                     onClick={submit}
                     disabled={loading}
                     type="submit"
@@ -187,6 +206,18 @@ export default function Login() {
                       "Đăng nhập"
                     )}
                   </MDBBtn>
+                </div>
+
+                 <div className="text-center mb-3">
+                  <p className="mb-2">Hoặc đăng nhập bằng</p>
+                  <div className="d-flex justify-content-center">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      shape="circle"
+                      theme="outline"
+                    />
+                  </div>
                 </div>
                 <p
                   className="mb-5 pb-lg-2"

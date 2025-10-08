@@ -12,12 +12,14 @@ export const userApi = {
     });
     return res.data;
   },
+
   updateProfile: async (data) => {
     const res = await apiClient.put("/users/profile", data, {
       headers: getAuthHeader(),
     });
     return res.data;
   },
+
   uploadAvatar: async (file) => {
     const form = new FormData();
     form.append("file", file);
@@ -26,6 +28,13 @@ export const userApi = {
         ...getAuthHeader(),
         "Content-Type": "multipart/form-data",
       },
+    });
+    return res.data;
+  },
+
+  changePassword: async (payload) => {
+    const res = await apiClient.post("/users/change-password", payload, {
+      headers: getAuthHeader(),
     });
     return res.data;
   },

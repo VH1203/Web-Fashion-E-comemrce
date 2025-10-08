@@ -1,31 +1,38 @@
 const mongoose = require("mongoose");
+const { v4: uuidv4 } = require("uuid");
 
-const ProductSchema = new mongoose.Schema({
-  _id: { type: String, required: true },
-  name: String,
-  category_id: String,
-  brand_id: String,
-  description: String,
-  tags: [String],
-  images: [{ type: String }],
-  image_public_ids: [{ type: String }],
-  videos: [String],
-  rating_avg: Number,
-  sold_count: Number,
-  stock_total: Number,
-  seo: {
-    title: String,
+const ProductSchema = new mongoose.Schema(
+  {
+    _id: { type: String, default: () => `prod-${uuidv4()}` },
+    name: { type: String, required: true },
+    category_id: { type: String, ref: "Category", required: true },
+    brand_id: { type: String, ref: "Brand" },
     description: String,
-    keywords: [String]
+    tags: [String],
+    images: [String],
+    image_public_ids: [String],
+    videos: [String],
+    rating_avg: { type: Number, default: 0 },
+    rating_count: { type: Number, default: 0 },
+    sold_count: { type: Number, default: 0 },
+    stock_total: { type: Number, default: 0 },
+    seo: { title: String, description: String, keywords: [String] },
+    is_featured: { type: Boolean, default: false },
+    base_price: { type: Number, required: true },
+    currency: { type: String, default: "VND" },
+    attributes: {},
+    shop_id: { type: String, ref: "User" },
+    status: { type: String, enum: ["active", "inactive", "out_of_stock"], default: "active" },
   },
-  is_featured: Boolean,
-  base_price: Number,
-  currency: String,
-  attributes: Object,
-  shop_id: String,
-  status: String,
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now }
+  { timestamps: true, versionKey: false, collection: "products" }
+);
+
+ProductSchema.virtual("variants", {
+  ref: "ProductVariant",
+  localField: "_id",
+  foreignField: "product_id",
 });
+
+ProductSchema.index({ name: "text", tags: "text" });
 
 module.exports = mongoose.model("Product", ProductSchema);

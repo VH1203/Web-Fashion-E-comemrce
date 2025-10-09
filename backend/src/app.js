@@ -5,19 +5,27 @@ const morgan = require('morgan');
 const authRoutes = require('./routes/authRoutes');
 const { errorHandler } = require('./middlewares/errorMiddleware');
 const { initRedis } = require('./config/redis');
-
-
 const app = express();
+const productRoutes = require('./routes/productRoutes');
+const bannerRoutes = require('./routes/bannerRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const userRoutes = require("./routes/userRoutes");
+const addressRoutes = require("./routes/addressRoutes");
+const bankRoutes = require("./routes/bankRoutes");
+
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
-
-const productRoutes = require('./routes/productRoutes');
 app.use('/api/products', productRoutes);
+app.use('/api/banners', bannerRoutes);
+app.use('/api/uploads', uploadRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/address", addressRoutes);
+app.use("/api/bank", bankRoutes);
 
 
-// (Optional) Enforce HTTPS behind proxy
 app.enable('trust proxy');
 app.use((req, res, next) => {
     if (process.env.NODE_ENV === 'production' && req.secure !== true) {
@@ -25,7 +33,6 @@ app.use((req, res, next) => {
     }
     next();
 });
-
 
 app.use('/api/auth', authRoutes);
 app.use(errorHandler);

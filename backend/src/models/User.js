@@ -1,41 +1,31 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const { v4: uuidv4 } = require("uuid");
+
+const UserSchema = new mongoose.Schema(
+  {
+    _id: { type: String, default: () => `user-${uuidv4()}` },
+    name: { type: String, required: true },
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true },
+    phone: { type: String, unique: true, sparse: true },
+    gender: { type: String, enum: ["male", "female", "other"] },
+    dob: Date,
+    role_id: { type: String, ref: "Role", default: "role-customer" },
+    status: { type: String, enum: ["active", "inactive", "banned"], default: "active" },
+    password_hash: String,
+    refresh_token: String,
+    avatar_url: String,
+    avatar_public_id: String,
+    preferences: {
+      height: Number,
+      weight: Number,
+      size_top: String,
+      size_bottom: String,
+    },
+    last_login: Date,
+  },
+  { timestamps: true, versionKey: false, collection: "users" }
+);
 
 
-const AddressSchema = new mongoose.Schema({
-id: { type: String, required: true },
-receiver_name: String,
-phone: String,
-address: String,
-is_default: { type: Boolean, default: false }
-}, { _id: false });
-
-
-const PreferencesSchema = new mongoose.Schema({
-favorite_categories: [String],
-favorite_size: String,
-favorite_color: String
-}, { _id: false });
-
-
-const UserSchema = new mongoose.Schema({
-_id: { type: String, required: true }, // UUID v4
-username: { type: String, required: true, unique: true, trim: true, lowercase: true },
-email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-phone: { type: String, required: true, unique: true, trim: true },
-password_hash: { type: String, required: true },
-role_id: { type: String, required: true },
-role: { type: String, enum: ['customer','shop_owner','system_admin','sales','support'], required: true },
-avatar: String,
-gender: { type: String, enum: ['male','female','other'], default: 'other' },
-dob: { type: String },
-preferences: PreferencesSchema,
-addresses: [AddressSchema],
-status: { type: String, enum: ['active','inactive','banned'], default: 'active' },
-created_at: { type: Date, default: Date.now },
-updated_at: { type: Date, default: Date.now }
-}, { collection: 'users' });
-
-
-
-
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model("User", UserSchema);

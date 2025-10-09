@@ -1,19 +1,21 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { limitOtpSends } = require('../middlewares/rateLimiter');
-const ctrl = require('../controllers/authController');
+const authCtrl = require("../controllers/authController");
+const { limitOtpSends } = require("../middlewares/rateLimiter");
 
-// Register
-router.post('/register/request-otp', limitOtpSends, ctrl.registerRequestOTP);
-router.post('/register/verify', ctrl.registerVerifyOTP);
-router.post('/refresh', ctrl.refresh);
+router.post("/register/request-otp", limitOtpSends, authCtrl.registerRequestOTP);
+router.post("/register/verify", authCtrl.registerVerifyOTP);
 
-// Login
-router.post('/login', ctrl.login);
-router.post('/logout', ctrl.logout);
+router.post("/login", authCtrl.login);
+router.post("/login/google", authCtrl.loginWithGoogle);
 
-// Forgot password
-router.post('/forgot-password/request', limitOtpSends, ctrl.forgotRequestOTP);
-router.post('/forgot-password/verify', ctrl.forgotVerify);
+router.post("/forgot-password/request", limitOtpSends, authCtrl.forgotRequestOTP);
+router.post("/forgot-password/verify", authCtrl.forgotVerify);
+
+router.post("/set-password/request", limitOtpSends, authCtrl.requestSetPasswordOTP);
+router.post("/set-password/verify", authCtrl.verifySetPassword);
+
+router.post("/refresh", authCtrl.refresh);
+router.post("/logout", authCtrl.logout);
 
 module.exports = router;

@@ -50,7 +50,7 @@ const Sidebar = ({
             A
           </div>
           {sidebarOpen && (
-            <span className="ms-3 fw-bold fs-5 text-dark">Admin</span>
+            <span className="ms-3 fw-bold fs-5 text-dark">Shop</span>
           )}
         </div>
 

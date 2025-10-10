@@ -23,7 +23,7 @@ const AnalyticsPage = () => {
     { name: "Apr", teamA: 60, teamB: 42, teamC: 35 },
     { name: "May", teamA: 35, teamB: 38, teamC: 45 },
     { name: "Jun", teamA: 50, teamB: 45, teamC: 38 },
-    { name: "Jul", teamA: 45, teamB: 35, teamC: 48 },
+    { name: "Jul", teamA: 45, teamB: 35, teamC: 48 }, 
     { name: "Aug", teamA: 55, teamB: 48, teamC: 42 },
   ];
 

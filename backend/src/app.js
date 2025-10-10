@@ -12,7 +12,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const userRoutes = require("./routes/userRoutes");
 const addressRoutes = require("./routes/addressRoutes");
 const bankRoutes = require("./routes/bankRoutes");
-
+const shopRoutes = require("./routes/shopRoutes");
 
 app.use(helmet());
 app.use(cors());
@@ -24,7 +24,7 @@ app.use('/api/uploads', uploadRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/bank", bankRoutes);
-
+app.use("/api/analytics", shopRoutes);
 
 app.enable('trust proxy');
 app.use((req, res, next) => {

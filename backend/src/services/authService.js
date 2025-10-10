@@ -45,7 +45,7 @@ async function checkDuplicate({ username, email, phone }) {
   throwError(`Đã tồn tại ${dupFields.join(", ")}`, 409);
 }
 
-async function requestRegisterOTP({ username, email, phone, password, confirmPassword, agreePolicy }) {
+async function requestRegisterOTP({ username, email, phone, password, confirmPassword, agreePolicy}) {
   if (!agreePolicy) throwError("Bạn cần đồng ý với chính sách.");
   if (password !== confirmPassword) throwError("Mật khẩu xác nhận không khớp");
   if (!isValidPassword(password)) throwError("Mật khẩu phải ≥8 ký tự, có chữ hoa, thường, số, ký tự đặc biệt");
@@ -54,7 +54,7 @@ async function requestRegisterOTP({ username, email, phone, password, confirmPas
 
   const otp = genOTP();
   const key = `otp:register:${email.toLowerCase()}`;
-  await saveOtp(key, otp);
+  await saveOtp(key, otp); 
   await sendOtpEmail(email, otp, "đăng ký");
 
   return { sent: true, message: "OTP đã gửi tới email" };
@@ -74,11 +74,11 @@ async function verifyRegisterOTP({ name, username, email, phone, password, otp }
     email: email.toLowerCase(),
     phone,
     password_hash: await hashPassword(password),
-    role: CUSTOMER_ROLE,
+   role: CUSTOMER_ROLE,
   });
 
   await deleteOtp(key);
-  return { registered: true, user: { id: user._id, username: user.username, email: user.email } };
+  return { registered: true, user: { id: user._id, username: user.username, email: user.email} };
 }
 
 // ========== Login ==========

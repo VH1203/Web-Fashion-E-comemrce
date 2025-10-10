@@ -21,16 +21,16 @@ export default function AppRouter() {
     <Routes>
       {/* Customer */}
       <Route path="/home" element={<HomePage />} />
-      {/* <Route path="/dashboard" element={<Dashboard />} />  */}
+       <Route path="/dashboard" element={<Dashboard />} />  
 
-       <Route
+       {/* <Route
         path="/shop/dashboard"
         element={
           <ProtectedRoute allowedRoles={["shop_owner"]}>
             <Dashboard />
           </ProtectedRoute>
         }
-      /> 
+      />  */}
 
       {/* System Admin */}
       <Route

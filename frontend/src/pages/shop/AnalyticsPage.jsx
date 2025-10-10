@@ -12,10 +12,35 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, Users, ShoppingCart, AlertCircle } from "lucide-react";
+import { TrendingUp, Users, ShoppingCart, AlertCircle,Star, CreditCard } from "lucide-react";
 import StatCard from "../../components/common/StarCard";
+import { getAnalytics } from "../../services/shopService";
+import { useEffect, useState } from "react";
+
 
 const AnalyticsPage = () => {
+  const [stats, setStats] = useState({
+    users: 0,
+    reviews: 0,
+    products: 0,
+    transactions: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await getAnalytics();
+        setStats(data);
+      } catch (error) {
+        console.error("Lỗi khi tải analytics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const websiteVisitsData = [
     { name: "Jan", teamA: 40, teamB: 24, teamC: 35 },
     { name: "Feb", teamA: 30, teamB: 35, teamC: 28 },
@@ -23,7 +48,7 @@ const AnalyticsPage = () => {
     { name: "Apr", teamA: 60, teamB: 42, teamC: 35 },
     { name: "May", teamA: 35, teamB: 38, teamC: 45 },
     { name: "Jun", teamA: 50, teamB: 45, teamC: 38 },
-    { name: "Jul", teamA: 45, teamB: 35, teamC: 48 }, 
+    { name: "Jul", teamA: 45, teamB: 35, teamC: 48 },
     { name: "Aug", teamA: 55, teamB: 48, teamC: 42 },
   ];
 
@@ -36,34 +61,36 @@ const AnalyticsPage = () => {
 
   const statCards = [
     {
-      title: "Weekly Sales",
-      value: "714k",
-      icon: TrendingUp,
-      bgColor: "bg-primary-subtle",
-      iconColor: "text-primary",
-    },
-    {
-      title: "New Users",
-      value: "1.35m",
+      title: "Người dùng",
+      value: stats.users.toLocaleString(),
       icon: Users,
       bgColor: "bg-info-subtle",
       iconColor: "text-info",
     },
     {
-      title: "Item Orders",
-      value: "1.72m",
+      title: "Sản phẩm",
+      value: stats.products.toLocaleString(),
       icon: ShoppingCart,
+      bgColor: "bg-primary-subtle",
+      iconColor: "text-primary",
+    },
+    {
+      title: "Đánh giá",
+      value: stats.reviews.toLocaleString(),
+      icon: Star,
       bgColor: "bg-warning-subtle",
       iconColor: "text-warning",
     },
     {
-      title: "Bug Reports",
-      value: "234",
-      icon: AlertCircle,
-      bgColor: "bg-danger-subtle",
-      iconColor: "text-danger",
+      title: "Giao dịch",
+      value: stats.transactions.toLocaleString(),
+      icon: CreditCard,
+      bgColor: "bg-success-subtle",
+      iconColor: "text-success",
     },
   ];
+
+  if (loading) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
   return (
     <div className="container py-4">
@@ -73,7 +100,7 @@ const AnalyticsPage = () => {
       </div>
 
       {/* Stat Cards */}
-      <div className="row g-4 mb-4">
+       <div className="row g-4 mb-4">
         {statCards.map((card, index) => (
           <div className="col-12 col-md-6 col-lg-3" key={index}>
             <StatCard {...card} />
@@ -81,7 +108,7 @@ const AnalyticsPage = () => {
         ))}
       </div>
 
-      {/* Charts */}
+      {/* Charts */}  
       <div className="row g-4">
         {/* Line Chart */}
         <div className="col-12 col-lg-8">

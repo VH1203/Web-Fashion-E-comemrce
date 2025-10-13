@@ -5,19 +5,14 @@ let redisClient;
 function initRedis() {
   if (redisClient) return redisClient;
 
-  redisClient = new Redis({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    password: process.env.REDIS_PASSWORD,
-    tls: {
-      rejectUnauthorized: false,
-    },
+  redisClient = new Redis(process.env.REDIS_URL, {
+    connectTimeout: 10000,
     retryStrategy(times) {
-      return Math.min(times * 100, 3000);
+      return Math.min(times * 2000, 10000);
     },
   });
 
-  redisClient.on("connect", () => console.log("✅ Connected to Redis Cloud via TLS"));
+  redisClient.on("connect", () => console.log("✅ Connected to Upstash Redis (port 443)"));
   redisClient.on("error", (err) => console.error("❌ Redis error:", err.message));
 
   return redisClient;

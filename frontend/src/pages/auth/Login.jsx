@@ -13,6 +13,7 @@ import {
 import { authApi } from "../../services/authService";
 import logo from "../../assets/icons/DFS-NonBG1.png";
 import { GoogleLogin } from "@react-oauth/google";
+import { useNavigate } from "react-router-dom";
 
 
 export default function Login() {
@@ -24,6 +25,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate();
 
   const roleRoutes = {
     customer: "/",
@@ -39,37 +42,51 @@ export default function Login() {
   };
 
   const submit = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await authApi.login(form);
-      localStorage.setItem("access_token", res.access_token);
-      localStorage.setItem("user", JSON.stringify(res.user));
-      localStorage.setItem("refresh_token", res.refresh_token);
-      localStorage.setItem("remember", form.remember ? "1" : "0");
+  setLoading(true);
+  setError("");
+  try {
+    const res = await authApi.login(form);
+    localStorage.setItem("access_token", res.access_token);
+    localStorage.setItem("user", JSON.stringify(res.user));
+    localStorage.setItem("refresh_token", res.refresh_token);
+    localStorage.setItem("remember", form.remember ? "1" : "0");
 
-      const redirect = roleRoutes[res.user.role] || "/";
-      window.location.href = redirect;
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const token = credentialResponse.credential;
-      const res = await authApi.googleLogin({ token });
-      localStorage.setItem("access_token", res.access_token);
-      localStorage.setItem("refresh_token", res.refresh_token);
-      localStorage.setItem("user", JSON.stringify(res.user));
+    const roleName =
+      res.user.role?.name ||
+      res.user.role ||
+      res.user.role_id?.name ||
+      "customer";
 
-      const redirect = roleRoutes[res.user.role.name] || "/";
-      window.location.href = redirect;
-    } catch (err) {
-      setError("Đăng nhập Google thất bại: " + err.message);
-    }
-  };
+    const redirect = roleRoutes[roleName] || "/";
+    navigate(redirect);
+  } catch (e) {
+    setError(e.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleGoogleSuccess = async (credentialResponse) => {
+  try {
+    const token = credentialResponse.credential;
+    const res = await authApi.googleLogin({ token });
+    localStorage.setItem("access_token", res.access_token);
+    localStorage.setItem("refresh_token", res.refresh_token);
+    localStorage.setItem("user", JSON.stringify(res.user));
+
+    const roleName =
+      res.user.role?.name ||
+      res.user.role ||
+      res.user.role_id?.name ||
+      "customer";
+
+    const redirect = roleRoutes[roleName] || "/";
+    navigate(redirect);
+  } catch (err) {
+    setError("Đăng nhập Google thất bại: " + err.message);
+  }
+};
+
 
   const handleGoogleError = () => {
     setError("Đăng nhập Google thất bại!");

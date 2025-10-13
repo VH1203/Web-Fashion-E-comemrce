@@ -10,8 +10,16 @@ const UserSchema = new mongoose.Schema(
     phone: { type: String, unique: true, sparse: true },
     gender: { type: String, enum: ["male", "female", "other"] },
     dob: Date,
-    role_id: { type: String, ref: "Role", default: "role-customer" },
-    status: { type: String, enum: ["active", "inactive", "banned"], default: "active" },
+    role_id: {
+      type: String,
+      ref: "Role",
+      default: "role-customer",
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "banned"],
+      default: "active",
+    },
     password_hash: String,
     refresh_token: String,
     avatar_url: String,
@@ -26,6 +34,5 @@ const UserSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false, collection: "users" }
 );
-
 
 module.exports = mongoose.model("User", UserSchema);

@@ -1,26 +1,33 @@
 const Category = require("../models/Category");
 const Product = require("../models/Product");
 
-// alias để frontend gọi cũ vẫn chạy
-const CATEGORY_ALIAS = { men: "men", women: "women" };
+const CATEGORY_ALIAS = { men: "nam", women: "nữ" };
 const TAG_ALIAS = { "flash-sale": "sale" };
-
 const isUuid = (v) => /^[0-9a-fA-F-]{36}$/.test(v);
 
-// Lấy toàn bộ _id các danh mục con (bao gồm cả chính nó)
+async function getCategories(req, res, next) {
+  try {
+    const categories = await Category.find().lean();
+    res.json(categories);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getDescendantCategoryIds(rootId) {
   const cats = await Category.find({}, { _id: 1, parent_id: 1 });
-  const childrenMap = new Map();
+  const map = new Map();
   for (const c of cats) {
-    const list = childrenMap.get(c.parent_id) || [];
+    const list = map.get(c.parent_id) || [];
     list.push(c);
-    childrenMap.set(c.parent_id, list);
+    map.set(c.parent_id, list);
   }
+
   const result = new Set([rootId]);
   const queue = [rootId];
   while (queue.length) {
     const cur = queue.shift();
-    const children = childrenMap.get(cur) || [];
+    const children = map.get(cur) || [];
     for (const ch of children) {
       if (!result.has(ch._id)) {
         result.add(ch._id);
@@ -31,26 +38,10 @@ async function getDescendantCategoryIds(rootId) {
   return Array.from(result);
 }
 
-// -------------------
-// GET /api/products/categories
-// -------------------
-const getCategories = async (req, res) => {
+async function getProducts(req, res, next) {
   try {
-    const categories = await Category.find();
-    res.json(categories);
-  } catch (error) {
-    console.error("getCategories error:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// -------------------
-// GET /api/products?tag=sale&category=men&sort=created_at&limit=8
-// -------------------
-const getProducts = async (req, res) => {
-  try {
-    let { tag, category, sort, limit } = req.query;
-    let filter = {};
+    let { tag, category, sort = "created_at", limit, page = 1 } = req.query;
+    const filter = {};
 
     // alias tag
     if (tag) {
@@ -58,40 +49,46 @@ const getProducts = async (req, res) => {
       filter.tags = tag;
     }
 
-    // filter category (slug hoặc _id)
+    // category
     if (category) {
-      category = CATEGORY_ALIAS[category] || category;
+      const alias = CATEGORY_ALIAS[category] || category;
+      const cat =
+        isUuid(alias)
+          ? await Category.findById(alias)
+          : await Category.findOne({ slug: alias });
 
-      let catDoc = null;
-      if (isUuid(category)) {
-        catDoc = await Category.findById(category);
-      } else {
-        catDoc = await Category.findOne({ slug: category });
+      if (cat) {
+        const ids = await getDescendantCategoryIds(cat._id);
+        filter.category_id = { $in: ids };
       }
-
-      if (!catDoc) return res.json([]);
-
-      const ids = await getDescendantCategoryIds(catDoc._id);
-      filter.category_id = { $in: ids };
     }
 
     let query = Product.find(filter);
 
-    // sort
     if (sort === "created_at") query = query.sort({ created_at: -1 });
+    const perPage = parseInt(limit || 12);
+    const skip = (parseInt(page) - 1) * perPage;
 
-    // limit
-    if (limit) {
-      const n = parseInt(limit, 10);
-      if (!Number.isNaN(n)) query = query.limit(n);
-    }
+    const [total, products] = await Promise.all([
+      Product.countDocuments(filter),
+      query.skip(skip).limit(perPage).lean(),
+    ]);
 
-    const products = await query.exec();
-    res.json(products);
-  } catch (error) {
-    console.error("getProducts error:", error);
-    res.status(500).json({ message: error.message });
+    res.json({ total, products });
+  } catch (err) {
+    next(err);
   }
-};
+}
 
-module.exports = { getCategories, getProducts };
+// ✅ Lấy chi tiết sản phẩm
+async function getProductDetail(req, res, next) {
+  try {
+    const p = await Product.findById(req.params.id).lean();
+    if (!p) return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+    res.json(p);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getCategories, getProducts, getProductDetail };

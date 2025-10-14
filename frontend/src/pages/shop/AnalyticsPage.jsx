@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, Users, ShoppingCart, AlertCircle,Star, CreditCard } from "lucide-react";
-import StatCard from "../../components/common/StarCard";
+import StatCardsGrid from "../../components/common/StarCard";
 import { getAnalytics } from "../../services/shopService";
 import { useEffect, useState } from "react";
 
@@ -59,37 +59,6 @@ const AnalyticsPage = () => {
     { name: "Africa", value: 987, color: "#F56565" },
   ];
 
-  const statCards = [
-    {
-      title: "Người dùng",
-      value: stats.users.toLocaleString(),
-      icon: Users,
-      bgColor: "bg-info-subtle",
-      iconColor: "text-info",
-    },
-    {
-      title: "Sản phẩm",
-      value: stats.products.toLocaleString(),
-      icon: ShoppingCart,
-      bgColor: "bg-primary-subtle",
-      iconColor: "text-primary",
-    },
-    {
-      title: "Đánh giá",
-      value: stats.reviews.toLocaleString(),
-      icon: Star,
-      bgColor: "bg-warning-subtle",
-      iconColor: "text-warning",
-    },
-    {
-      title: "Giao dịch",
-      value: stats.transactions.toLocaleString(),
-      icon: CreditCard,
-      bgColor: "bg-success-subtle",
-      iconColor: "text-success",
-    },
-  ];
-
   if (loading) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
   return (
@@ -99,14 +68,9 @@ const AnalyticsPage = () => {
         <h1 className="h3 fw-bold text-dark mb-2">Hi, Welcome back 👋</h1>
       </div>
 
-      {/* Stat Cards */}
-       <div className="row g-4 mb-4">
-        {statCards.map((card, index) => (
-          <div className="col-12 col-md-6 col-lg-3" key={index}>
-            <StatCard {...card} />
-          </div>
-        ))}
-      </div>
+       {/* ✅ Stat Cards */}
+      <StatCardsGrid stats={stats} />
+
 
       {/* Charts */}  
       <div className="row g-4">

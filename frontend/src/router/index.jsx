@@ -14,6 +14,8 @@ import Tickets from "../pages/support/Tickets";
 import Profile from "../pages/customer/Profile";
 
 import ProtectedRoute from "./ProtectedRoute";
+import AllProductsPage from "../pages/customer/AllProductsPages";
+import CategoryProductsPage from "../pages/customer/CategoryProductsPage";
 
 export default function AppRouter() {
   return (
@@ -62,15 +64,12 @@ export default function AppRouter() {
         }
       />
 
-        {/* Auth */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/users/profile" element={<Profile />} />
-      {/* Auth */}
-      <Route path="/register" element={<Register />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/categories/:slug" element={<CategoryProductsPage />} />
+        <Route path="/products/:type" element={<AllProductsPage />} />
 
       {/* 404 */}
       <Route path="*" element={<h1>404 - Not Found</h1>} />

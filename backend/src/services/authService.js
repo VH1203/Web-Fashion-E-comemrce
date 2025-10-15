@@ -5,7 +5,7 @@ const Role = require("../models/Role");
 const { hashPassword, comparePassword } = require("../utils/hash");
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require("../utils/jwt");
 const { normalizeIdentifier, isValidPassword } = require("../utils/validators");
-const redis = require("../config/redis"); // <- KHÔNG destructuring
+const redis = require("../config/redis");
 const { sendOtpEmail } = require("./notificationService");
 const { OAuth2Client } = require("google-auth-library");
 
@@ -71,6 +71,8 @@ async function requestRegisterOTP({ username, email, phone, password, confirmPas
 
 async function verifyRegisterOTP({ name, username, email, phone, password, otp }) {
   if (!email) throwError("Thiếu email");
+  if (!isValidUsername(username)) throwError("Tên đăng nhập chỉ được chứa chữ thường và số, không dấu cách hoặc ký tự đặc biệt");
+  if (!isValidFullName(name)) throwError("Họ và tên chỉ được chứa chữ cái, không được có số hoặc ký tự đặc biệt");
   const key = `otp:register:${email.toLowerCase()}`;
   const cached = await getOtp(key);
   if (!cached || cached !== otp) throwError("OTP không hợp lệ hoặc đã hết hạn");

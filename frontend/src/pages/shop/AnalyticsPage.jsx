@@ -43,20 +43,12 @@ const AnalyticsPage = () => {
 
   const websiteVisitsData = [
     { name: "Jan", teamA: 40, teamB: 24, teamC: 35 },
-    { name: "Feb", teamA: 30, teamB: 35, teamC: 28 },
-    { name: "Mar", teamA: 45, teamB: 28, teamC: 40 },
-    { name: "Apr", teamA: 60, teamB: 42, teamC: 35 },
-    { name: "May", teamA: 35, teamB: 38, teamC: 45 },
-    { name: "Jun", teamA: 50, teamB: 45, teamC: 38 },
-    { name: "Jul", teamA: 45, teamB: 35, teamC: 48 },
-    { name: "Aug", teamA: 55, teamB: 48, teamC: 42 },
+    
   ];
 
   const currentVisitsData = [
     { name: "America", value: 3547, color: "#5B93FF" },
-    { name: "Asia", value: 2534, color: "#FFC107" },
-    { name: "Europe", value: 1234, color: "#48BB78" },
-    { name: "Africa", value: 987, color: "#F56565" },
+    
   ];
 
   if (loading) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;

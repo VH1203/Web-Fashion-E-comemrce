@@ -13,6 +13,8 @@ const userRoutes = require('./routes/userRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const bankRoutes = require('./routes/bankRoutes');
 const shopRoutes = require('./routes/shopRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
 
 const app = express();
 
@@ -40,7 +42,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/bank', bankRoutes);
 app.use('/api/shop', shopRoutes);
-
+app.use('/api/orders', orderRoutes);
+app.use('/api/transactions', transactionRoutes);
 // Error handler
 app.use(errorHandler);
 

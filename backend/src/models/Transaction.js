@@ -17,5 +17,31 @@ const TransactionSchema = new mongoose.Schema(
 );
 
 TransactionSchema.index({ wallet_id: 1, createdAt: -1 });
+TransactionSchema.statics.getRevenueByMonth = async function () {
+  return this.aggregate([
+    { $match: { status: "success" } },
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        totalRevenue: { $sum: "$amount" },
+        totalTransactions: { $sum: 1 },
+      },
+    },
+    { $sort: { "_id": 1 } },
+    {
+      $project: {
+        _id: 0,
+        month: {
+          $arrayElemAt: [
+            ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+            { $subtract: ["$_id", 1] },
+          ],
+        },
+        totalRevenue: 1,
+        totalTransactions: 1,
+      },
+    },
+  ]);
+};
 
 module.exports = mongoose.model("Transaction", TransactionSchema);

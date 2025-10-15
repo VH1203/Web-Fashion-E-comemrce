@@ -65,4 +65,49 @@ OrderSchema.index({ shop_id: 1 });
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ createdAt: -1 });
 
+
+// doanh thu theo danh muc san pham
+OrderSchema.statics.getRevenueByCategory = async function () {
+  return this.aggregate([
+    { $unwind: "$items" },
+    {
+      $lookup: {
+        from: "products",
+        localField: "items.product_id",
+        foreignField: "_id",
+        as: "productInfo",
+      },
+    },
+    { $unwind: "$productInfo" },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "productInfo.category_id",
+        foreignField: "_id",
+        as: "categoryInfo",
+      },
+    },
+    { $unwind: "$categoryInfo" },
+    {
+      $group: {
+        _id: "$categoryInfo.name",
+        totalRevenue: {
+          $sum: {
+            $add: [
+              { $ifNull: ["$items.total", { $multiply: ["$items.price", "$items.qty"] }] },
+            ],
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        name: "$_id",
+        value: "$totalRevenue",
+      },
+    },
+  ]);
+};
+
 module.exports = mongoose.model("Order", OrderSchema);

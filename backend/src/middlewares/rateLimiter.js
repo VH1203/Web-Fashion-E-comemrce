@@ -1,5 +1,4 @@
-const { redis } = require('../config/redis');
-
+const redis = require('../config/redis');
 
 async function limitOtpSends(req, res, next) {
     try {

@@ -24,7 +24,7 @@ export const authApi = {
   forgotRequest: (payload) => post("/auth/forgot-password/request", payload),
   forgotVerify: (payload) => post("/auth/forgot-password/verify", payload),
 
-  setPasswordRequest: (payload) => post("/auth/set-password/request", payload),
+  setPasswordRequest: (identifier) => post("/auth/set-password/request", { identifier }),
   setPasswordVerify: (payload) => post("/auth/set-password/verify", payload),
 
   refresh: (payload) => post("/auth/refresh", payload),

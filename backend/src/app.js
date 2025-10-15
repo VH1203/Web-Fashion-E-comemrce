@@ -3,7 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const { errorHandler } = require('./middlewares/errorMiddleware');
-const { initRedis } = require('./config/redis');
+require("dotenv").config();
 
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
@@ -38,11 +38,15 @@ app.use('/api/uploads', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/bank', bankRoutes);
+app.use((err, req, res, next) => {
+  console.error("❌ Global error:", err);
+  res.status(500).json({ message: err.message });
+});
 
 // Error handler
 app.use(errorHandler);
 
 // Initialize Redis (connect once at startup)
-initRedis();
+require('./config/redis');
 
 module.exports = app;

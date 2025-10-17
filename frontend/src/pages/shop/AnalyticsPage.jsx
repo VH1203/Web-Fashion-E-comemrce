@@ -16,6 +16,7 @@ import { TrendingUp, Users, ShoppingCart, AlertCircle,Star, CreditCard } from "l
 import StatCardsGrid from "../../components/common/StarCard";
 import { getAnalytics } from "../../services/shopService";
 import { useEffect, useState } from "react";
+import { getRevenueByMonth, getRevenueByCategory } from "../../services/shopService";
 
 
 const AnalyticsPage = () => {
@@ -26,7 +27,9 @@ const AnalyticsPage = () => {
     transactions: 0,
   });
   const [loading, setLoading] = useState(true);
-
+  const [revenueByMonth, setRevenueByMonth] = useState([]);
+  const [revenueByCategory, setRevenueByCategory] = useState([]);
+  const COLORS = ["#5B93FF", "#FFC107", "#48BB78", "#FF5C93", "#7B61FF"];
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -41,10 +44,27 @@ const AnalyticsPage = () => {
     fetchData();
   }, []);
 
-  const websiteVisitsData = [
-    { name: "Jan", teamA: 40, teamB: 24, teamC: 35 },
-    
-  ];
+ useEffect (() => {
+    const fetchChartData = async () => {
+      try {
+        const [monthlyData, categoryData] = await Promise.all([
+          getRevenueByMonth(),
+          getRevenueByCategory(),
+        ]);
+
+        setRevenueByMonth(monthlyData || []);
+        setRevenueByCategory(categoryData || []);
+      } catch (error) {
+        console.error("Lỗi khi tải analytics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChartData();
+ }, []);
+
+
+  
 
   const currentVisitsData = [
     { name: "America", value: 3547, color: "#5B93FF" },
@@ -67,38 +87,34 @@ const AnalyticsPage = () => {
       {/* Charts */}  
       <div className="row g-4">
         {/* Line Chart */}
-        <div className="col-12 col-lg-8">
+        <div className="col-12 col-lg-8">¬
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <div className="mb-4">
-                <h2 className="h5 fw-bold text-dark mb-1">Website Visits</h2>
-                <p className="text-muted small">(+43%) than last year</p>
+                <h2 className="h5 fw-bold text-dark mb-1">Doanh thu theo tháng</h2>
+                <p className="text-muted small">Tổng quan doanh thu 12 tháng gần nhất</p>
               </div>
               <div style={{ width: "100%", height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={websiteVisitsData}>
+                  <LineChart data={revenueByMonth}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="name" />
+                    <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
                     <Line
                       type="monotone"
-                      dataKey="teamA"
+                      dataKey="totalRevenue"
                       stroke="#5B93FF"
                       strokeWidth={2}
+                      name="Doanh thu (VND)"
                     />
                     <Line
                       type="monotone"
-                      dataKey="teamB"
+                      dataKey="totalTransactions"
                       stroke="#FFC107"
                       strokeWidth={2}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="teamC"
-                      stroke="#48BB78"
-                      strokeWidth={2}
+                      name="Số giao dịch"
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -108,29 +124,27 @@ const AnalyticsPage = () => {
         </div>
 
         {/* Pie Chart */}
-        <div className="col-12 col-lg-4">
+      <div className="col-12 col-lg-4">
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <div className="mb-4">
-                <h2 className="h5 fw-bold text-dark">Current Visits</h2>
+                <h2 className="h5 fw-bold text-dark">Doanh thu theo danh mục</h2>
               </div>
               <div style={{ width: "100%", height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={currentVisitsData}
+                      data={revenueByCategory}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) =>
-                        `${name} ${(percent * 100).toFixed(0)}%`
-                      }
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {currentVisitsData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      {revenueByCategory.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -139,7 +153,7 @@ const AnalyticsPage = () => {
               </div>
 
               <div className="mt-3">
-                {currentVisitsData.map((item, index) => (
+                {revenueByCategory.map((item, index) => (
                   <div
                     key={index}
                     className="d-flex justify-content-between align-items-center small mb-2"
@@ -150,12 +164,14 @@ const AnalyticsPage = () => {
                         style={{
                           width: "10px",
                           height: "10px",
-                          backgroundColor: item.color,
+                          backgroundColor: COLORS[index % COLORS.length],
                         }}
                       ></div>
                       <span className="text-muted">{item.name}</span>
                     </div>
-                    <span className="fw-semibold text-dark">{item.value}</span>
+                    <span className="fw-semibold text-dark">
+                      {item.value.toLocaleString("vi-VN")}₫
+                    </span>
                   </div>
                 ))}
               </div>

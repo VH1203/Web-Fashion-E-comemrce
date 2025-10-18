@@ -1,230 +1,271 @@
 import React, { useEffect, useState } from "react";
+import { Container, Row, Col, Button, Card, Carousel } from "react-bootstrap";
 import { productApi } from "../../services/productService";
 import { categoryApi } from "../../services/categoryService";
 import { bannerApi } from "../../services/bannerService";
+import { brandApi } from "../../services/brandService";
 import "../../assets/styles/Homepage.css";
 
 export default function HomePage() {
   const [banners, setBanners] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [flashSale, setFlashSale] = useState([]);
   const [newProducts, setNewProducts] = useState([]);
   const [menProducts, setMenProducts] = useState([]);
   const [womenProducts, setWomenProducts] = useState([]);
 
-  // Auto slide banner
-  const [currentSlide, setCurrentSlide] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % banners.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [banners]);
+  // ===== Fetch Data =====
 
   useEffect(() => {
-    bannerApi.getAll().then(setBanners).catch(console.error);
-    categoryApi.getAll().then(setCategories).catch(console.error);
-    productApi.getByTag("flash-sale").then(setFlashSale).catch(console.error);
-    productApi.getNew().then(setNewProducts).catch(console.error);
-    productApi.getByCategory("men").then(setMenProducts).catch(console.error);
-    productApi
-      .getByCategory("women")
-      .then(setWomenProducts)
+    Promise.all([
+      bannerApi.getAll(),
+      categoryApi.getAll(),
+      brandApi.getAll(),
+      productApi.getByTag("flash-sale"),
+      productApi.getNew(),
+      productApi.getByCategory("men"),
+      productApi.getByCategory("women"),
+    ])
+      .then(
+        ([
+          bannersRes,
+          categoriesRes,
+          brandsRes,
+          flashSaleRes,
+          newRes,
+          menRes,
+          womenRes,
+        ]) => {
+          setBanners(bannersRes);
+          setCategories(categoriesRes);
+          setBrands(brandsRes);
+          setFlashSale(flashSaleRes);
+          setNewProducts(newRes);
+          setMenProducts(menRes);
+          setWomenProducts(womenRes);
+        }
+      )
       .catch(console.error);
   }, []);
 
   return (
-    <div className="homepage-container">
+    <Container fluid className="homepage-container">
       {/* ==== Banner ==== */}
-      {banners.length > 0 && (
-        <div className="banner-slider">
-          <div
-            className="banner-track"
-            style={{
-              transform: `translateX(-${currentSlide * 100}%)`,
-            }}
-          >
-            {banners.map((b, i) => (
-              <div key={b._id} className="banner-slide">
-                <a href={b.link_url || "#"}>
-                  <img src={b.image_url} alt={b.title} />
+      <Carousel fade interval={4000} className="mb-5 rounded shadow-lg">
+        {banners.length > 0
+          ? banners.map((b) => (
+              <Carousel.Item key={b._id}>
+                <a href={b.link || "#"}>
+                  <img
+                    className="d-block w-100 rounded"
+                    src={b.image_url || "https://placehold.co/1200x400?text=FLASH+SALE"}
+                    alt={b.title}
+                  />
                 </a>
-              </div>
-            ))}
-          </div>
-
-          <button
-            className="banner-nav left"
-            onClick={() =>
-              setCurrentSlide(
-                currentSlide === 0 ? banners.length - 1 : currentSlide - 1
-              )
-            }
-          >
-            ‹
-          </button>
-          <button
-            className="banner-nav right"
-            onClick={() => setCurrentSlide((currentSlide + 1) % banners.length)}
-          >
-            ›
-          </button>
-
-          <div className="banner-dots">
-            {banners.map((_, i) => (
-              <span
-                key={i}
-                className={`dot ${i === currentSlide ? "active" : ""}`}
-                onClick={() => setCurrentSlide(i)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ==== Danh mục ==== */}
-      <section className="category-section">
-        <h2>Danh mục</h2>
-
-        <div className="category-wrapper">
-          <button
-            className="scroll-btn left"
-            onClick={() => {
-              const scroll = document.getElementById("category-scroll");
-              scroll.scrollBy({ left: -300, behavior: "smooth" });
-            }}
-          >
-            ‹
-          </button>
-
-          <div id="category-scroll" className="category-scroll">
-            {categories.map((c) => (
-              <div key={c._id} className="category-card">
+              </Carousel.Item>
+            ))
+          : [...Array(3)].map((_, i) => (
+              <Carousel.Item key={i}>
                 <img
-                  src={
-                    c.image_url ||
-                    `https://picsum.photos/100/100?random=${c._id}`
-                  }
-                  alt={c.name}
+                  className="d-block w-100 rounded"
+                  src={`https://placehold.co/1200x400?text=Banner+${i + 1}`}
+                  alt={`Banner ${i + 1}`}
                 />
-                <p>{c.name}</p>
-              </div>
+              </Carousel.Item>
             ))}
-          </div>
+      </Carousel>
 
-          <button
-            className="scroll-btn right"
-            onClick={() => {
-              const scroll = document.getElementById("category-scroll");
-              scroll.scrollBy({ left: 300, behavior: "smooth" });
-            }}
-          >
-            ›
-          </button>
-        </div>
-      </section>
+      {/* ==== Categories ==== */}
+      <Section title="Danh mục nổi bật">
+        <ScrollableRow items={categories} type="category" />
+      </Section>
 
-      {/* ==== Flash Sale ==== */}
-      <Section title="FLASH SALE 🔥" products={flashSale} highlight />
+      {/* ==== Brands ==== */}
+      <Section title="Thương hiệu nổi bật">
+        <ScrollableRow items={brands} type="brand" />
+      </Section>
 
-      {/* ==== Sản phẩm mới ==== */}
-      <Section
+      {/* ==== Product Sections ==== */}
+      <ProductSection title="FLASH SALE 🔥" products={flashSale} highlight />
+      <ProductSection
         title="Sản phẩm mới"
         products={newProducts}
         viewAllLink="/products/new"
       />
-
-      {/* ==== Thời trang Nam ==== */}
-      <Section
+      <ProductSection
         title="Thời trang Nam"
         products={menProducts}
         viewAllLink="/products/men"
       />
-
-      {/* ==== Thời trang Nữ ==== */}
-      <Section
+      <ProductSection
         title="Thời trang Nữ"
         products={womenProducts}
         viewAllLink="/products/women"
       />
-    </div>
+    </Container>
   );
 }
 
-function Section({ title, products, highlight, viewAllLink }) {
-  const [scrollX, setScrollX] = useState(0);
+// ==== Reusable Section Wrapper ====
+const Section = ({ title, children }) => (
+  <div className="mb-5">
+    <h3 className="fw-bold text-primary mb-3">{title}</h3>
+    {children}
+  </div>
+);
 
+// ==== Horizontal Scroll List (for categories & brands) ====
+const ScrollableRow = ({ items, type }) => {
+  const scroll = (offset) => {
+    const el = document.getElementById(`scroll-${type}`);
+    if (el) el.scrollBy({ left: offset, behavior: "smooth" });
+  };
+
+  return (
+    <div className="scroll-wrapper position-relative">
+      <Button
+        variant="light"
+        className="scroll-btn left shadow-sm"
+        onClick={() => scroll(-300)}
+      >
+        ‹
+      </Button>
+      <div
+        id={`scroll-${type}`}
+        className="d-flex overflow-auto gap-3 pb-2 scroll-container"
+      >
+        {items.map((item) => (
+          <Card
+            key={item._id}
+            className="border-0 text-center"
+            style={{ width: "120px", minWidth: "120px" }}
+          >
+            <Card.Img
+              variant="top"
+              src={
+                item.image_url ||
+                item.logo_url ||
+                `https://placehold.co/100x100?text=${item.name}`
+              }
+              alt={item.name}
+              className="rounded-circle border border-primary p-1"
+            />
+            <Card.Body className="p-2">
+              <Card.Text className="fw-semibold text-primary small">
+                {item.name}
+              </Card.Text>
+            </Card.Body>
+          </Card>
+        ))}
+      </div>
+      <Button
+        variant="light"
+        className="scroll-btn right shadow-sm"
+        onClick={() => scroll(300)}
+      >
+        ›
+      </Button>
+    </div>
+  );
+};
+
+// ==== Product Section (Reusable) ====
+function ProductSection({ title, products, highlight, viewAllLink }) {
   const scroll = (offset) => {
     const container = document.getElementById(`scroll-${title}`);
     if (container) container.scrollBy({ left: offset, behavior: "smooth" });
   };
 
-  const getSalePrice = (p) => {
-    if (p.tags?.includes("sale")) {
-      return Math.round(p.base_price * 0.8);
-    }
-    return p.base_price;
-  };
-
-  const displayedProducts = products.slice(0, 5);
+  const getSalePrice = (p) =>
+    p.tags?.includes("sale") ? Math.round(p.base_price * 0.8) : p.base_price;
 
   return (
-    <section className={`product-section ${highlight ? "highlight" : ""}`}>
-      <div className="section-header">
-        <h2>{title}</h2>
+    <div
+      className={`product-section p-4 rounded ${
+        highlight ? "bg-primary text-white shadow-lg" : ""
+      }`}
+    >
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h4 className="fw-bold mb-0">{title}</h4>
         {highlight ? (
-          <div className="countdown">
-            <span>⏰ Kết thúc sau: 02:15:45</span>
+          <div className="bg-white text-primary px-3 py-1 rounded fw-semibold small">
+            ⏰ Kết thúc sau: 02:15:45
           </div>
         ) : (
           viewAllLink && (
-            <a href={viewAllLink} className="view-all">
+            <a href={viewAllLink} className="text-decoration-none fw-semibold">
               Xem tất cả →
             </a>
           )
         )}
       </div>
 
-      <div className="scroll-wrapper">
-        <button className="scroll-btn left" onClick={() => scroll(-500)}>
+      <div className="scroll-wrapper position-relative">
+        <Button
+          variant={highlight ? "light" : "outline-primary"}
+          className="scroll-btn left"
+          onClick={() => scroll(-500)}
+        >
           ‹
-        </button>
+        </Button>
 
-        <div id={`scroll-${title}`} className="product-scroll">
-          {displayedProducts.map((p) => {
+        <div
+          id={`scroll-${title}`}
+          className="d-flex overflow-auto gap-4 pb-2 product-scroll"
+        >
+          {products.slice(0, 10).map((p) => {
             const salePrice = getSalePrice(p);
             const isSale = salePrice < p.base_price;
             const image =
-              p.images?.[0] || `https://picsum.photos/300/400?random=${p._id}`;
-
+              p.images?.[0] || `https://placehold.co/300x400?text=${p.name}`;
             return (
-              <div key={p._id} className="product-card">
-                <img src={image} alt={p.name} />
-                <h3>{p.name}</h3>
-                {isSale ? (
-                  <div className="price-group">
-                    <span className="sale-price">
-                      {salePrice.toLocaleString()} đ
-                    </span>
-                    <span className="old-price">
+              <Card
+                key={p._id}
+                className="product-card border-0 shadow-sm"
+                style={{ minWidth: "220px", maxWidth: "220px" }}
+              >
+                <Card.Img
+                  variant="top"
+                  src={image}
+                  alt={p.name}
+                  className="rounded"
+                />
+                <Card.Body className="text-center p-2">
+                  <Card.Title className="h6 fw-semibold text-primary text-truncate">
+                    {p.name}
+                  </Card.Title>
+                  {isSale ? (
+                    <div className="d-flex justify-content-center gap-2 align-items-center">
+                      <span className="text-danger fw-bold">
+                        {salePrice.toLocaleString()} đ
+                      </span>
+                      <span className="text-muted text-decoration-line-through small">
+                        {p.base_price.toLocaleString()} đ
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-primary fw-bold">
                       {p.base_price.toLocaleString()} đ
                     </span>
-                  </div>
-                ) : (
-                  <span className="sale-price">
-                    {p.base_price.toLocaleString()} đ
-                  </span>
-                )}
-                <p className="sold-count">Đã bán: {p.sold_count}</p>
-              </div>
+                  )}
+                  <p className="text-muted small mb-0">
+                    Đã bán: {p.sold_count || 0}
+                  </p>
+                </Card.Body>
+              </Card>
             );
           })}
         </div>
 
-        <button className="scroll-btn right" onClick={() => scroll(300)}>
+        <Button
+          variant={highlight ? "light" : "outline-primary"}
+          className="scroll-btn right"
+          onClick={() => scroll(300)}
+        >
           ›
-        </button>
+        </Button>
       </div>
-    </section>
+    </div>
   );
 }

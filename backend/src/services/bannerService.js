@@ -1,5 +1,10 @@
-import apiClient from "./apiClient";
+const Banner = require("../models/Banner");
 
-export const bannerApi = {
-  getAll: () => apiClient.get("/banners").then(res => res.data),
+exports.getActiveBanners = async (position = null) => {
+  const filter = { is_active: true };
+  if (position) filter.position = position;
+
+  return await Banner.find(filter)
+    .sort({ createdAt: -1 })
+    .select("_id title image_url link position");
 };

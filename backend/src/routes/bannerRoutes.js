@@ -1,7 +1,7 @@
 const express = require("express");
-const { getBanners } = require("../controllers/bannerController");
 const router = express.Router();
+const bannerController = require("../controllers/bannerController");
 
-router.get("/", getBanners);
+router.get("/", bannerController.getAllBanners);
 
 module.exports = router;

@@ -1,8 +1,8 @@
 import apiClient from "./apiClient";
 
-export const categoryApi = {
+export const brandApi = {
   getAll: async () => {
-    const res = await apiClient.get("/categories");
+    const res = await apiClient.get("/brands");
     return res.data;
   },
 };

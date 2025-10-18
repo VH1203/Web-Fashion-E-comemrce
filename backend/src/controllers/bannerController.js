@@ -1,13 +1,11 @@
-const Banner = require("../models/Banner");
+const bannerService = require("../services/bannerService");
 
-const getBanners = async (req, res) => {
+exports.getAllBanners = async (req, res, next) => {
   try {
-    const banners = await Banner.find({ active: true }).sort({ created_at: -1 });
+    const { position } = req.query;
+    const banners = await bannerService.getActiveBanners(position);
     res.json(banners);
-  } catch (error) {
-    console.error("getBanners error:", error);
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    next(err);
   }
 };
-
-module.exports = { getBanners };

@@ -63,14 +63,6 @@ const AnalyticsPage = () => {
     fetchChartData();
  }, []);
 
-
-  
-
-  const currentVisitsData = [
-    { name: "America", value: 3547, color: "#5B93FF" },
-    
-  ];
-
   if (loading) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
   return (
@@ -80,7 +72,7 @@ const AnalyticsPage = () => {
         <h1 className="h3 fw-bold text-dark mb-2">Hi, Welcome back 👋</h1>
       </div>
 
-       {/* ✅ Stat Cards */}
+       
       <StatCardsGrid stats={stats} />
 
 

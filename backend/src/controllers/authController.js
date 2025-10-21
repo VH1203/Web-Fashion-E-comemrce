@@ -1,6 +1,18 @@
 const authService = require("../services/authService");
 
-const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
+// const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
+const wrap = (fn) => (req, res, next) =>
+  fn(req, res, next).catch((err) => {
+    console.error("❌ Error in route:", {
+      message: err.message,
+      stack: err.stack,
+      name: err.name,
+      status: err.status,
+    });
+    res
+      .status(err.status || 500)
+      .json({ message: err.message || "Internal Server Error" });
+  });
 
 exports.registerRequestOTP = wrap(async (req, res) => {
   res.json(await authService.requestRegisterOTP(req.body));

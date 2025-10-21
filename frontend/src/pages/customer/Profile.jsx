@@ -150,10 +150,11 @@ const handleProvinceChange = async (e) => {
       if (!user) throw new Error("Chưa đăng nhập");
 
       if (user.provider === "google" || !user.password_hash) {
-        await authApi.setPasswordRequest({ identifier: user.email });
-      } else {
-        await authApi.forgotRequest({ identifier: user.email });
-      }
+  await authApi.setPasswordRequest(user.email);
+} else {
+  await authApi.forgotRequest({ identifier: user.email });
+}
+
 
       setOtpSent(true);
       setToast({ type: "success", message: "Đã gửi OTP xác thực!" });

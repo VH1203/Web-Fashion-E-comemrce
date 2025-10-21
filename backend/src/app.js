@@ -3,7 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const { errorHandler } = require('./middlewares/errorMiddleware');
-const { initRedis } = require('./config/redis');
+require("dotenv").config();
 
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
@@ -15,6 +15,8 @@ const bankRoutes = require('./routes/bankRoutes');
 const shopRoutes = require('./routes/shopRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
+const categoryRoutes = require('./routes/categoryRoutes')
+const brandRoutes = require('./routes/brandRoutes');
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/brands', brandRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/address', addressRoutes);
@@ -44,10 +48,15 @@ app.use('/api/bank', bankRoutes);
 app.use('/api/shop', shopRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use((err, req, res, next) => {
+  console.error("❌ Global error:", err);
+  res.status(500).json({ message: err.message });
+});
+
 // Error handler
 app.use(errorHandler);
 
 // Initialize Redis (connect once at startup)
-initRedis();
+require('./config/redis');
 
 module.exports = app;

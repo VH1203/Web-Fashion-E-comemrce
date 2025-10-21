@@ -89,7 +89,7 @@ export default function Header() {
           ) : (
             <>
               {/* Navbar */}
-              <nav className="main-nav">
+              {/* <nav className="main-nav">
                 <Link
                   to="/"
                   className={`nav-link ${
@@ -122,7 +122,7 @@ export default function Header() {
                 >
                   Combos
                 </Link>
-              </nav>
+              </nav> */}
 
               {/* Search bar */}
               <div className="header-search">

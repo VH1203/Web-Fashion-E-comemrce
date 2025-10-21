@@ -6,6 +6,7 @@ import {
   DollarSign,
   Menu,
   X,
+  ShoppingCart
 } from "lucide-react";
 
 const Sidebar = ({
@@ -19,6 +20,7 @@ const Sidebar = ({
     { id: "chart", name: "Chart", icon: Activity },
     { id: "forecast", name: "Forecast", icon: TrendingDown },
     { id: "revenue", name: "Revenue", icon: DollarSign },
+   { id: "manage_products", name: "Manage Products", icon: ShoppingCart },
   ];
 
   return (

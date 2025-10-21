@@ -28,3 +28,19 @@ exports.getByCategory = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.getAllProducts = async (req, res) => {
+   try {
+    const products = await productService.getAllproductsofShop();
+    return res.status(200).json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+   console.error("Lỗi khi lấy sản phẩm:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ khi lấy danh sách sản phẩm",
+    });
+  }
+};

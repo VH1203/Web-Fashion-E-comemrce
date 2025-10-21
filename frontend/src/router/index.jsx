@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Register from "../pages/auth/Register";
 import Login from "../pages/auth/Login";
@@ -20,7 +20,6 @@ import { useAuth } from "../context/AuthContext";
 export default function AppRouter() {
   const { user } = useAuth();
 
-  // Nếu người dùng đã đăng nhập và KHÔNG phải customer -> điều hướng sang dashboard role tương ứng
   const redirectByRole = () => {
     if (!user) return null;
     switch (user.role) {
@@ -38,48 +37,30 @@ export default function AppRouter() {
   };
 
   return (
-      <Routes>
-        {/* HOME PAGE — chỉ cho customer */}
-        <Route
-          path="/"
-          element={
-            user && user.role !== "customer" ? redirectByRole() : <HomePage />
-          }
-        />
-
     <Routes>
-      {/* Customer */}
-      <Route path="/home" element={<HomePage />} />
-       <Route path="/dashboard" element={<Dashboard />} />  
+      {/* HOME PAGE */}
+      <Route
+        path="/"
+        element={
+          user && user.role !== "customer" ? redirectByRole() : <HomePage />
+        }
+      />
 
-        {/* SHOP OWNER */}
-        <Route
-          path="/shop/*"
-          element={
-            <ProtectedRoute allowedRoles={["shop_owner"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-       {/* <Route
-        path="/shop/dashboard"
+      {/* CUSTOMER */}
+      <Route path="/home" element={<HomePage />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+
+      {/* SHOP OWNER */}
+      {/* <Route
+        path="/shop/*"
         element={
           <ProtectedRoute allowedRoles={["shop_owner"]}>
             <Dashboard />
           </ProtectedRoute>
         }
-      />  */}
+      /> */}
 
-        {/* SYSTEM ADMIN */}
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute allowedRoles={["system_admin"]}>
-              <SystemConfig />
-            </ProtectedRoute>
-          }
-        />
-      {/* System Admin */}
+      {/* SYSTEM ADMIN */}
       <Route
         path="/admin/*"
         element={
@@ -89,16 +70,7 @@ export default function AppRouter() {
         }
       />
 
-        {/* SALES */}
-        <Route
-          path="/sales/*"
-          element={
-            <ProtectedRoute allowedRoles={["sales"]}>
-              <SalesOrders />
-            </ProtectedRoute>
-          }
-        />
-      {/* Sales */}
+      {/* SALES */}
       <Route
         path="/sales/*"
         element={
@@ -108,16 +80,7 @@ export default function AppRouter() {
         }
       />
 
-        {/* SUPPORT */}
-        <Route
-          path="/support/*"
-          element={
-            <ProtectedRoute allowedRoles={["support"]}>
-              <Tickets />
-            </ProtectedRoute>
-          }
-        />
-      {/* Support */}
+      {/* SUPPORT */}
       <Route
         path="/support/*"
         element={
@@ -127,37 +90,33 @@ export default function AppRouter() {
         }
       />
 
-        {/* PROFILE — tất cả role có thể xem profile */}
-        <Route
-          path="/users/profile"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                "customer",
-                "shop_owner",
-                "system_admin",
-                "sales",
-                "support",
-              ]}
-            >
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
+      {/* PROFILE */}
+      <Route
+        path="/users/profile"
+        element={
+          <ProtectedRoute
+            allowedRoles={[
+              "customer",
+              "shop_owner",
+              "system_admin",
+              "sales",
+              "support",
+            ]}
+          >
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* CATALOG */}
-        <Route path="/categories/:slug" element={<CategoryProductsPage />} />
-        <Route path="/products/:type" element={<AllProductsPage />} />
+      {/* PRODUCTS & CATEGORIES */}
+      <Route path="/categories/:slug" element={<CategoryProductsPage />} />
+      <Route path="/products/:type" element={<AllProductsPage />} />
 
-        {/* AUTH */}
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+      {/* AUTH */}
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* 404 */}
-        <Route path="*" element={<h1>404 - Not Found</h1>} />
-      </Routes>
-  
       {/* 404 */}
       <Route path="*" element={<h1>404 - Not Found</h1>} />
     </Routes>

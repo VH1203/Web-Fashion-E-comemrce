@@ -13,4 +13,9 @@ export const productApi = {
     const res = await apiClient.get(`/products/category/${slug}`);
     return res.data;
   },
+
+  getAllProducts: async () => {
+    const res = await apiClient.get("/products/all-products");
+    return res.data.data;
+  },
 };

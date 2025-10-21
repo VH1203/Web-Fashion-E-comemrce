@@ -4,7 +4,7 @@ import AnalyticsPage from "./AnalyticsPage";
 import ChartPage from "./ChartPage";
 import ForecastPage from "./ForecastPage";
 import RevenuePage from "./RevenuePage";
-
+import ManageProducts from "./ManageProducts";
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeMenu, setActiveMenu] = useState("analytics");
@@ -19,6 +19,8 @@ const Dashboard = () => {
         return <ForecastPage />;
       case "revenue":
         return <RevenuePage />;
+         case "manage_products":
+           return<ManageProducts/>;
       default:
         return <AnalyticsPage />;
     }

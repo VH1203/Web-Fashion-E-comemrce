@@ -103,3 +103,16 @@ exports.getByCategory = async (categorySlug) => {
   }
 };
 
+// get all products của role Shop 
+exports.getAllproductsofShop = async() =>{
+try{
+const products = await Product.find().sort({ createdAt: -1 }).lean();
+console.log(` Found ${products.length} products of Shop`);
+return products;
+
+}catch(err){
+   console.error("🔥 Lỗi Mongo khi find Product:", error);
+  console.error(" getAllproductsofShop error:", err);
+  return [];
+};      
+};

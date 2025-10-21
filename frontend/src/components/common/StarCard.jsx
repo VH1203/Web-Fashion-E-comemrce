@@ -35,7 +35,7 @@ const SingleCard = ({ title, value, icon: Icon, bgColor, iconColor }) => {
   );
 };
 
-// ✅ Component hiển thị toàn bộ grid Stat Cards
+//  Component hiển thị toàn bộ grid Stat Cards
 const StatCardsGrid = ({ stats }) => {
   if (!stats) return null;
 

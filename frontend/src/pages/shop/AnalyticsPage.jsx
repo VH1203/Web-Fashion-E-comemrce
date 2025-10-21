@@ -83,7 +83,7 @@ const AnalyticsPage = () => {
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <div className="mb-4">
-                <h2 className="h5 fw-bold text-dark mb-1">Doanh thu theo tháng</h2>
+                <h2 className="h5 fw-bold text-dark mb-1">Biểu đồ doanh thu theo tháng</h2>
                 <p className="text-muted small">Tổng quan doanh thu 12 tháng gần nhất</p>
               </div>
               <div style={{ width: "100%", height: 300 }}>
@@ -120,7 +120,7 @@ const AnalyticsPage = () => {
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <div className="mb-4">
-                <h2 className="h5 fw-bold text-dark">Doanh thu theo danh mục</h2>
+                <h2 className="h5 fw-bold text-dark"> Biểu đồ doanh thu theo danh mục</h2>
               </div>
               <div style={{ width: "100%", height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">

@@ -1,3 +1,4 @@
+// frontend/src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
@@ -18,12 +19,13 @@ const GOOGLE_CLIENT_ID =
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <BrowserRouter> 
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </BrowserRouter>
-    </GoogleOAuthProvider>
-  </React.StrictMode>
+  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <BrowserRouter>
+      <AuthProvider>
+        <App /> {/* App chứa Header, AppRouter, Footer */}
+      </AuthProvider>
+    </BrowserRouter>
+  </GoogleOAuthProvider>
+</React.StrictMode>
+
 );

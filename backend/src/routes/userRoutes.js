@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
+const upload = multer();
 const { authMiddleware } = require("../middlewares/authMiddleware");
-const upload = require("../middlewares/uploadMiddleware");
 const userCtrl = require("../controllers/userController");
-
 
 router.get("/profile", authMiddleware, userCtrl.getProfile);
 router.put("/profile", authMiddleware, userCtrl.updateProfile);

@@ -1,16 +1,7 @@
 import apiClient from "./apiClient";
 
 export const productApi = {
-  getByTag: async (tag) => {
-    const res = await apiClient.get(`/products/tag/${tag}`);
-    return res.data;
-  },
-  getNew: async () => {
-    const res = await apiClient.get("/products/new");
-    return res.data;
-  },
-  getByCategory: async (slug) => {
-    const res = await apiClient.get(`/products/category/${slug}`);
-    return res.data;
-  },
+  getByTag: (tag) => apiClient.get(`/products/tag/${tag}`),
+  getNew: () => apiClient.get("/products/new"),
+  getByCategory: (slug) => apiClient.get(`/products/category/${slug}`),
 };

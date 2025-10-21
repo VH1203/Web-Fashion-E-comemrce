@@ -1,41 +1,30 @@
 import apiClient from "./apiClient";
 
 function getAuthHeader() {
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem("dfs_access_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export const userApi = {
-  getProfile: async () => {
-    const res = await apiClient.get("/users/profile", {
-      headers: getAuthHeader(),
-    });
-    return res.data;
+  async getProfile() {
+    return await apiClient.get("/users/profile", { headers: getAuthHeader() });
   },
 
-  updateProfile: async (data) => {
-    const res = await apiClient.put("/users/profile", data, {
-      headers: getAuthHeader(),
-    });
-    return res.data;
+  async updateProfile(data) {
+    return await apiClient.put("/users/profile", data, { headers: getAuthHeader() });
   },
 
-  uploadAvatar: async (file) => {
-    const form = new FormData();
-    form.append("file", file);
-    const res = await apiClient.post("/users/profile/avatar", form, {
-      headers: {
-        ...getAuthHeader(),
-        "Content-Type": "multipart/form-data",
-      },
+  async uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return await apiClient.post("/users/profile/avatar", formData, {
+      headers: { ...getAuthHeader(), "Content-Type": "multipart/form-data" },
     });
-    return res.data;
   },
 
-  changePassword: async (payload) => {
-    const res = await apiClient.post("/users/change-password", payload, {
+  async changePassword(payload) {
+    return await apiClient.post("/users/change-password", payload, {
       headers: getAuthHeader(),
     });
-    return res.data;
   },
 };

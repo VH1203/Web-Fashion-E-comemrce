@@ -49,9 +49,6 @@ voucherSchema.pre("save", function (next) {
   next();
 });
 
-// Index tối ưu
-voucherSchema.index({ code: 1 });
-voucherSchema.index({ valid_from: 1, valid_to: 1 });
-voucherSchema.index({ is_active: 1 });
+
 
 module.exports = mongoose.model("Voucher", voucherSchema);

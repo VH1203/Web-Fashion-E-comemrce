@@ -17,37 +17,48 @@ export default function HomePage() {
 
   // ===== Fetch Data =====
 
-  useEffect(() => {
-    Promise.all([
-      bannerApi.getAll(),
-      categoryApi.getAll(),
-      brandApi.getAll(),
-      productApi.getByTag("flash-sale"),
-      productApi.getNew(),
-      productApi.getByCategory("men"),
-      productApi.getByCategory("women"),
-    ])
-      .then(
-        ([
-          bannersRes,
-          categoriesRes,
-          brandsRes,
-          flashSaleRes,
-          newRes,
-          menRes,
-          womenRes,
-        ]) => {
-          setBanners(bannersRes);
-          setCategories(categoriesRes);
-          setBrands(brandsRes);
-          setFlashSale(flashSaleRes);
-          setNewProducts(newRes);
-          setMenProducts(menRes);
-          setWomenProducts(womenRes);
-        }
-      )
-      .catch(console.error);
-  }, []);
+useEffect(() => {
+  Promise.all([
+    bannerApi.getAll(),
+    categoryApi.getAll(),
+    brandApi.getAll(),
+    productApi.getByTag("flash-sale"),
+    productApi.getNew(),
+    productApi.getByCategory("men"),
+    productApi.getByCategory("men").then((res) => console.log("✅ menRes:", res)),
+  ])
+    .then(
+      ([
+        bannersRes,
+        categoriesRes,
+        brandsRes,
+        flashSaleRes,
+        newRes,
+        menRes,
+        womenRes,
+      ]) => {
+        const safe = (res) => (Array.isArray(res) ? res : res?.data || []);
+        setBanners(safe(bannersRes));
+        setCategories(safe(categoriesRes));
+        setBrands(safe(brandsRes));
+        setFlashSale(safe(flashSaleRes));
+        setNewProducts(safe(newRes));
+        setMenProducts(safe(menRes));
+        setWomenProducts(safe(womenRes));
+
+        console.log("✅ Dữ liệu homepage:", {
+          banners: safe(bannersRes),
+          categories: safe(categoriesRes),
+          brands: safe(brandsRes),
+          flashSale: safe(flashSaleRes),
+          menProducts: safe(menRes),
+          womenProducts: safe(womenRes),
+        });
+      }
+    )
+    .catch((err) => console.error("⚠️ Lỗi load dữ liệu HomePage:", err));
+}, []);
+
 
   return (
     <Container fluid className="homepage-container">

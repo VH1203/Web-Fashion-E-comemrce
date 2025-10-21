@@ -34,24 +34,28 @@ export default function Profile() {
   const [addresses, setAddresses] = useState([]);
   const [provinces, setProvinces] = useState([]);
   const [wards, setWards] = useState([]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const prov = await locationApi.getProvinces();
+        setProvinces(prov);
 
- useEffect(() => {
-  (async () => {
-    try {
-      const prov = await locationApi.getProvinces();
-      setProvinces(prov);
-    } catch (err) {
-      console.error("⚠️ Không thể tải danh sách tỉnh:", err);
-    }
+        const res = await userApi.getProfile();
+        if (!res) throw new Error("Không thể tải hồ sơ người dùng");
 
-    const res = await userApi.getProfile();
-    setUser(res);
-    setProfileForm(res);
-    setBanks(res.banks || []);
-    setAddresses(res.addresses || []);
-  })();
-}, []);
-
+        setUser(res);
+        setProfileForm(res);
+        setBanks(res.banks || []);
+        setAddresses(res.addresses || []);
+      } catch (err) {
+        if (err?.status === 401) {
+          console.warn("Token hết hạn, đang chờ refresh...");
+        } else {
+          console.error("Lỗi khác:", err);
+        }
+      }
+    })();
+  }, []);
 
   // ---------------- PROFILE ----------------
   const handleProfileSave = async (e) => {
@@ -110,14 +114,12 @@ export default function Profile() {
     }
   };
 
-const handleProvinceChange = async (e) => {
-  const provinceName = e.target.value;
-  setAddressForm({ ...addressForm, city: provinceName, ward: "" });
-  const w = await locationApi.getWards(provinceName);
-  setWards(w);
-};
-
-
+  const handleProvinceChange = async (e) => {
+    const provinceName = e.target.value;
+    setAddressForm({ ...addressForm, city: provinceName, ward: "" });
+    const w = await locationApi.getWards(provinceName);
+    setWards(w);
+  };
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
@@ -146,15 +148,14 @@ const handleProvinceChange = async (e) => {
   // ---------------- PASSWORD ----------------
   const handleRequestOTP = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const user = JSON.parse(localStorage.getItem("dfs_user"));
       if (!user) throw new Error("Chưa đăng nhập");
 
       if (user.provider === "google" || !user.password_hash) {
-  await authApi.setPasswordRequest(user.email);
-} else {
-  await authApi.forgotRequest({ identifier: user.email });
-}
-
+        await authApi.setPasswordRequest(user.email);
+      } else {
+        await authApi.forgotRequest({ identifier: user.email });
+      }
 
       setOtpSent(true);
       setToast({ type: "success", message: "Đã gửi OTP xác thực!" });
@@ -359,74 +360,79 @@ const handleProvinceChange = async (e) => {
         )}
 
         {/* Địa chỉ */}
-       {/* Địa chỉ */}
-{activeTab === "address" && (
-  <div className="tab-content">
-    <h3>Địa chỉ nhận hàng</h3>
-    <form onSubmit={handleAddAddress}>
-      <input
-        placeholder="Họ tên"
-        value={addressForm.name || ""}
-        onChange={(e) =>
-          setAddressForm({ ...addressForm, name: e.target.value })
-        }
-      />
-      <input
-        placeholder="Số điện thoại"
-        value={addressForm.phone || ""}
-        onChange={(e) =>
-          setAddressForm({ ...addressForm, phone: e.target.value })
-        }
-      />
+        {/* Địa chỉ */}
+        {activeTab === "address" && (
+          <div className="tab-content">
+            <h3>Địa chỉ nhận hàng</h3>
+            <form onSubmit={handleAddAddress}>
+              <input
+                placeholder="Họ tên"
+                value={addressForm.name || ""}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, name: e.target.value })
+                }
+              />
+              <input
+                placeholder="Số điện thoại"
+                value={addressForm.phone || ""}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, phone: e.target.value })
+                }
+              />
 
-      {/* Tỉnh/Thành */}
-      <select value={addressForm.city || ""} onChange={handleProvinceChange}>
-        <option value="">Chọn tỉnh</option>
-        {provinces.map((p) => (
-          <option key={p.id} value={p.name}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+              {/* Tỉnh/Thành */}
+              <select
+                value={addressForm.city || ""}
+                onChange={handleProvinceChange}
+              >
+                <option value="">Chọn tỉnh</option>
+                {provinces.map((p) => (
+                  <option key={p.id} value={p.name}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
 
-      {/* Xã/Phường */}
-      <select
-  value={addressForm.ward || ""}
-  onChange={(e) => setAddressForm({ ...addressForm, ward: e.target.value })}
-  disabled={wards.length === 0}
->
-  <option value="">
-    {wards.length === 0 ? "Chọn tỉnh trước" : "Chọn xã/phường"}
-  </option>
-  {wards.map((w) => (
-    <option key={w.id} value={w.name}>
-      {w.name}
-    </option>
-  ))}
-</select>
+              {/* Xã/Phường */}
+              <select
+                value={addressForm.ward || ""}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, ward: e.target.value })
+                }
+                disabled={wards.length === 0}
+              >
+                <option value="">
+                  {wards.length === 0 ? "Chọn tỉnh trước" : "Chọn xã/phường"}
+                </option>
+                {wards.map((w) => (
+                  <option key={w.id} value={w.name}>
+                    {w.name}
+                  </option>
+                ))}
+              </select>
 
+              <input
+                placeholder="Địa chỉ chi tiết"
+                value={addressForm.street || ""}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, street: e.target.value })
+                }
+              />
+              <button type="submit">Lưu địa chỉ</button>
+            </form>
 
-      <input
-        placeholder="Địa chỉ chi tiết"
-        value={addressForm.street || ""}
-        onChange={(e) =>
-          setAddressForm({ ...addressForm, street: e.target.value })
-        }
-      />
-      <button type="submit">Lưu địa chỉ</button>
-    </form>
-
-    <ul>
-      {addresses.map((a) => (
-        <li key={a._id}>
-          {a.name} - {a.phone} - {a.street}
-          <button onClick={() => handleDeleteAddress(a._id)}>Xóa</button>
-        </li>
-      ))}
-    </ul>
-  </div>
-)}
-
+            <ul>
+              {addresses.map((a) => (
+                <li key={a._id}>
+                  {a.name} - {a.phone} - {a.street}
+                  <button onClick={() => handleDeleteAddress(a._id)}>
+                    Xóa
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Bảo mật */}
         {activeTab === "password" && (

@@ -15,6 +15,5 @@ const AuditLogSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false, collection: "audit_logs" }
 );
 
-AuditLogSchema.index({ actor_id: 1, createdAt: -1 });
 
 module.exports = mongoose.model("AuditLog", AuditLogSchema);

@@ -9,7 +9,7 @@ const CategorySchema = new mongoose.Schema(
     description: String,
     parent_id: { type: String, ref: "Category", default: null },
     level: { type: Number, default: 0 },
-    path: { type: String },
+    path: { type: [String], default: [] },
     ancestors: [{ type: String, ref: "Category" }],
     children_count: { type: Number, default: 0 },
     image_url: String,
@@ -26,7 +26,5 @@ CategorySchema.virtual("children", {
   foreignField: "parent_id",
 });
 
-CategorySchema.index({ name: "text", slug: "text", description: "text" });
-CategorySchema.index({ parent_id: 1 });
 
 module.exports = mongoose.model("Category", CategorySchema);

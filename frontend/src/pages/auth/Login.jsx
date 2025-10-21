@@ -46,9 +46,10 @@ export default function Login() {
   setError("");
   try {
     const res = await authApi.login(form);
-    localStorage.setItem("access_token", res.access_token);
-    localStorage.setItem("user", JSON.stringify(res.user));
-    localStorage.setItem("refresh_token", res.refresh_token);
+    localStorage.setItem("dfs_access_token", res.access_token);
+localStorage.setItem("dfs_refresh_token", res.refresh_token);
+localStorage.setItem("dfs_user", JSON.stringify(res.user));
+
     localStorage.setItem("remember", form.remember ? "1" : "0");
 
     const roleName =
@@ -66,14 +67,22 @@ export default function Login() {
   }
 };
 
+
 const handleGoogleSuccess = async (credentialResponse) => {
   try {
     const token = credentialResponse.credential;
     const res = await authApi.googleLogin({ token });
-    localStorage.setItem("access_token", res.access_token);
-    localStorage.setItem("refresh_token", res.refresh_token);
-    localStorage.setItem("user", JSON.stringify(res.user));
+    console.log("✅ Google login response:", res);
 
+    // ⚠️ Dùng key đồng bộ với AuthContext
+    localStorage.setItem("dfs_access_token", res.access_token);
+    localStorage.setItem("dfs_refresh_token", res.refresh_token);
+    localStorage.setItem("dfs_user", JSON.stringify(res.user));
+
+    // ⏳ Đợi localStorage sync (tránh redirect quá nhanh)
+    await new Promise((r) => setTimeout(r, 100));
+
+    // Redirect theo role
     const roleName =
       res.user.role?.name ||
       res.user.role ||
@@ -83,9 +92,12 @@ const handleGoogleSuccess = async (credentialResponse) => {
     const redirect = roleRoutes[roleName] || "/";
     navigate(redirect);
   } catch (err) {
+    console.error("❌ Google login failed:", err);
     setError("Đăng nhập Google thất bại: " + err.message);
   }
 };
+
+
 
 
   const handleGoogleError = () => {

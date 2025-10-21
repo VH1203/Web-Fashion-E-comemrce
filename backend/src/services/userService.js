@@ -1,13 +1,12 @@
+// backend/src/services/userService.js
 import apiClient from "./apiClient";
 
-// Hàm tiện ích lấy token từ localStorage
 function getAuthHeader() {
   const token = localStorage.getItem("access_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export const userApi = {
-  // 🔹 Lấy thông tin hồ sơ người dùng
   async getProfile() {
     const res = await apiClient.get("/users/profile", {
       headers: getAuthHeader(),

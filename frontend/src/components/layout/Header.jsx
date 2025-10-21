@@ -14,7 +14,7 @@ export default function Header() {
   const authPaths = ["/login", "/register", "/forgot-password"];
   const isAuthPage = authPaths.includes(location.pathname);
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const user = JSON.parse(localStorage.getItem("dfs_user") || "null");
   const [lang, setLang] = useState(localStorage.getItem("lang") || "en");
 
   useEffect(() => {

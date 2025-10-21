@@ -1,10 +1,10 @@
-import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 import Register from "../pages/auth/Register";
 import Login from "../pages/auth/Login";
 import ForgotPassword from "../pages/auth/ForgotPassword";
-
 import HomePage from "../pages/customer/HomePage";
 import Dashboard from "../pages/shop/Dashboard";
 import SystemConfig from "../pages/admin/SystemConfig";
@@ -13,110 +13,103 @@ import Tickets from "../pages/support/Tickets";
 import Profile from "../pages/customer/Profile";
 import AllProductsPage from "../pages/customer/AllProductsPages";
 import CategoryProductsPage from "../pages/customer/CategoryProductsPage";
-
 import ProtectedRoute from "./ProtectedRoute";
-import { useAuth } from "../context/AuthContext";
 
 export default function AppRouter() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate(); // ✅ luôn khai báo hook trước return
 
-  // Nếu người dùng đã đăng nhập và KHÔNG phải customer -> điều hướng sang dashboard role tương ứng
-  const redirectByRole = () => {
-    if (!user) return null;
-    switch (user.role) {
-      case "shop_owner":
-        return <Navigate to="/shop/dashboard" replace />;
-      case "system_admin":
-        return <Navigate to="/admin/system-config" replace />;
-      case "sales":
-        return <Navigate to="/sales/orders" replace />;
-      case "support":
-        return <Navigate to="/support/tickets" replace />;
-      default:
-        return null;
-    }
-  };
+  // ✅ Hook luôn tồn tại, chỉ thực thi khi user sẵn sàng
+  useEffect(() => {
+    if (!user || loading) return;
+
+    const id = user.role_id || "";
+    if (id.includes("role-e72d444c")) navigate("/shop/dashboard", { replace: true }); // shop_owner
+    else if (id.includes("role-9958c801")) navigate("/admin/system-config", { replace: true }); // system_admin
+    else if (id.includes("role-0b00ec21")) navigate("/sales/orders", { replace: true }); // sales
+    else if (id.includes("role-9c49ce93")) navigate("/support/tickets", { replace: true }); // support
+    // customer => ở lại HomePage
+  }, [user, loading, navigate]);
+
+  // ✅ return JSX sau, không return sớm
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "80px" }}>
+        ⏳ Đang tải dữ liệu...
+      </div>
+    );
+  }
 
   return (
-      <Routes>
-        {/* HOME PAGE — chỉ cho customer */}
-        <Route
-          path="/"
-          element={
-            user && user.role !== "customer" ? redirectByRole() : <HomePage />
-          }
-        />
+    <Routes>
+      <Route path="/" element={<HomePage />} />
 
-        {/* SHOP OWNER */}
-        <Route
-          path="/shop/*"
-          element={
-            <ProtectedRoute allowedRoles={["shop_owner"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/shop/*"
+        element={
+          <ProtectedRoute allowedRoles={["shop_owner"]}>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* SYSTEM ADMIN */}
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute allowedRoles={["system_admin"]}>
-              <SystemConfig />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute allowedRoles={["system_admin"]}>
+            <SystemConfig />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* SALES */}
-        <Route
-          path="/sales/*"
-          element={
-            <ProtectedRoute allowedRoles={["sales"]}>
-              <SalesOrders />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/sales/*"
+        element={
+          <ProtectedRoute allowedRoles={["sales"]}>
+            <SalesOrders />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* SUPPORT */}
-        <Route
-          path="/support/*"
-          element={
-            <ProtectedRoute allowedRoles={["support"]}>
-              <Tickets />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/support/*"
+        element={
+          <ProtectedRoute allowedRoles={["support"]}>
+            <Tickets />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* PROFILE — tất cả role có thể xem profile */}
-        <Route
-          path="/users/profile"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                "customer",
-                "shop_owner",
-                "system_admin",
-                "sales",
-                "support",
-              ]}
-            >
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/users/profile"
+        element={
+          <ProtectedRoute
+            allowedRoles={[
+              "customer",
+              "shop_owner",
+              "system_admin",
+              "sales",
+              "support",
+            ]}
+          >
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
 
-        {/* CATALOG */}
-        <Route path="/categories/:slug" element={<CategoryProductsPage />} />
-        <Route path="/products/:type" element={<AllProductsPage />} />
+      <Route path="/categories/:slug" element={<CategoryProductsPage />} />
+      <Route path="/products/:type" element={<AllProductsPage />} />
 
-        {/* AUTH */}
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* 404 */}
-        <Route path="*" element={<h1>404 - Not Found</h1>} />
-      </Routes>
-  
+      <Route
+        path="*"
+        element={
+          <h2 className="text-center mt-5">404 - Trang không tồn tại</h2>
+        }
+      />
+    </Routes>
   );
 }

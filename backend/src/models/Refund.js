@@ -19,6 +19,5 @@ const RefundSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false, collection: "refunds" }
 );
 
-RefundSchema.index({ order_id: 1 });
 
 module.exports = mongoose.model("Refund", RefundSchema);

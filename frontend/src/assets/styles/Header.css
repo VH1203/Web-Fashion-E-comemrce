@@ -1,11 +1,13 @@
 .header {
-  border-bottom: 1px solid #eee;
-  padding: 20px 90px;
-  background: #fff;
   position: sticky;
   top: 0;
-  z-index: 1000;
-background: linear-gradient(90deg, #a5d8ff, #74c0fc);
+  left: 0;
+  width: 100%;
+  background: linear-gradient(90deg, #a5d8ff, #74c0fc);
+  z-index: 100;
+  border-bottom: 1px solid #eee;
+  padding: 10px 30px;  /* giảm padding để không chiếm full viewport */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .header-auth-page {

@@ -1,122 +1,67 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-import Register from "../pages/auth/Register";
+// ===== Auth Pages =====
 import Login from "../pages/auth/Login";
+import Register from "../pages/auth/Register";
 import ForgotPassword from "../pages/auth/ForgotPassword";
+import ChangePassword from "../pages/auth/ChangePassword";
 
+// ===== Role Pages =====
 import HomePage from "../pages/customer/HomePage";
 import Dashboard from "../pages/shop/Dashboard";
 import SystemConfig from "../pages/admin/SystemConfig";
 import SalesOrders from "../pages/sales/SalesOrders";
 import Tickets from "../pages/support/Tickets";
-import Profile from "../pages/customer/Profile";
-import AllProductsPage from "../pages/customer/AllProductsPages";
-import CategoryProductsPage from "../pages/customer/CategoryProductsPage";
 
-import ProtectedRoute from "./ProtectedRoute";
-import { useAuth } from "../context/AuthContext";
+// ===== Error Page =====
+import NotFound from "../pages/errors/NotFound";
+import ProductDetail from "../pages/customer/ProductDetail";
+
+// ==========================================
+// 🧩 Route Guards
+// ==========================================
+function ProtectedRoute({ children }) {
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/login" replace />;
+}
+
+function RoleRoute({ children, roles }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!roles.includes(user.role_id) && !roles.includes(user.role))
+    return <Navigate to="/" replace />;
+  return children;
+}
 
 export default function AppRouter() {
-  const { user } = useAuth();
-
-  // Nếu người dùng đã đăng nhập và KHÔNG phải customer -> điều hướng sang dashboard role tương ứng
-  const redirectByRole = () => {
-    if (!user) return null;
-    switch (user.role) {
-      case "shop_owner":
-        return <Navigate to="/shop/dashboard" replace />;
-      case "system_admin":
-        return <Navigate to="/admin/system-config" replace />;
-      case "sales":
-        return <Navigate to="/sales/orders" replace />;
-      case "support":
-        return <Navigate to="/support/tickets" replace />;
-      default:
-        return null;
-    }
-  };
-
   return (
-      <Routes>
-        {/* HOME PAGE — chỉ cho customer */}
-        <Route
-          path="/"
-          element={
-            user && user.role !== "customer" ? redirectByRole() : <HomePage />
-          }
-        />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
 
-        {/* SHOP OWNER */}
-        <Route
-          path="/shop/*"
-          element={
-            <ProtectedRoute allowedRoles={["shop_owner"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+      {/* Customer */}
+      <Route path="/" element={<HomePage />} />
+      <Route path="/product/:idOrSlug" element={<ProductDetail />} />
 
-        {/* SYSTEM ADMIN */}
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute allowedRoles={["system_admin"]}>
-              <SystemConfig />
-            </ProtectedRoute>
-          }
-        />
+      {/* Shop */}
+      <Route path="/shop/dashboard" element={<RoleRoute roles={["shop_owner", "role-shop-owner"]}><Dashboard /></RoleRoute>} />
 
-        {/* SALES */}
-        <Route
-          path="/sales/*"
-          element={
-            <ProtectedRoute allowedRoles={["sales"]}>
-              <SalesOrders />
-            </ProtectedRoute>
-          }
-        />
+      {/* Sales */}
+      <Route path="/sales/orders" element={<RoleRoute roles={["sales", "role-sales"]}><SalesOrders /></RoleRoute>} />
 
-        {/* SUPPORT */}
-        <Route
-          path="/support/*"
-          element={
-            <ProtectedRoute allowedRoles={["support"]}>
-              <Tickets />
-            </ProtectedRoute>
-          }
-        />
+      {/* Support */}
+      <Route path="/support/tickets" element={<RoleRoute roles={["support", "role-support"]}><Tickets /></RoleRoute>} />
 
-        {/* PROFILE — tất cả role có thể xem profile */}
-        <Route
-          path="/users/profile"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                "customer",
-                "shop_owner",
-                "system_admin",
-                "sales",
-                "support",
-              ]}
-            >
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
+      {/* Admin */}
+      <Route path="/admin/system-config" element={<RoleRoute roles={["system_admin", "role-system-admin"]}><SystemConfig /></RoleRoute>} />
 
-        {/* CATALOG */}
-        <Route path="/categories/:slug" element={<CategoryProductsPage />} />
-        <Route path="/products/:type" element={<AllProductsPage />} />
-
-        {/* AUTH */}
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-
-        {/* 404 */}
-        <Route path="*" element={<h1>404 - Not Found</h1>} />
-      </Routes>
-  
+      {/* Not Found */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }

@@ -9,7 +9,7 @@ const BannerSchema = new mongoose.Schema(
     link: { type: String, default: "#" },
     position: {
       type: String,
-      enum: ["homepage_top", "homepage_middle", "homepage_bottom", "category_page"],
+      enum: ["homepage_top", "homepage_mid", "homepage_bottom", "category_page"],
       default: "homepage_top",
     },
     is_active: { type: Boolean, default: true },
@@ -21,6 +21,5 @@ const BannerSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false, collection: "banners" }
 );
 
-BannerSchema.index({ position: 1, is_active: 1 });
 
 module.exports = mongoose.model("Banner", BannerSchema);

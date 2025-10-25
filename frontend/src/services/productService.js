@@ -1,16 +1,26 @@
 import apiClient from "./apiClient";
 
 export const productApi = {
-  getByTag: async (tag) => {
-    const res = await apiClient.get(`/products/tag/${tag}`);
-    return res.data;
+  getByTag: (tag) => apiClient.get(`/products/tag/${tag}`),
+  getNew: () => apiClient.get("/products/new"),
+  getByCategory: (slug) => apiClient.get(`/products/category/${slug}`),
+};
+
+export const productService = {
+  async getDetail(idOrSlug) {
+    const res = await apiClient.get(`/products/${idOrSlug}`);
+    return res.data.data;
   },
-  getNew: async () => {
-    const res = await apiClient.get("/products/new");
-    return res.data;
+  async getReviews(idOrSlug, page = 1, limit = 10) {
+    const res = await apiClient.get(`/products/${idOrSlug}/reviews`, { params: { page, limit } });
+    return res.data.data; // { total, items }
   },
-  getByCategory: async (slug) => {
-    const res = await apiClient.get(`/products/category/${slug}`);
-    return res.data;
+  async getRatingsSummary(idOrSlug) {
+    const res = await apiClient.get(`/products/${idOrSlug}/ratings-summary`);
+    return res.data.data; // { average, count, histogram }
+  },
+  async getRelated(idOrSlug, limit = 12) {
+    const res = await apiClient.get(`/products/${idOrSlug}/related`, { params: { limit } });
+    return res.data.data;
   },
 };

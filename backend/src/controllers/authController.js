@@ -1,55 +1,73 @@
 const authService = require("../services/authService");
+const { successResponse, errorResponse } = require("../utils/constants");
 
-// const wrap = (fn) => (req, res, next) => fn(req, res, next).catch(next);
-const wrap = (fn) => (req, res, next) =>
-  fn(req, res, next).catch((err) => {
-    console.error("❌ Error in route:", {
-      message: err.message,
-      stack: err.stack,
-      name: err.name,
-      status: err.status,
-    });
-    res
-      .status(err.status || 500)
-      .json({ message: err.message || "Internal Server Error" });
-  });
+exports.requestRegisterOTP = async (req, res) => {
+  try {
+    const { email, phone } = req.body;
+    const result = await authService.requestOTP({ email, phone, type: "register" });
+    res.json(successResponse(result, "Đã gửi OTP xác thực đăng ký"));
+  } catch (err) {
+    res.status(400).json(errorResponse(err.message));
+  }
+};
 
-exports.registerRequestOTP = wrap(async (req, res) => {
-  res.json(await authService.requestRegisterOTP(req.body));
-});
+exports.verifyRegisterOTP = async (req, res) => {
+  try {
+    const { email, otp, name, username, password } = req.body;
+    const result = await authService.verifyRegister({ email, otp, name, username, password });
+    res.json(successResponse(result, "Đăng ký thành công"));
+  } catch (err) {
+    res.status(400).json(errorResponse(err.message));
+  }
+};
 
-exports.registerVerifyOTP = wrap(async (req, res) => {
-  res.json(await authService.verifyRegisterOTP(req.body));
-});
+exports.login = async (req, res) => {
+  try {
+    const { identifier, password } = req.body;
+    const result = await authService.login(identifier, password);
+    res.json(successResponse(result, "Đăng nhập thành công"));
+  } catch (err) {
+    res.status(401).json(errorResponse(err.message));
+  }
+};
 
-exports.login = wrap(async (req, res) => {
-  res.json(await authService.login(req.body));
-});
+exports.googleLogin = async (req, res) => {
+  try {
+    const { token } = req.body; // Google ID token
+    const result = await authService.googleLogin(token);
+    res.json(successResponse(result, "Đăng nhập Google thành công"));
+  } catch (err) {
+    res.status(400).json(errorResponse(err.message));
+  }
+};
 
-exports.loginWithGoogle = wrap(async (req, res) => {
-  res.json(await authService.loginWithGoogle(req.body));
-});
+exports.requestResetOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const result = await authService.requestOTP({ email, type: "forgot" });
+    res.json(successResponse(result, "Đã gửi OTP đặt lại mật khẩu"));
+  } catch (err) {
+    res.status(400).json(errorResponse(err.message));
+  }
+};
 
-exports.forgotRequestOTP = wrap(async (req, res) => {
-  res.json(await authService.requestForgotPasswordOTP(req.body));
-});
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const result = await authService.resetPassword(email, otp, newPassword);
+    res.json(successResponse(result, "Đặt lại mật khẩu thành công"));
+  } catch (err) {
+    res.status(400).json(errorResponse(err.message));
+  }
+};
 
-exports.forgotVerify = wrap(async (req, res) => {
-  res.json(await authService.verifyForgotPassword(req.body));
-});
-
-exports.refresh = wrap(async (req, res) => {
-  res.json(await authService.refreshToken(req.body));
-});
-
-exports.logout = wrap(async (req, res) => {
-  res.json(await authService.logout(req.body));
-});
-
-exports.requestSetPasswordOTP = wrap(async (req, res) => {
-  res.json(await authService.requestSetPasswordOTP(req.body));
-});
-
-exports.verifySetPassword = wrap(async (req, res) => {
-  res.json(await authService.setPasswordForGoogleUser(req.body));
-});
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { oldPassword, newPassword } = req.body;
+    const result = await authService.changePassword(userId, oldPassword, newPassword);
+    res.json(successResponse(result, "Đổi mật khẩu thành công"));
+  } catch (err) {
+    res.status(400).json(errorResponse(err.message));
+  }
+};

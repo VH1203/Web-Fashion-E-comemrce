@@ -33,6 +33,5 @@ ProductSchema.virtual("variants", {
   foreignField: "product_id",
 });
 
-ProductSchema.index({ name: "text", tags: "text" });
 
 module.exports = mongoose.model("Product", ProductSchema);

@@ -1,21 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const authCtrl = require("../controllers/authController");
+const authController = require("../controllers/authController");
 const { limitOtpSends } = require("../middlewares/rateLimiter");
+const { verifyToken } = require("../middlewares/authMiddleware");
 
-router.post("/register/request-otp", limitOtpSends, authCtrl.registerRequestOTP);
-router.post("/register/verify", authCtrl.registerVerifyOTP);
 
-router.post("/login", authCtrl.login);
-router.post("/login/google", authCtrl.loginWithGoogle);
-
-router.post("/forgot-password/request", limitOtpSends, authCtrl.forgotRequestOTP);
-router.post("/forgot-password/verify", authCtrl.forgotVerify);
-
-router.post("/set-password/request", limitOtpSends, authCtrl.requestSetPasswordOTP);
-router.post("/set-password/verify", authCtrl.verifySetPassword);
-
-router.post("/refresh", authCtrl.refresh);
-router.post("/logout", authCtrl.logout);
+router.post("/register/request-otp", limitOtpSends, authController.requestRegisterOTP);
+router.post("/register/verify", authController.verifyRegisterOTP);
+router.post("/login", authController.login);
+router.post("/google-login", authController.googleLogin);
+router.post("/forgot-password/request-otp", limitOtpSends, authController.requestResetOTP);
+router.post("/forgot-password/verify", authController.resetPassword);
+router.post("/change-password", verifyToken, authController.changePassword);
 
 module.exports = router;

@@ -1,102 +1,58 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { authApi } from "../services/authService";
 
 const AuthContext = createContext();
 
-// Hook tiện dụng
-export const useAuth = () => useContext(AuthContext);
-
-// Provider chính
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
+  const [token, setToken] = useState(localStorage.getItem("access_token") || null);
 
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem("dfs_user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+  const login = (userData, accessToken) => {
+    setUser(userData);
+    setToken(accessToken);
+    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("access_token", accessToken);
 
-  const [token, setToken] = useState(() => localStorage.getItem("dfs_token"));
-  const [loading, setLoading] = useState(true);
+    console.log("🔐 Login called, user role:", userData.role_id);
+console.log("🔐 Navigate should redirect now...");
 
-  // Gọi API xác thực khi có token (auto-login)
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
 
-      try {
-        const data = await authApi.getProfile(); // GET /auth/me
-        setUser(data);
-        localStorage.setItem("dfs_user", JSON.stringify(data));
-      } catch (err) {
-        console.error("❌ AuthContext: Token invalid -> clearing...");
-        logout(); // Token lỗi → logout
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [token]);
-
-  // Đăng nhập
-  const login = async (credentials) => {
-    try {
-      const { user: userData, accessToken } = await authApi.login(credentials);
-      setUser(userData);
-      setToken(accessToken);
-
-      localStorage.setItem("dfs_user", JSON.stringify(userData));
-      localStorage.setItem("dfs_token", accessToken);
-
-      // Điều hướng theo role
-      switch (userData.role) {
-        case "shop_owner":
-          navigate("/shop/dashboard");
-          break;
-        case "system_admin":
-          navigate("/admin/system-config");
-          break;
-        case "sales":
-          navigate("/sales/orders");
-          break;
-        case "support":
-          navigate("/support/tickets");
-          break;
-        default:
-          navigate("/");
-      }
-    } catch (err) {
-      console.error("❌ Login failed:", err);
-      throw err;
+    switch (userData.role_id || userData.role) {
+      case "system_admin":
+      case "role-system-admin":
+        navigate("/admin/system-config");
+        break;
+      case "shop_owner":
+      case "role-shop-owner":
+        navigate("/shop/dashboard");
+        break;
+      case "sales":
+      case "role-sales":
+        navigate("/sales/orders");
+        break;
+      case "support":
+      case "role-support":
+        navigate("/support/tickets");
+        break;
+      default:
+        navigate("/");
     }
   };
 
-  // Đăng xuất
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem("dfs_user");
-    localStorage.removeItem("dfs_token");
-    navigate("/login");
-  };
-
-  const value = {
-    user,
-    token,
-    loading,
-    login,
-    logout,
-    setUser,
-    setToken,
+    localStorage.removeItem("user");
+    localStorage.removeItem("access_token");
+    navigate("/login",{ replace: true });
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, token, login, logout }}>
+      {children}
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);

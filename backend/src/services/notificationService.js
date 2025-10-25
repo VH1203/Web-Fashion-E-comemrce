@@ -1,24 +1,36 @@
-const nodemailer = require('nodemailer');
+// ================================
+// 📧 DFS - Notification Service
+// ================================
+const nodemailer = require("nodemailer");
 
+// Hàm gửi email OTP / thông báo hệ thống
+exports.sendEmail = async (to, subject, text) => {
+  try {
+    if (!to) throw new Error("Thiếu địa chỉ email người nhận");
 
-const transporter = nodemailer.createTransport({
-host: process.env.SMTP_HOST,
-port: Number(process.env.SMTP_PORT || 587),
-secure: false,
-auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-});
+    // ⚙️ Cấu hình transporter từ .env
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
+    const mailOptions = {
+      from: `"Daily Fit System" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      text,
+    };
 
-async function sendOtpEmail(to, otp, purpose) {
-const info = await transporter.sendMail({
-from: `DFS Auth <${process.env.SMTP_USER}>`,
-to,
-subject: `[DFS] OTP ${purpose} của bạn`,
-text: `Mã OTP của bạn là: ${otp}. Mã có hiệu lực trong 10 phút.`,
-html: `<p>Mã OTP của bạn là: <b>${otp}</b>. Mã có hiệu lực trong 10 phút.</p>`
-});
-return info.messageId;
-}
-
-
-module.exports = { sendOtpEmail };
+    await transporter.sendMail(mailOptions);
+    console.log(`📩 Đã gửi email tới ${to} với tiêu đề: ${subject}`);
+    return true;
+  } catch (err) {
+    console.error("❌ Lỗi khi gửi email:", err.message);
+    throw new Error("Không thể gửi email");
+  }
+};

@@ -20,6 +20,5 @@ const ProductVariantSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false, collection: "product_variants" }
 );
 
-ProductVariantSchema.index({ product_id: 1 });
 
 module.exports = mongoose.model("ProductVariant", ProductVariantSchema);

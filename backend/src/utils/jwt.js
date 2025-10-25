@@ -1,24 +1,17 @@
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1h";
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || "7d";
+exports.generateAccessToken = (user) => {
+  return jwt.sign(
+    { _id: user._id, role: user.role_id },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
+  );
+};
 
-function signAccessToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-}
-
-function signRefreshToken(payload) {
-  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
-}
-
-function verifyAccessToken(token) {
-  return jwt.verify(token, JWT_SECRET);
-}
-
-function verifyRefreshToken(token) {
-  return jwt.verify(token, JWT_REFRESH_SECRET);
-}
-
-module.exports = { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken };
+exports.generateRefreshToken = (user) => {
+  return jwt.sign(
+    { _id: user._id },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" }
+  );
+};

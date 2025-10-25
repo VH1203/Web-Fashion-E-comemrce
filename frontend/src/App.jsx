@@ -1,15 +1,25 @@
-// frontend/src/App.jsx
 import React from "react";
-import Header from "./components/layout/Header";
-import Footer from "./components/layout/Footer";
 import AppRouter from "./router";
+import Header from "./components/layout/Header";
+import { useAuth } from "./context/AuthContext";
 
 export default function App() {
+  const { user, logout } = useAuth();
+
+  const handleSearch = (q) => {
+    console.log("search:", q);
+  };
+
   return (
-    <>
-      <Header />
+    <div className="app-container">
+      <Header
+        user={user}
+        cartCount={3}
+        notifyCount={5}
+        onLogout={logout}
+        onSearch={handleSearch}
+      />
       <AppRouter />
-      <Footer />
-    </>
+    </div>
   );
 }

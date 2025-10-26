@@ -1,222 +1,204 @@
 import React, { useState } from "react";
-import {
-  MDBBtn,
-  MDBContainer,
-  MDBCard,
-  MDBCardBody,
-  MDBRow,
-  MDBCol,
-  MDBInput,
-} from "mdb-react-ui-kit";
-import { authApi } from "../../services/authService";
-import logo from "../../assets/icons/DFS-NonBG1.png";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+
+// MUI
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Button from "@mui/material/Button";
+import Divider from "@mui/material/Divider";
+import Alert from "@mui/material/Alert";
+import Link from "@mui/material/Link";
+
+// Icons
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import ArrowBack from "@mui/icons-material/ArrowBack";
+
+import { authService } from "../../services/authService";
+// import dfsLogo from "../../assets/dfs-logo.png";
 
 export default function ForgotPassword() {
-  const [form, setForm] = useState({
-    identifier: "",
-    otp: "",
-    newPassword: "",
-  });
-  const [step, setStep] = useState(1);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(""); // 👈 thêm state success
+  const navigate = useNavigate();
+  const [step, setStep] = useState(1); // 1: nhập email, 2: nhập OTP + mật khẩu mới
+  const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
-  const onChange = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-  };
+  const [form, setForm] = useState({ email: "", otp: "", newPassword: "" });
+  const [message, setMessage] = useState("");
+  const [severity, setSeverity] = useState("error"); // 'success' | 'error' | 'info'
 
-  const requestOTP = async () => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSend = async (e) => {
+    e?.preventDefault?.();
     try {
-      await authApi.forgotRequest({ identifier: form.identifier });
+      if (!form.email) return setMessage("Vui lòng nhập email!");
+      setLoading(true);
+      await authService.requestResetOTP({ email: form.email });
+      setSeverity("success");
+      setMessage("✅ Đã gửi OTP tới email!");
       setStep(2);
-    } catch (e) {
-      setError(e.message);
+    } catch (err) {
+      setSeverity("error");
+      setMessage(err?.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const verifyOTP = async () => {
-    setLoading(true);
-    setError("");
-    setSuccess("");
+  const handleReset = async (e) => {
+    e?.preventDefault?.();
     try {
-      await authApi.forgotVerify({
-        identifier: form.identifier,
-        otp: form.otp,
-        newPassword: form.newPassword,
-      });
-      setSuccess("Đổi mật khẩu thành công! Bạn có thể đăng nhập ngay.");
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 1500);
-    } catch (e) {
-      setError(e.message);
+      if (!form.otp) return setMessage("Vui lòng nhập OTP!");
+      if (!form.newPassword) return setMessage("Vui lòng nhập mật khẩu mới!");
+      setLoading(true);
+      await authService.resetPassword(form);
+      setSeverity("success");
+      setMessage("🎉 Mật khẩu đã được đặt lại! Đang chuyển về trang đăng nhập…");
+      navigate("/login", { replace: true });
+      // hoặc: setTimeout(() => navigate("/login", { replace: true }), 1200);
+    } catch (err) {
+      setSeverity("error");
+      setMessage(err?.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <MDBContainer className="my-5">
-      <MDBCard>
-        <MDBRow className="g-0">
-          <MDBCol md="6" className="d-none d-md-block">
-            <img
-              src="https://cdn.occtoo-media.com/995cf62a-7759-4681-a516-370aaabfd325/445f33e1-b55a-5121-9eed-e5a32a7ca2cc/239777-0014_03.jpg?format=large&outputFormat=webp"
-              alt="forgot password"
-              className="rounded-start w-100"
-            />
-          </MDBCol>
+    <Box
+      sx={{
+        minHeight: "100dvh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 3,
+        background:
+          "radial-gradient(1000px 500px at 10% -10%, rgba(99,102,241,.08), transparent), radial-gradient(800px 400px at 100% 0, rgba(16,185,129,.08), transparent)",
+      }}
+    >
+      <Card elevation={8} sx={{ width: "100%", maxWidth: 480, borderRadius: 3 }}>
+        <CardContent sx={{ p: { xs: 4, sm: 6 } }}>
+          {/* Header */}
+          <Typography variant="h4" color="primary" sx={{ mb: 0.5 }}>
+            Quên mật khẩu
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Nhập email để nhận mã OTP, sau đó đặt mật khẩu mới.
+          </Typography>
 
-          <MDBCol md="6">
-            <MDBCardBody className="d-flex flex-column">
-              <div className="d-flex flex-row mt-2 align-items-center">
-                <img
-                  src={logo}
-                  alt="Logo"
-                  style={{
-                    width: "50px",
-                    height: "50px",
-                    objectFit: "contain",
-                    marginRight: "12px",
-                    borderRadius: "50px",
-                  }}
-                />
-                <span className="h1 fw-bold mb-0">Daily Fit</span>
-              </div>
+          {message ? (
+            <Alert severity={severity} sx={{ mb: 2 }}>
+              {message}
+            </Alert>
+          ) : null}
 
-              <h5 className="fw-normal my-4 pb-3">Quên mật khẩu</h5>
-
-              {/* Hiển thị thông báo lỗi */}
-              {error && (
-                <div
-                  className="flex w-full max-w-sm overflow-hidden bg-white rounded-lg shadow mb-3"
-                  style={{ border: "1px solid #f87171" }}
-                >
-                  <div className="flex items-center justify-center w-12 bg-red-500">
-                    <i className="fa fa-times text-white"></i>
-                  </div>
-                  <div className="px-4 py-2 -mx-3">
-                    <div className="mx-3">
-                      <span className="font-semibold text-red-500">Error</span>
-                      <p className="text-sm text-gray-600">{error}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {success && (
-                <div
-                  className="flex items-center p-3 mb-4 text-green-700 bg-green-100 rounded-lg shadow"
-                  role="alert"
-                >
-                  <i className="fa fa-check-circle mr-2 text-green-600 text-xl"></i>
-                  <div>
-                    <span className="font-semibold">Thành công!</span> {success}
-                  </div>
-                </div>
-              )}
-
-              {step === 1 && (
-                <>
-                  <MDBInput
-                    wrapperClass="mb-4"
-                    label="Email / SĐT / Tên đăng nhập"
-                    name="identifier"
-                    type="text"
-                    value={form.identifier}
-                    onChange={onChange}
-                  />
-                  <MDBBtn
-                    className="mb-4 px-5"
-                    color="dark"
-                    size="lg"
-                    onClick={requestOTP}
-                    disabled={loading}
-                  >
-                    {loading ? "Đang gửi OTP..." : "Gửi OTP"}
-                  </MDBBtn>
-                </>
-              )}
-
-              {step === 2 && (
-                <>
-                  <MDBInput
-                    wrapperClass="mb-4"
-                    label="Mã OTP"
-                    name="otp"
-                    type="text"
-                    value={form.otp}
-                    onChange={onChange}
-                  />
-
-                  {/* Input mật khẩu có nút xem/ẩn */}
-                  <div style={{ position: "relative" }} className="mb-4">
-                    <MDBInput
-                      label="Mật khẩu mới"
-                      name="newPassword"
-                      type={showPassword ? "text" : "password"}
-                      value={form.newPassword}
-                      onChange={onChange}
-                    />
-                    <i
-                      className={`fa ${
-                        showPassword ? "fa-eye-slash" : "fa-eye"
-                      }`}
-                      onClick={() => setShowPassword((s) => !s)}
-                      style={{
-                        position: "absolute",
-                        right: "15px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        cursor: "pointer",
-                        color: "#555",
-                        fontSize: "18px",
-                      }}
-                    ></i>
-                  </div>
-
-                  <MDBBtn
-                    className="mb-3 px-5"
-                    color="dark"
-                    size="lg"
-                    onClick={verifyOTP}
-                    disabled={loading}
-                  >
-                    {loading ? "Đang xác thực..." : "Xác nhận đổi mật khẩu"}
-                  </MDBBtn>
-
-                  <MDBBtn
-                    outline
-                    color="secondary"
-                    size="lg"
-                    onClick={requestOTP}
-                    disabled={loading}
-                  >
-                    Gửi lại OTP
-                  </MDBBtn>
-                </>
-              )}
-
-              <p
-                className="mt-4"
-                style={{ color: "#393f81", textAlign: "center" }}
+          {step === 1 ? (
+            <Box
+              component="form"
+              noValidate
+              autoComplete="off"
+              onSubmit={handleSend}
+              sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
+            >
+              <TextField
+                autoFocus
+                fullWidth
+                label="Email"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+              />
+              <Button
+                fullWidth
+                variant="contained"
+                type="submit"
+                disabled={loading}
+                sx={{ py: 1.25, borderRadius: 2 }}
               >
-                <a href="/login" style={{ color: "#393f81" }}>
-                  Quay lại Đăng nhập
-                </a>
-              </p>
-            </MDBCardBody>
-          </MDBCol>
-        </MDBRow>
-      </MDBCard>
-    </MDBContainer>
+                {loading ? "Đang gửi OTP..." : "Gửi OTP"}
+              </Button>
+
+              <Divider>Hoặc</Divider>
+
+              <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+                <Link component={RouterLink} to="/login" underline="hover">
+                  Quay lại đăng nhập
+                </Link>
+              </Box>
+            </Box>
+          ) : (
+            <Box
+              component="form"
+              noValidate
+              autoComplete="off"
+              onSubmit={handleReset}
+              sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
+            >
+              <TextField
+                fullWidth
+                label="Mã OTP"
+                name="otp"
+                value={form.otp}
+                onChange={handleChange}
+              />
+              <TextField
+                fullWidth
+                label="Mật khẩu mới"
+                name="newPassword"
+                type={showPwd ? "text" : "password"}
+                value={form.newPassword}
+                onChange={handleChange}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        edge="end"
+                        size="small"
+                        onClick={() => setShowPwd((s) => !s)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        aria-label={showPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                      >
+                        {showPwd ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Button
+                fullWidth
+                variant="contained"
+                type="submit"
+                disabled={loading}
+                sx={{ py: 1.25, borderRadius: 2 }}
+              >
+                {loading ? "Đang xác nhận..." : "Xác nhận"}
+              </Button>
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Button
+                  variant="text"
+                  startIcon={<ArrowBack />}
+                  onClick={() => setStep(1)}
+                >
+                  Nhập lại email
+                </Button>
+                <Button variant="text" onClick={handleSend}>
+                  Gửi lại OTP
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
   );
 }

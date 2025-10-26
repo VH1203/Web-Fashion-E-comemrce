@@ -35,6 +35,5 @@ CartSchema.pre("save", function (next) {
     next();
 });
 
-CartSchema.index({ user_id: 1 });
 
 module.exports = mongoose.model("Cart", CartSchema);

@@ -1,268 +1,341 @@
-import React, { useState } from "react";
-import {
-  MDBBtn,
-  MDBContainer,
-  MDBCard,
-  MDBCardBody,
-  MDBCardImage,
-  MDBRow,
-  MDBCol,
-  MDBIcon,
-  MDBInput,
-} from "mdb-react-ui-kit";
-import { authApi } from "../../services/authService";
-import logo from "../../assets/icons/DFS-NonBG1.png";
-import { GoogleLogin } from "@react-oauth/google";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
+import dfsLogo from "../../assets/icons/DFS-NonBG1.png";
 
+// MUI
+import Box from "@mui/material/Box";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Checkbox from "@mui/material/Checkbox";
+import Button from "@mui/material/Button";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Divider from "@mui/material/Divider";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+import Link from "@mui/material/Link";
+
+// Icons
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import FacebookOutlined from "@mui/icons-material/FacebookOutlined";
+import GitHub from "@mui/icons-material/GitHub";
+import Google from "@mui/icons-material/Google";
+import Twitter from "@mui/icons-material/Twitter";
+
+// Your app imports
+import { authService } from "../../services/authService";
+import { useAuth } from "../../context/AuthContext";
+// (Optional) import Logo component nếu bạn có:
+// import Logo from "../../components/common/Logo";
 
 export default function Login() {
-  const [form, setForm] = useState({
-    identifier: "",
-    password: "",
-    remember: false,
-  });
+  const [form, setForm] = useState({ identifier: "", password: "" });
+  const [isPasswordShown, setIsPasswordShown] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [message, setMessage] = useState("");
+  const [severity, setSeverity] = useState("error"); // 'success' | 'error' | 'info'
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const roleRoutes = {
-    customer: "/",
-    shop_owner: "/shop/dashboard",
-    system_admin: "/admin/system-config",
-    sales: "/sales/orders",
-    support: "/support/tickets",
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+  const toggleShowPassword = () => setIsPasswordShown((s) => !s);
+
+  // --- Submit: Đăng nhập thường ---
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage("");
+    setLoading(true);
+    try {
+      const res = await authService.login(form);
+      const { accessToken, user } = res.data.data || {};
+      // Lưu "remember me" tùy ý
+      if (remember) {
+        localStorage.setItem("dfs_remember", "1");
+      } else {
+        localStorage.removeItem("dfs_remember");
+      }
+      login(user, accessToken);
+      setSeverity("success");
+      setMessage("Đăng nhập thành công!");
+    } catch (err) {
+      setSeverity("error");
+      setMessage(
+        err?.response?.data?.message || err.message || "Đăng nhập thất bại"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const onChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
+  // --- Google Identity Services ---
+  useEffect(() => {
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback,
+        ux_mode: "popup", // mở popup chọn tài khoản
+      });
+    }
+  }, []);
+
+  const handleGoogleCallback = async (response) => {
+    try {
+      setLoading(true);
+      const token = response.credential;
+      const res = await authService.googleLogin({ token });
+      const { accessToken, user } = res.data.data || {};
+      login(user, accessToken);
+      setSeverity("success");
+      setMessage("Đăng nhập Google thành công!");
+    } catch (err) {
+      setSeverity("error");
+      setMessage(
+        "Lỗi Google Login: " + (err?.response?.data?.message || err.message)
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const submit = async () => {
-  setLoading(true);
-  setError("");
-  try {
-    const res = await authApi.login(form);
-    localStorage.setItem("access_token", res.access_token);
-    localStorage.setItem("user", JSON.stringify(res.user));
-    localStorage.setItem("refresh_token", res.refresh_token);
-    localStorage.setItem("remember", form.remember ? "1" : "0");
-
-    const roleName =
-      res.user.role?.name ||
-      res.user.role ||
-      res.user.role_id?.name ||
-      "customer";
-
-    const redirect = roleRoutes[roleName] || "/";
-    navigate(redirect);
-  } catch (e) {
-    setError(e.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleGoogleSuccess = async (credentialResponse) => {
-  try {
-    const token = credentialResponse.credential;
-    const res = await authApi.googleLogin({ token });
-    localStorage.setItem("access_token", res.access_token);
-    localStorage.setItem("refresh_token", res.refresh_token);
-    localStorage.setItem("user", JSON.stringify(res.user));
-
-    const roleName =
-      res.user.role?.name ||
-      res.user.role ||
-      res.user.role_id?.name ||
-      "customer";
-
-    const redirect = roleRoutes[roleName] || "/";
-    navigate(redirect);
-  } catch (err) {
-    setError("Đăng nhập Google thất bại: " + err.message);
-  }
-};
-
-
-  const handleGoogleError = () => {
-    setError("Đăng nhập Google thất bại!");
+  const promptGoogle = () => {
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt();
+    } else {
+      setSeverity("error");
+      setMessage("Google chưa sẵn sàng.");
+    }
   };
+
   return (
-    <MDBContainer className="my-5 d-flex justify-content-center">
-      <MDBCard>
-        <MDBRow className="g-6">
-          {/* Cột ảnh bên trái */}
-          <MDBCol md="6">
-            <MDBCardImage
-              src="https://cdn.occtoo-media.com/995cf62a-7759-4681-a516-370aaabfd325/445f33e1-b55a-5121-9eed-e5a32a7ca2cc/239777-0014_03.jpg?format=large&outputFormat=webp"
-              alt="login form"
-              className="rounded-start w-100"
-              // style={{ objectFit: "cover", height: "10px" }}
-            />
-          </MDBCol>
-
-          {/* Form login */}
-          <MDBCol md="6">
-            <MDBCardBody className="d-flex flex-column">
-              <div className="d-flex flex-row mt-2 align-items-center">
-                <img
-                  src={logo}
-                  alt="Logo"
-                  style={{
-                    width: "100px",
-                    height: "100px",
-                    objectFit: "contain",
-                    marginRight: "12px",
-                    borderRadius: "50px",
-                  }}
-                />
-                <span className="h1 fw-bold mb-0">Daily Fit</span>
-              </div>
-
-              <h5
-                className="fw-normal my-4 pb-3"
-                style={{ letterSpacing: "1px" }}
-              >
-                Đăng nhập
-              </h5>
-
-              {error && (
-                <div style={{ color: "red", marginBottom: 12 }}>{error}</div>
-              )}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submit();
+    <Box
+      sx={{
+        minHeight: "100dvh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 3,
+        position: "relative",
+        // nền nhẹ nhàng
+        background:
+          "radial-gradient(1000px 500px at 10% -10%, rgba(99,102,241,.08), transparent), radial-gradient(800px 400px at 100% 0, rgba(16,185,129,.08), transparent)",
+      }}
+    >
+      <Card
+        elevation={8}
+        sx={{ width: "100%", maxWidth: 480, borderRadius: 3 }}
+      >
+        <CardContent sx={{ p: { xs: 4, sm: 6 } }}>
+          {/* Header auth: logo + tiêu đề nằm ngang */}
+          <Box
+            sx={{
+              mb: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2.5,
+              flexDirection: { xs: "column", sm: "row" }, 
+              textAlign: { xs: "center", sm: "left" },
+            }}
+          >
+            {/* Logo crop tròn */}
+            <Link
+              component={RouterLink}
+              to="/"
+              underline="none"
+              sx={{ lineHeight: 0 }}
+            >
+              <Box
+                sx={{
+                  width: 100,
+                  height: 100,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  boxShadow: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <MDBInput
-                  wrapperClass="mb-4"
-                  label="Tên đăng nhập / Email / SĐT"
-                  id="identifier"
-                  name="identifier"
-                  type="text"
-                  size="lg"
-                  value={form.identifier}
-                  onChange={onChange}
-                />
-                <div style={{ position: "relative" }} className="mb-4">
-                  <MDBInput
-                    label="Mật khẩu"
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    size="lg"
-                    value={form.password}
-                    onChange={onChange}
-                  />
-
-                  <i
-                    className={`fa ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
-                    onClick={() => setShowPassword((s) => !s)}
-                    style={{
-                      position: "absolute",
-                      right: "15px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      cursor: "pointer",
-                      color: "#555",
-                      fontSize: "18px",
-                    }}
-                  ></i>
-                </div>
-
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <input
-                      type="checkbox"
-                      id="remember"
-                      name="remember"
-                      style={{ width: "16px", height: "16px" }}
-                      onChange={onChange}
-                    />
-                    <label
-                      htmlFor="remember"
-                      className="ms-2"
-                      style={{ fontSize: "16px", marginBottom: 0 }}
-                    >
-                      Ghi nhớ đăng nhập
-                    </label>
-                  </div>
-
-                  <a
-                    href="/forgot-password"
-                    className="small text-primary"
-                    style={{ fontSize: "16px" }}
-                  >
-                    Quên mật khẩu?
-                  </a>
-                </div>
-
-                <div className="d-flex justify-content-center">
-                  <MDBBtn
-                    className="mb-4 px-5d-flex align-items-center justify-content-center"
-                    color="primary"
-                    size="lg"
-                    style={{ width: "60%" }}
-                    onClick={submit}
-                    disabled={loading}
-                    type="submit"
-                  >
-                    {loading ? (
-                      <div
-                        className="spinner-border spinner-border-sm text-light"
-                        role="status"
-                      >
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
-                    ) : (
-                      "Đăng nhập"
-                    )}
-                  </MDBBtn>
-                </div>
-
-                 <div className="text-center mb-3">
-                  <p className="mb-2">Hoặc đăng nhập bằng</p>
-                  <div className="d-flex justify-content-center">
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={handleGoogleError}
-                      shape="circle"
-                      theme="outline"
-                    />
-                  </div>
-                </div>
-                <p
-                  className="mb-5 pb-lg-2"
-                  style={{
-                    color: "#393f81",
-                    textAlign: "center",
-                    fontSize: "18px",
+                <Box
+                  component="img"
+                  src={dfsLogo}
+                  alt="DFS"
+                  sx={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    transform: "scale(1.25)",
+                    display: "block",
                   }}
-                >
-                  Chưa có tài khoản?{" "}
-                  <a href="/register" style={{ color: "#393f81" }}>
-                    Đăng ký tại đây
-                  </a>
-                </p>
+                />
+              </Box>
+            </Link>
 
-                <div className="mb-5 pb-lg-2" style={{ textAlign: "center" }}>
-                  <a href="#!" className="small text-muted me-1">
-                    Terms of use.
-                  </a>
-                  <a href="#!" className="small text-muted">
-                    Privacy policy
-                  </a>
-                </div>
-              </form>
-            </MDBCardBody>
-          </MDBCol>
-        </MDBRow>
-      </MDBCard>
-    </MDBContainer>
+            {/* Tiêu đề + mô tả */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Typography variant="h4">Chào mừng đến với DFS</Typography>
+              <Typography color="text.secondary">
+                Vui lòng đăng nhập để bắt đầu trải nghiệm.
+              </Typography>
+            </Box>
+          </Box>
+
+          {message ? (
+            <Alert severity={severity} sx={{ mb: 2 }}>
+              {message}
+            </Alert>
+          ) : null}
+
+          <Box
+            component="form"
+            noValidate
+            autoComplete="off"
+            onSubmit={handleSubmit}
+            sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
+          >
+            <TextField
+              autoFocus
+              fullWidth
+              label="Email / Username / SĐT"
+              name="identifier"
+              value={form.identifier}
+              onChange={handleChange}
+            />
+
+            <TextField
+              fullWidth
+              label="Mật khẩu"
+              name="password"
+              type={isPasswordShown ? "text" : "password"}
+              value={form.password}
+              onChange={handleChange}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      onClick={toggleShowPassword}
+                      onMouseDown={(e) => e.preventDefault()}
+                      aria-label={
+                        isPasswordShown ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+                      }
+                      size="small"
+                    >
+                      {isPasswordShown ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                  />
+                }
+                label="Ghi nhớ tôi"
+              />
+              <Link
+                component={RouterLink}
+                to="/forgot-password"
+                underline="hover"
+                color="primary"
+              >
+                Quên mật khẩu?
+              </Link>
+            </Box>
+
+            <Button
+              fullWidth
+              variant="contained"
+              type="submit"
+              disabled={loading}
+              sx={{ py: 1.25, borderRadius: 2 }}
+            >
+              {loading ? <CircularProgress size={22} /> : "Đăng nhập"}
+            </Button>
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <Typography>Bạn mới dùng nền tảng?</Typography>
+              <Link
+                component={RouterLink}
+                to="/register"
+                color="primary"
+                underline="hover"
+              >
+                Tạo tài khoản
+              </Link>
+            </Box>
+
+            <Divider>hoặc đăng nhập bằng</Divider>
+
+            {/* Dãy social (demo UI) */}
+            <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+              {/* <IconButton size="small" aria-label="Login with Facebook">
+                <FacebookOutlined />
+              </IconButton>
+              <IconButton size="small" aria-label="Login with Twitter/X">
+                <Twitter />
+              </IconButton>
+              <IconButton size="small" aria-label="Login with GitHub">
+                <GitHub />
+              </IconButton> */}
+              {/* Nút Google phụ (nếu GIS script chưa render kịp) */}
+              <Button
+                onClick={promptGoogle}
+                variant="outlined"
+                startIcon={<Google />}
+                fullWidth={false} // đổi thành true nếu muốn kéo full hàng
+                sx={{
+                  px: 2.5,
+                  color: "#DB4437",
+                  borderColor: "#DB4437",
+                  borderRadius: 20,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  "&:hover": {
+                    bgcolor: "rgba(219,68,55,0.08)",
+                    borderColor: "#DB4437",
+                  },
+                }}
+              >
+                Google
+              </Button>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* (Optional) Hình minh họa nền — bạn có thể thay ảnh riêng */}
+      {/* <Box sx={{ position: "absolute", right: 0, bottom: 0, opacity: .25 }}>
+        <img src="/images/pages/auth-v1-mask-light.png" alt="Decor" style={{ maxWidth: 420 }} />
+      </Box> */}
+    </Box>
   );
 }

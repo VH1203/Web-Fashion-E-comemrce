@@ -41,7 +41,7 @@ const OrderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "confirmed", "shipping", "delivered", "canceled"],
+      enum: ["processing","pending", "confirmed", "shipping", "delivered", "canceled_by_customer", "canceled_by_shop", "refund_pending", "refund_completed"],
       default: "pending",
     },
 
@@ -60,10 +60,6 @@ OrderSchema.pre("save", function (next) {
   next();
 });
 
-OrderSchema.index({ user_id: 1 });
-OrderSchema.index({ shop_id: 1 });
-OrderSchema.index({ status: 1 });
-OrderSchema.index({ createdAt: -1 });
 
 
 // doanh thu theo danh muc san pham

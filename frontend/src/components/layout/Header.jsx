@@ -1,180 +1,293 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { authApi } from "../../services/authService";
-import logo from "../../assets/icons/DFS-NonBG.png";
-import "../../assets/styles/Header.css";
+import React, { useState } from "react";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
+import dfsLogo from "../../assets/icons/DFS-NonBG1.png";
 
-const flagVN = "https://flagcdn.com/w20/vn.png";
-const flagUS = "https://flagcdn.com/w20/us.png";
+// MUI
+import AppBar from "@mui/material/AppBar";
+import Toolbar from "@mui/material/Toolbar";
+import Container from "@mui/material/Container";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import Badge from "@mui/material/Badge";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
+import Link from "@mui/material/Link";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Divider from "@mui/material/Divider";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme, alpha } from "@mui/material/styles";
 
-export default function Header() {
+// Icons
+import SearchIcon from "@mui/icons-material/Search";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
+import LoginIcon from "@mui/icons-material/Login";
+
+const AUTH_PATHS = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/change-password",
+];
+
+export default function Header({
+  cartCount = 0,
+  notifyCount = 0,
+  user = null, // { name, email } | null
+  onSearch, // (keyword) => void
+  onLogout, // () => void
+}) {
+  const theme = useTheme();
+  const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
+  const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   const location = useLocation();
   const navigate = useNavigate();
 
-  const authPaths = ["/login", "/register", "/forgot-password"];
-  const isAuthPage = authPaths.includes(location.pathname);
+  const isAuthPage = AUTH_PATHS.some((p) => location.pathname.startsWith(p));
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-  const [lang, setLang] = useState(localStorage.getItem("lang") || "en");
-
-  useEffect(() => {
-    localStorage.setItem("lang", lang);
-  }, [lang]);
-
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-      navigate("/login");
-    } catch (e) {
-      console.error("Logout error", e);
-    }
+  // Profile menu
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = (e) => setAnchorEl(e.currentTarget);
+  const closeMenu = () => setAnchorEl(null);
+  const handleLogout = () => {
+    closeMenu();
+    onLogout?.();
   };
 
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    const keyword = new FormData(e.currentTarget).get("q")?.toString().trim();
+    if (keyword) onSearch?.(keyword);
+  };
+
+  // Brand (logo + tên)
+  const Brand = (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+      <Box
+        component="img"
+        src={dfsLogo}
+        alt="Daily Fit"
+        sx={{ height: 30, width: "auto" }}
+      />
+      <Typography
+        variant="h6"
+        component={RouterLink}
+        to="/"
+        sx={{
+          color: "inherit",
+          textDecoration: "none",
+          fontWeight: 800,
+          letterSpacing: ".2px",
+        }}
+      >
+        Daily Fit
+      </Typography>
+    </Box>
+  );
+
   return (
-    <>
-      <header className={`header ${isAuthPage ? "header-auth-page" : ""}`}>
-        <div className="header-inner">
-          {/* Logo */}
-          <div className="header-logo">
-            <Link to="/">
-              <div className="logo-wrapper">
-                <img src={logo} alt="Daily Fit" className="logo-img" />
-              </div>
-            </Link>
-            <span className="logo-text">Daily Fit</span>
-          </div>
+    <AppBar
+      position="sticky"
+      elevation={0}
+      color="transparent"
+      sx={{
+        backdropFilter: "saturate(180%) blur(10px)",
+        backgroundColor: alpha(theme.palette.background.paper, 0.7),
+        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.6)}`,
+      }}
+    >
+      <Container maxWidth="lg" disableGutters>
+        <Toolbar
+          sx={{
+            px: 2,
+            minHeight: { xs: 60, sm: 64 },
+            gap: 2,
+            justifyContent: isAuthPage ? "center" : "space-between",
+          }}
+        >
+          <Link
+            component={RouterLink}
+            to="/"
+            underline="none"
+            sx={{ lineHeight: 0 }}
+          >
+            <Box
+              sx={{
+                width: 70,
+                height: 70,
+                borderRadius: "50%",
+                overflow: "hidden",
+                boxShadow: 3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Box
+                component="img"
+                src={dfsLogo}
+                alt="DFS"
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "center",
+                  transform: "scale(1.25)",
+                  display: "block",
+                }}
+              />
+            </Box>
+          </Link>
 
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Typography variant="h4">Daily Fit</Typography>
+          </Box>
+
+          {/* Auth pages: chỉ logo + tên */}
           {isAuthPage ? (
-            <div className="header-auth">
-              {/* Switch ngôn ngữ */}
-              <div
-                className="lang-switch"
-                onClick={() => setLang(lang === "en" ? "vi" : "en")}
-                title="Đổi ngôn ngữ"
-              >
-                <div
-                  className="lang-thumb"
-                  style={{
-                    left: lang === "en" ? "4px" : "40px",
-                  }}
-                >
-                  <img
-                    src={lang === "en" ? flagUS : flagVN}
-                    alt={lang}
-                    className="lang-flag"
-                  />
-                </div>
-              </div>
-
-              {/* Auth buttons */}
-              <div className="auth-buttons">
-                <Link
-                  to="/login"
-                  className={`auth-btn ${
-                    location.pathname === "/login" ? "active" : ""
-                  }`}
-                >
-                  Đăng nhập
-                </Link>
-                <Link
-                  to="/register"
-                  className={`auth-btn ${
-                    location.pathname === "/register" ? "active" : ""
-                  }`}
-                >
-                  Đăng ký
-                </Link>
-              </div>
-            </div>
+            <Box sx={{ display: "none" }} />
           ) : (
             <>
-              {/* Navbar */}
-              {/* <nav className="main-nav">
-                <Link
-                  to="/"
-                  className={`nav-link ${
-                    location.pathname === "/" ? "active" : ""
-                  }`}
+              {/* Search pill */}
+              {isSmUp ? (
+                <Box
+                  component="form"
+                  onSubmit={handleSearchSubmit}
+                  sx={{ flex: 1, maxWidth: isMdUp ? 620 : 460 }}
                 >
-                  Trang chủ
-                </Link>
-                <Link
-                  to="/men"
-                  className={`nav-link ${
-                    location.pathname === "/men" ? "active" : ""
-                  }`}
+                  <TextField
+                    name="q"
+                    size="small"
+                    fullWidth
+                    placeholder="Tìm kiếm sản phẩm…"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "999px",
+                        backgroundColor: alpha(
+                          theme.palette.common.black,
+                          0.02
+                        ),
+                      },
+                    }}
+                  />
+                </Box>
+              ) : (
+                // Mobile: chỉ icon search → điều hướng /search (hoặc mở overlay riêng nếu bạn có)
+                <IconButton
+                  aria-label="Tìm kiếm"
+                  onClick={() => navigate("/search")}
+                  sx={{ ml: "auto" }}
                 >
-                  Nam
-                </Link>
-                <Link
-                  to="/women"
-                  className={`nav-link ${
-                    location.pathname === "/women" ? "active" : ""
-                  }`}
-                >
-                  Nữ
-                </Link>
-                <Link
-                  to="/combos"
-                  className={`nav-link ${
-                    location.pathname === "/combos" ? "active" : ""
-                  }`}
-                >
-                  Combos
-                </Link>
-              </nav> */}
+                  <SearchIcon />
+                </IconButton>
+              )}
 
-              {/* Search bar */}
-              <div className="header-search">
-                <input type="text" placeholder="Tìm sản phẩm..." />
-                <button type="button">
-                  <i className="fas fa-search"></i>
-                </button>
-              </div>
+              {/* Action area */}
+              {!user ? (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Button
+                    component={RouterLink}
+                    to="/register"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<PersonAddAltIcon />}
+                    sx={{ textTransform: "none", borderRadius: "999px" }}
+                  >
+                    Đăng ký
+                  </Button>
+                  <Button
+                    component={RouterLink}
+                    to="/login"
+                    variant="contained"
+                    size="small"
+                    startIcon={<LoginIcon />}
+                    sx={{ textTransform: "none", borderRadius: "999px" }}
+                  >
+                    Đăng nhập
+                  </Button>
+                </Box>
+              ) : (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <IconButton
+                    color="inherit"
+                    component={RouterLink}
+                    to="/cart"
+                    aria-label="Giỏ hàng"
+                  >
+                    <Badge badgeContent={cartCount} color="primary">
+                      <ShoppingCartIcon />
+                    </Badge>
+                  </IconButton>
 
-              <div className="header-icons">
-                {/* Hàng trên: Hồ sơ + Đăng xuất hoặc Đăng nhập */}
-                <div className="user-top">
-                  {user ? (
-                    <>
-                      <Link
-                        className={`user-name ${
-                          location.pathname === "/users/profile" ? "active" : ""
-                        }`}
-                        to="/users/profile"
-                      >
-                        <i className="fa-solid fa-user"></i> Hồ sơ
-                      </Link>
-                      <button className="logout-btn" onClick={handleLogout}>
-                        Đăng xuất
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link to="/login" className="login-btn">
-                        Đăng nhập
-                      </Link>
-                      <Link to="/register" className="login-btn">
-                        Đăng ký
-                      </Link>
-                    </>
-                  )}
-                </div>
+                  <IconButton
+                    color="inherit"
+                    component={RouterLink}
+                    to="/notifications"
+                    aria-label="Thông báo"
+                  >
+                    <Badge badgeContent={notifyCount} color="error">
+                      <NotificationsIcon />
+                    </Badge>
+                  </IconButton>
 
-                {/* Hàng dưới: Wishlist + Cart */}
-                <div className="user-icons">
-                  <Link to="/wishlist" className="icon-link">
-                    <i className="fas fa-heart"></i>
-                  </Link>
-                  <Link to="/cart" className="icon-link">
-                    <i className="fas fa-shopping-cart"></i>
-                  </Link>
-                </div>
-              </div>
+                  <IconButton
+                    color="inherit"
+                    aria-label="Tài khoản"
+                    onClick={openMenu}
+                    sx={{ ml: 0.5 }}
+                  >
+                    <AccountCircleIcon />
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={closeMenu}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                    transformOrigin={{ vertical: "top", horizontal: "right" }}
+                  >
+                    <MenuItem disabled>
+                      <Typography variant="body2" noWrap>
+                        {user?.name || user?.email || "Tài khoản"}
+                      </Typography>
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem
+                      onClick={() => {
+                        closeMenu();
+                        navigate("/profile");
+                      }}
+                    >
+                      Hồ sơ
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        closeMenu();
+                        navigate("/orders");
+                      }}
+                    >
+                      Đơn hàng
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
+                  </Menu>
+                </Box>
+              )}
             </>
           )}
-        </div>
-      </header>
-    </>
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 }

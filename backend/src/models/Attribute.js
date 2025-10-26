@@ -6,7 +6,7 @@ const AttributeSchema = new mongoose.Schema(
     _id: { type: String, default: () => `attr-${uuidv4()}` },
     name: { type: String, required: true },
     code: { type: String, required: true, unique: true, lowercase: true },
-    type: { type: String, enum: ["text", "number", "enum", "boolean"], default: "enum" },
+    type: { type: String, enum: ["text", "number", "enum", "boolean", "select"], default: "enum" },
     values: [String],
     unit: String,
     applicable_category_ids: [{ type: String, ref: "Category" }],
@@ -17,6 +17,5 @@ const AttributeSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false, collection: "attributes" }
 );
 
-AttributeSchema.index({ code: 1 });
 
 module.exports = mongoose.model("Attribute", AttributeSchema);

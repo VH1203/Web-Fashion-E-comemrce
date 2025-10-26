@@ -16,6 +16,5 @@ const AddressSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false, collection: "addresses" }
 );
 
-AddressSchema.index({ user_id: 1, is_default: 1 });
 
 module.exports = mongoose.model("Address", AddressSchema);

@@ -1,43 +1,28 @@
-// backend/src/controllers/addressController.js
-const { v4: uuidv4 } = require("uuid");
-const Address = require("../models/Address");
+const svc = require("../services/addressService");
+const ok  = (res, data) => res.json({ status: "success", data });
+const bad = (res, e, fb="Bad request") => res.status(e?.status||400).json({ status:"fail", message:e?.message||fb });
+const nf  = (res, msg) => res.status(404).json({ status:"fail", message: msg });
 
-exports.getAddresses = async (req, res, next) => {
+exports.list   = async (req, res) => { try { ok(res, { items: await svc.list(req.user._id) }); } catch(e){ bad(res,e,"Cannot list addresses"); } };
+exports.create = async (req, res) => { try { ok(res, { item: await svc.create(req.user._id, req.body) }); } catch(e){ bad(res,e,"Cannot create address"); } };
+exports.update = async (req, res) => {
   try {
-    const addresses = await Address.find({ user_id: req.user.sub });
-    res.json(addresses);
-  } catch (err) {
-    next(err);
-  }
+    const item = await svc.update(req.user._id, req.params.id, req.body);
+    if (!item) return nf(res, "Address not found");
+    ok(res, { item });
+  } catch(e){ bad(res,e,"Cannot update address"); }
 };
-
-exports.addAddress = async (req, res, next) => {
+exports.remove = async (req, res) => {
   try {
-    const { name, phone, city, district, ward, street, is_default } = req.body;
-    const addr = new Address({
-      _id: uuidv4(),
-      user_id: req.user.sub,
-      name,
-      phone,
-      city,
-      district,
-      ward,
-      street,
-      is_default,
-    });
-    await addr.save();
-    res.status(201).json(addr);
-  } catch (err) {
-    next(err);
-  }
+    const item = await svc.remove(req.user._id, req.params.id);
+    if (!item) return nf(res, "Address not found");
+    ok(res, { deleted_id: req.params.id });
+  } catch(e){ bad(res,e,"Cannot delete address"); }
 };
-
-exports.deleteAddress = async (req, res, next) => {
+exports.setDefault = async (req, res) => {
   try {
-    const { id } = req.params;
-    await Address.deleteOne({ _id: id, user_id: req.user.sub });
-    res.json({ message: "Xóa địa chỉ thành công" });
-  } catch (err) {
-    next(err);
-  }
+    const item = await svc.setDefault(req.user._id, req.params.id);
+    if (!item) return nf(res, "Address not found");
+    ok(res, { item });
+  } catch(e){ bad(res,e,"Cannot set default address"); }
 };

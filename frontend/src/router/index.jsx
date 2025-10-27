@@ -14,54 +14,105 @@ import Dashboard from "../pages/shop/Dashboard";
 import SystemConfig from "../pages/admin/SystemConfig";
 import SalesOrders from "../pages/sales/SalesOrders";
 import Tickets from "../pages/support/Tickets";
-
-// ===== Error Page =====
-import NotFound from "../pages/errors/NotFound";
 import ProductDetail from "../pages/customer/ProductDetail";
+import ProfilePage from "../pages/customer/Profile";
+import NotFound from "../pages/errors/NotFound";
 
-// ==========================================
-// 🧩 Route Guards
-// ==========================================
+/** Đợi authReady để tránh redirect sớm */
 function ProtectedRoute({ children }) {
-  const { user } = useAuth();
-  return user ? children : <Navigate to="/login" replace />;
+  const { isAuthenticated, authReady } = useAuth();
+  if (!authReady) return null;               // hoặc spinner
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-function RoleRoute({ children, roles }) {
-  const { user } = useAuth();
+/** Kiểm tra theo role_name và/hoặc permissions */
+function RoleRoute({ children, roles = [], permAny = [], permAll = [] }) {
+  const { user, authReady } = useAuth();
+  if (!authReady) return null;               // hoặc spinner
   if (!user) return <Navigate to="/login" replace />;
-  if (!roles.includes(user.role_id) && !roles.includes(user.role))
-    return <Navigate to="/" replace />;
-  return children;
+
+  const roleName = user.role_name;
+  const perms = Array.isArray(user.permissions) ? user.permissions : [];
+
+  const roleOK = roles.length === 0 ? true : roles.includes(roleName);
+  const permAnyOK = permAny.length === 0 ? true : permAny.some(p => perms.includes(p));
+  const permAllOK = permAll.length === 0 ? true : permAll.every(p => perms.includes(p));
+
+  const allowed = roleOK && permAnyOK && permAllOK;
+  return allowed ? children : <Navigate to="/" replace />;
 }
 
 export default function AppRouter() {
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* Public */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
+
+      {/* Đổi mật khẩu: cần đăng nhập */}
+      <Route
+        path="/change-password"
+        element={
+          <ProtectedRoute>
+            <ChangePassword />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Customer */}
       <Route path="/" element={<HomePage />} />
       <Route path="/product/:idOrSlug" element={<ProductDetail />} />
-      {/* <Route path="/shop/dashboard" element={<Dashboard />} /> */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
 
-      {/* Shop */}
-      <Route path="/shop/dashboard" element={<RoleRoute roles={["shop_owner", "role-shop-owner"]}><Dashboard /></RoleRoute>} />
+      {/* Shop: cho shop_owner/sales hoặc ai có shop:access */}
+      <Route
+        path="/shop/dashboard"
+        element={
+          <RoleRoute roles={["shop_owner", "sales"]} permAny={["shop:access"]}>
+            <Dashboard />
+          </RoleRoute>
+        }
+      />
 
       {/* Sales */}
-      <Route path="/sales/orders" element={<RoleRoute roles={["sales", "role-sales"]}><SalesOrders /></RoleRoute>} />
+      <Route
+        path="/sales/orders"
+        element={
+          <RoleRoute roles={["sales"]}>
+            <SalesOrders />
+          </RoleRoute>
+        }
+      />
 
       {/* Support */}
-      <Route path="/support/tickets" element={<RoleRoute roles={["support", "role-support"]}><Tickets /></RoleRoute>} />
+      <Route
+        path="/support/tickets"
+        element={
+          <RoleRoute roles={["support"]}>
+            <Tickets />
+          </RoleRoute>
+        }
+      />
 
       {/* Admin */}
-      <Route path="/admin/system-config" element={<RoleRoute roles={["system_admin", "role-system-admin"]}><SystemConfig /></RoleRoute>} />
+      <Route
+        path="/admin/system-config"
+        element={
+          <RoleRoute roles={["system_admin"]}>
+            <SystemConfig />
+          </RoleRoute>
+        }
+      />
 
-      {/* Not Found */}
+      {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

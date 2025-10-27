@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link as RouterLink ,useNavigate} from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import dfsLogo from "../../assets/icons/DFS-NonBG1.png";
 
 // MUI
@@ -18,17 +18,19 @@ import Alert from "@mui/material/Alert";
 // Icons
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import FacebookOutlined from "@mui/icons-material/FacebookOutlined";
-import GitHub from "@mui/icons-material/GitHub";
-import Google from "@mui/icons-material/Google";
-import Twitter from "@mui/icons-material/Twitter";
 import Link from "@mui/material/Link";
 
 import { authService } from "../../services/authService";
+import {
+  isEmail,
+  isValidFullName,
+  isValidPassword,
+  isValidUsername,
+} from "../../utils/validators";
 
 export default function Register() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); 
+  const [step, setStep] = useState(1);
   const [showPwd, setShowPwd] = useState(false);
   const [showPwd2, setShowPwd2] = useState(false);
   const [agree, setAgree] = useState(true);
@@ -44,18 +46,58 @@ export default function Register() {
   });
 
   const [message, setMessage] = useState("");
-  const [severity, setSeverity] = useState("error"); // 'success' | 'error' | 'info'
+  const [severity, setSeverity] = useState("error");
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+  // helper validate cho Step 1
+  const validateStep1 = (data) => {
+    const e = {};
+    const name = data.name?.trim() || "";
+    const username = data.username?.trim().toLowerCase() || "";
+    const email = data.email?.trim().toLowerCase() || "";
+    const pw = data.password || "";
+    const cpw = data.confirmPassword || "";
+
+    if (!name) e.name = "Vui lòng nhập họ tên";
+    else if (!isValidFullName(name)) e.name = "Họ tên không hợp lệ";
+
+    if (!username) e.username = "Vui lòng nhập tên đăng nhập";
+    else if (!isValidUsername(username))
+      e.username = "Username 3–30 ký tự, chỉ a–z và 0–9";
+
+    if (!email) e.email = "Vui lòng nhập email";
+    else if (!isEmail(email)) e.email = "Email không hợp lệ";
+
+    if (!pw) e.password = "Vui lòng nhập mật khẩu";
+    else if (!isValidPassword(pw))
+      e.password = "Tối thiểu 8 ký tự, gồm hoa, thường, số và ký tự đặc biệt";
+
+    if (!cpw) e.confirmPassword = "Vui lòng xác nhận mật khẩu";
+    else if (pw !== cpw) e.confirmPassword = "Mật khẩu xác nhận không khớp";
+
+    if (!agree) e.agree = "Bạn cần đồng ý điều khoản để tiếp tục";
+
+    return e;
+  };
 
   const handleRequestOTP = async (e) => {
     e?.preventDefault?.();
+    setMessage("");
+    const v = validateStep1(form);
+    setErrors(v);
+    if (Object.keys(v).length > 0) {
+      setSeverity("error");
+      setMessage("Vui lòng kiểm tra lại thông tin.");
+      return;
+    }
+
     try {
-      if (!form.email) return setMessage("Vui lòng nhập email!");
-      if (!agree) return setMessage("Bạn cần đồng ý điều khoản để tiếp tục.");
       setLoading(true);
-      await authService.requestRegisterOTP({ email: form.email });
+      await authService.requestRegisterOTP({
+        email: form.email.trim().toLowerCase(), // normalize
+      });
       setSeverity("success");
       setMessage("Đã gửi OTP tới email của bạn.");
       setStep(2);
@@ -185,22 +227,39 @@ export default function Register() {
                 name="name"
                 value={form.name}
                 onChange={handleChange}
+                error={!!errors.name}
+                helperText={errors.name}
               />
+
               <TextField
                 fullWidth
                 label="Tên đăng nhập"
                 name="username"
                 value={form.username}
-                onChange={handleChange}
+                onChange={(e) =>
+                  setForm({ ...form, username: e.target.value.toLowerCase() })
+                }
+                error={!!errors.username}
+                helperText={errors.username}
               />
+
               <TextField
                 fullWidth
                 label="Email"
                 name="email"
                 type="email"
                 value={form.email}
-                onChange={handleChange}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    email: e.target.value.trim().toLowerCase(),
+                  })
+                }
+                error={!!errors.email}
+                helperText={errors.email}
               />
+
+              {/* Mật khẩu */}
               <TextField
                 fullWidth
                 label="Mật khẩu"
@@ -208,6 +267,9 @@ export default function Register() {
                 type={showPwd ? "text" : "password"}
                 value={form.password}
                 onChange={handleChange}
+                error={!!errors.password}
+                helperText={errors.password}
+                autoComplete="new-password"
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -224,6 +286,8 @@ export default function Register() {
                   ),
                 }}
               />
+
+              {/* Xác nhận mật khẩu */}
               <TextField
                 fullWidth
                 label="Xác nhận mật khẩu"
@@ -231,6 +295,9 @@ export default function Register() {
                 type={showPwd2 ? "text" : "password"}
                 value={form.confirmPassword}
                 onChange={handleChange}
+                error={!!errors.confirmPassword}
+                helperText={errors.confirmPassword}
+                autoComplete="new-password"
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -269,12 +336,25 @@ export default function Register() {
                   </>
                 }
               />
+              {errors.agree && (
+                <Typography variant="caption" color="error" sx={{ mt: -1 }}>
+                  {errors.agree}
+                </Typography>
+              )}
 
               <Button
                 fullWidth
                 variant="contained"
                 type="submit"
-                disabled={loading}
+                disabled={
+                  loading ||
+                  !form.name ||
+                  !form.username ||
+                  !form.email ||
+                  !form.password ||
+                  !form.confirmPassword ||
+                  !agree
+                }
                 sx={{ py: 1.25, borderRadius: 2 }}
               >
                 {loading ? "Đang gửi OTP..." : "Gửi OTP"}
@@ -297,7 +377,7 @@ export default function Register() {
                 >
                   Đăng nhập
                 </Typography>
-              </Box>        
+              </Box>
             </Box>
           ) : (
             <Box

@@ -1,5 +1,6 @@
 const authService = require("../services/authService");
 const { successResponse, errorResponse } = require("../utils/constants");
+const User = require("../models/User");
 
 exports.requestRegisterOTP = async (req, res) => {
   try {
@@ -70,4 +71,9 @@ exports.changePassword = async (req, res) => {
   } catch (err) {
     res.status(400).json(errorResponse(err.message));
   }
+};
+
+exports.logout = async (req, res) => {
+  await User.updateOne({ _id: req.user._id }, { $unset: { refresh_token: "" } });
+  return res.json({ message: "Đã đăng xuất" });
 };

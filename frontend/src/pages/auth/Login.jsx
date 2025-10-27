@@ -18,26 +18,18 @@ import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import Link from "@mui/material/Link";
 
-// Icons
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import FacebookOutlined from "@mui/icons-material/FacebookOutlined";
-import GitHub from "@mui/icons-material/GitHub";
 import Google from "@mui/icons-material/Google";
-import Twitter from "@mui/icons-material/Twitter";
-
-// Your app imports
 import { authService } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
-// (Optional) import Logo component nếu bạn có:
-// import Logo from "../../components/common/Logo";
 
 export default function Login() {
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [isPasswordShown, setIsPasswordShown] = useState(false);
   const [remember, setRemember] = useState(true);
   const [message, setMessage] = useState("");
-  const [severity, setSeverity] = useState("error"); // 'success' | 'error' | 'info'
+  const [severity, setSeverity] = useState("error");
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();

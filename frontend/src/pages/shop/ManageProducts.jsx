@@ -1,14 +1,14 @@
 // ManageProducts.jsx 
 import React from "react";
 import { useState, useEffect } from "react";
-import {  productApi } from "../../services/productService";
+import {  productService } from "../../services/productService";
 const ManageProducts = () => {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState([]);
    useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await productApi.getAllProducts();
+        const data = await productService.getAllProducts();
         setProducts(data);
       } catch (error) {
         console.error("Lỗi khi tải sản phẩm:", error);

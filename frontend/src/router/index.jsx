@@ -1,7 +1,6 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Routes, Route, Navigate } from "react-router-dom";
 
 // ===== Auth Pages =====
 import Login from "../pages/auth/Login";
@@ -37,24 +36,6 @@ function RoleRoute({ children, roles }) {
 }
 
 export default function AppRouter() {
-  const { user } = useAuth();
-
-  const redirectByRole = () => {
-    if (!user) return null;
-    switch (user.role) {
-      case "shop_owner":
-        return <Navigate to="/shop/dashboard" replace />;
-      case "system_admin":
-        return <Navigate to="/admin/system-config" replace />;
-      case "sales":
-        return <Navigate to="/sales/orders" replace />;
-      case "support":
-        return <Navigate to="/support/tickets" replace />;
-      default:
-        return null;
-    }
-  };
-
   return (
     <Routes>
       {/* Public Routes */}
@@ -66,6 +47,7 @@ export default function AppRouter() {
       {/* Customer */}
       <Route path="/" element={<HomePage />} />
       <Route path="/product/:idOrSlug" element={<ProductDetail />} />
+      {/* <Route path="/shop/dashboard" element={<Dashboard />} /> */}
 
       {/* Shop */}
       <Route path="/shop/dashboard" element={<RoleRoute roles={["shop_owner", "role-shop-owner"]}><Dashboard /></RoleRoute>} />
@@ -81,89 +63,6 @@ export default function AppRouter() {
 
       {/* Not Found */}
       <Route path="*" element={<NotFound />} />
-    </Routes>
-    <Routes>
-      {/* HOME PAGE */}
-      <Route
-        path="/"
-        element={
-          user && user.role !== "customer" ? redirectByRole() : <HomePage />
-        }
-      />
-
-      {/* CUSTOMER */}
-      <Route path="/home" element={<HomePage />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-
-      {/* SHOP OWNER */}
-      {/* <Route
-        path="/shop/*"
-        element={
-          <ProtectedRoute allowedRoles={["shop_owner"]}>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      /> */}
-
-      {/* SYSTEM ADMIN */}
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute allowedRoles={["system_admin"]}>
-            <SystemConfig />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* SALES */}
-      <Route
-        path="/sales/*"
-        element={
-          <ProtectedRoute allowedRoles={["sales"]}>
-            <SalesOrders />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* SUPPORT */}
-      <Route
-        path="/support/*"
-        element={
-          <ProtectedRoute allowedRoles={["support"]}>
-            <Tickets />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* PROFILE */}
-      <Route
-        path="/users/profile"
-        element={
-          <ProtectedRoute
-            allowedRoles={[
-              "customer",
-              "shop_owner",
-              "system_admin",
-              "sales",
-              "support",
-            ]}
-          >
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* PRODUCTS & CATEGORIES */}
-      <Route path="/categories/:slug" element={<CategoryProductsPage />} />
-      <Route path="/products/:type" element={<AllProductsPage />} />
-
-      {/* AUTH */}
-      <Route path="/register" element={<Register />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-
-      {/* 404 */}
-      <Route path="*" element={<h1>404 - Not Found</h1>} />
     </Routes>
   );
 }

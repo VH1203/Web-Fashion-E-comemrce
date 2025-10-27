@@ -1,30 +1,34 @@
 // src/models/CartItemSchema.js
 const mongoose = require("mongoose");
+const { v4: uuidv4 } = require("uuid");
 
-/**
- * CartItemSchema
- * Mỗi phần tử trong giỏ hàng của khách hàng
- * - Không có _id riêng (subdocument)
- * - Lưu thông tin snapshot của sản phẩm tại thời điểm thêm
- */
 const CartItemSchema = new mongoose.Schema(
   {
-    product_id: { type: String, ref: "Product", required: true },
-    variant_id: { type: String, ref: "ProductVariant" },
+    _id: { type: String, default: () => `item-${uuidv4()}` }, // <-- thêm id cho item
+    product_id: { type: String, ref: "Product", required: true, index: true },
+    variant_id: { type: String, ref: "ProductVariant", required: true, index: true },
+
     name: { type: String, required: true },
-    image_url: { type: String },
-    price: { type: Number, required: true, min: 0 },
+    image: { type: String },              
+    sku: { type: String },
+    attributes: { type: Object, default: {} },
+    variant_label: { type: String },
+
+    price: { type: Number, required: true, min: 0 }, 
+    discount_amount: { type: Number, default: 0, min: 0 },
     qty: { type: Number, required: true, min: 1 },
-    currency: { type: String, default: "VND" },
-    shop_id: { type: String, ref: "User" },
-    total: {
-      type: Number,
-      default: function () {
-        return this.price * this.qty;
-      },
-    },
+    total: { type: Number, min: 0 },
+
+    currency: { type: String, enum: ["VND", "USD"], default: "VND" },
+    shop_id: { type: String, ref: "User" }, 
   },
-  { _id: false } // không tạo _id riêng cho từng item
+  { versionKey: false }
 );
+
+CartItemSchema.pre("validate", function (next) {
+  const unit = Math.max(0, (this.price || 0) - (this.discount_amount || 0));
+  this.total = Math.max(0, unit * (this.qty || 0));
+  next();
+});
 
 module.exports = CartItemSchema;

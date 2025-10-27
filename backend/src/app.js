@@ -12,6 +12,10 @@ const homeRoutes = require('./routes/homeRoutes');
 const authRoutes = require("./routes/authRoutes");
 const errorMiddleware = require("./middlewares/errorMiddleware");
 const app = express();
+const userRoutes = require('./routes/userRoutes');
+const addressRoutes = require('./routes/addressRoutes');
+const bankRoutes = require('./routes/bankRoutes');
+
 
 // const orderRoutes = require("./routes/orderRoutes");
 // const walletRoutes = require("./routes/walletRoutes");
@@ -34,7 +38,6 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(compression()); 
 app.use(morgan("dev")); 
-app.use('/api', homeRoutes);
 app.use(
   rateLimit({
     windowMs: 60 * 1000, 
@@ -43,9 +46,15 @@ app.use(
   })
 );
 
+app.use('/api', homeRoutes);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+
+app.use("/api/users", userRoutes);
+app.use("/api/addresses", addressRoutes);
+app.use("/api/banks", bankRoutes);
+
 // app.use("/api/orders", orderRoutes);
 // app.use("/api/wallets", walletRoutes);
 // app.use("/api/refunds", refundRoutes);

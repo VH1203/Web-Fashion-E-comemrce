@@ -2,6 +2,7 @@ const Banner = require('../models/Banner');
 const FlashSale = require('../models/FlashSale');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
+const Brand = require('../models/Brand');
 
 async function getActiveBanners() {
     const now = new Date();
@@ -25,6 +26,12 @@ async function getActiveBanners() {
     return grouped;
 }
 
+async function getBrands(limit = 12) {
+    return Brand.find({ is_active: true })
+        .sort({ name: 1 })
+        .limit(limit)
+        .lean();
+}
 async function getActiveFlashSale(limitItems = 20) {
     const now = new Date();
     const fs = await FlashSale.findOne({
@@ -96,16 +103,16 @@ async function getProductsByRootSlug(rootSlug, limit = 12) {
 }
 
 async function getHomepageData() {
-    const [banners, flashSale, categories, men, women] = await Promise.all([
+    const [banners, flashSale, categories, men, women, brands] = await Promise.all([
         getActiveBanners(),
         getActiveFlashSale(20),
         getCategoryTree(),
         getProductsByRootSlug('men', 12),
         getProductsByRootSlug('women', 12),
+        getBrands(12),
     ]);
-    return { banners, flashSale, categories, men, women };
+    return { banners, flashSale, categories, men, women, brands };
 }
-
 
 module.exports = {
     getActiveBanners,

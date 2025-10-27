@@ -1,55 +1,100 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
+const TOKEN_KEY = "dfs_token";   // ✅ thêm
+const USER_KEY  = "dfs_user";    // ✅ thêm
+
+function decodeJwt(t) {
+  try {
+    const [, payload] = t.split(".");
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/"); // base64url -> base64
+    const json = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(json);
+  } catch {
+    return {};
+  }
+}
+
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
-  const [token, setToken] = useState(localStorage.getItem("access_token") || null);
+
+  const [user, setUser] = useState(() =>
+    JSON.parse(localStorage.getItem(USER_KEY) || "null")
+  );
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
+  const [authReady, setAuthReady] = useState(false); // ✅ tránh nháy UI
+
+  // Khởi tạo từ localStorage + payload
+  useEffect(() => {
+    if (!token) {
+      setAuthReady(true);
+      return;
+    }
+    const p = decodeJwt(token);
+    setUser((u) => {
+      const merged = {
+        ...(u || {}),
+        _id: u?._id ?? p?._id,
+        role_name: u?.role_name ?? p?.role_name,
+        permissions: u?.permissions ?? p?.permissions ?? [],
+      };
+      localStorage.setItem(USER_KEY, JSON.stringify(merged));
+      return merged;
+    });
+    setAuthReady(true);
+  }, [token]);
 
   const login = (userData, accessToken) => {
-    setUser(userData);
+    const p = decodeJwt(accessToken);
+    const merged = {
+      ...userData,
+      _id: userData?._id ?? p?._id,
+      role_name: userData?.role_name ?? p?.role_name ?? null,
+      permissions: userData?.permissions ?? p?.permissions ?? [],
+    };
+
     setToken(accessToken);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("access_token", accessToken);
+    setUser(merged);
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(merged));
 
-    console.log("🔐 Login called, user role:", userData.role_id);
-console.log("🔐 Navigate should redirect now...");
+    // Điều hướng theo role_name / permissions
+    const role = merged.role_name;
+    const perms = merged.permissions || [];
 
-
-    switch (userData.role_id || userData.role) {
-      case "system_admin":
-      case "role-system-admin":
-        navigate("/admin/system-config");
-        break;
-      case "shop_owner":
-      case "role-shop-owner":
-        navigate("/shop/dashboard");
-        break;
-      case "sales":
-      case "role-sales":
-        navigate("/sales/orders");
-        break;
-      case "support":
-      case "role-support":
-        navigate("/support/tickets");
-        break;
-      default:
-        navigate("/");
+    if (role === "system_admin")
+      return navigate("/admin/system-config", { replace: true });
+    if (role === "sales") return navigate("/sales/orders", { replace: true });
+    if (role === "support")
+      return navigate("/support/tickets", { replace: true });
+    if (role === "shop_owner" || perms.includes("shop:access")) {
+      return navigate("/shop/dashboard", { replace: true });
     }
+    return navigate("/", { replace: true });
   };
 
   const logout = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem("access_token"); // legacy cleanup
+    localStorage.removeItem("accessToken");  // legacy cleanup
     setUser(null);
     setToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("access_token");
-    navigate("/login",{ replace: true });
+    navigate("/login", { replace: true });
   };
 
+  const isAuthenticated = !!token;
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, authReady, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

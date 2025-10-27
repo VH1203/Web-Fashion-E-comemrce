@@ -3,12 +3,7 @@ const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
 const CartItemSchema = require("./CartItemSchema");
 
-/**
- * CartSchema
- * - Giỏ hàng của khách hàng
- * - Chỉ có 1 cart active / user (1 user_id)
- * - items[] chứa thông tin snapshot sản phẩm
- */
+
 const CartSchema = new mongoose.Schema(
     {
         _id: { type: String, default: () => `cart-${uuidv4()}` },

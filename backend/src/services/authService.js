@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
 const redis = require("../config/redis");
 const User = require("../models/User");
+const Role = require("../models/Role");
 const { sendEmail } = require("./notificationService");
 const { generateAccessToken, generateRefreshToken } = require("../utils/jwt");
 
@@ -23,7 +24,7 @@ exports.requestOTP = async ({ email, phone, type }) => {
 
   try {
     console.log("🧩 redis type:", typeof redis.setEx);
-console.log("🧩 redis status:", redis.status);
+    console.log("🧩 redis status:", redis.status);
 
     await redis.set(`otp:${type}:${identifier}`, otp, "EX", 600);
     console.log(`✅ OTP lưu vào Redis cho ${identifier}:`, otp);
@@ -42,28 +43,49 @@ console.log("🧩 redis status:", redis.status);
   return { identifier, expiresIn: "10 phút" };
 };
 exports.verifyRegister = async ({ email, otp, name, username, password }) => {
-  const cachedOtp = await redis.get(`otp:register:${email}`);
-  if (!cachedOtp || cachedOtp !== otp) throw new Error("OTP không hợp lệ hoặc đã hết hạn");
+  const normEmail = String(email).trim().toLowerCase();
+  const normUsername = String(username).trim().toLowerCase();
 
-  const existing = await User.findOne({ $or: [{ email }, { username }] });
+  const otpKey = `otp:register:${normEmail}`;
+  const cachedOtp = await redis.get(otpKey);
+  if (!cachedOtp || cachedOtp !== otp) {
+    throw new Error("OTP không hợp lệ hoặc đã hết hạn");
+  }
+
+  const existing = await User.findOne({ 
+    $or: [{ email: normEmail }, { username: normUsername }] 
+  });
   if (existing) throw new Error("Email hoặc username đã tồn tại");
+
+  if (!password || password.length < 8) {
+    throw new Error("Mật khẩu phải tối thiểu 8 ký tự");
+  }
 
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
 
+  // 🔑 Lookup role theo name
+  const role = await Role.findOne({ name: "customer" });
+  if (!role) throw new Error("Role 'customer' chưa được seed");
+
   const user = await User.create({
     name,
-    username,
-    email,
+    username: normUsername,
+    email: normEmail,
     password_hash: hash,
-    role_id: "role-customer",
+    role_id: role._id, 
+    status: "active",
   });
 
-  await redis.del(`otp:register:${email}`);
-  return { user };
+  await redis.del(otpKey);
+
+  const safe = user.toObject();
+  delete safe.password_hash;
+  return { user: safe };
 };
 
 exports.login = async (identifier, password) => {
+  const id = String(identifier).trim().toLowerCase();
   const user = await User.findOne({
     $or: [{ email: identifier }, { username: identifier }, { phone: identifier }],
   });
@@ -72,41 +94,64 @@ exports.login = async (identifier, password) => {
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) throw new Error("Sai mật khẩu");
 
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
+  const accessToken = await generateAccessToken(user);
+  const refreshToken = await generateRefreshToken(user);
   user.refresh_token = refreshToken;
   user.last_login = new Date();
   await user.save();
 
-  return { accessToken, refreshToken, user };
+  const role = await Role.findById(user.role_id).lean();
+
+const safe = user.toObject();
+delete safe.password_hash;
+delete safe.refresh_token;
+
+safe.role_name = role?.name || null;
+safe.permissions = Array.isArray(role?.permissions) ? role.permissions : [];
+
+return { accessToken, refreshToken, user: safe };
 };
 
 exports.googleLogin = async (idToken) => {
-  const ticket = await client.verifyIdToken({
-    idToken,
-    audience: process.env.GOOGLE_CLIENT_ID,
-  });
+  const ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID });
   const payload = ticket.getPayload();
+  const email = String(payload.email).trim().toLowerCase();
 
-  let user = await User.findOne({ email: payload.email });
+  let user = await User.findOne({ email });
   if (!user) {
+    const role = await Role.findOne({ name: "customer" }); // ✅ lookup role thật
+    if (!role) throw new Error("Role 'customer' chưa được seed");
+
+    // tránh trùng username
+    const base = email.split("@")[0];
+    let username = base, i = 1;
+    while (await User.findOne({ username })) username = `${base}${i++}`;
+
     user = await User.create({
       name: payload.name,
-      email: payload.email,
-      username: payload.email.split("@")[0],
+      email,
+      username,
       avatar_url: payload.picture,
-      role_id: "role-customer",
+      role_id: role._id,           // ✅
+      status: "active",
     });
   }
 
-  const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
+  const accessToken  = await generateAccessToken(user);
+  const refreshToken = await generateRefreshToken(user);
   user.refresh_token = refreshToken;
   user.last_login = new Date();
   await user.save();
 
-  return { accessToken, refreshToken, user };
+  // (khuyến nghị) trả kèm role info
+  const role = await Role.findById(user.role_id).lean();
+  const safe = user.toObject(); delete safe.password_hash; delete safe.refresh_token;
+  safe.role_name = role?.name || null;
+  safe.permissions = Array.isArray(role?.permissions) ? role.permissions : [];
+
+  return { accessToken, refreshToken, user: safe };
 };
+
 
 exports.resetPassword = async (email, otp, newPassword) => {
   const cachedOtp = await redis.get(`otp:forgot:${email}`);

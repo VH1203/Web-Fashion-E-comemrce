@@ -1,39 +1,21 @@
-const { v4: uuidv4 } = require("uuid");
-const BankAccount = require("../models/BankAccount");
+const svc = require("../services/bankService");
+const ok  = (res, data) => res.json({ status: "success", data });
+const bad = (res, e, fb="Bad request") => res.status(e?.status||400).json({ status:"fail", message:e?.message||fb });
+const nf  = (res, msg) => res.status(404).json({ status:"fail", message: msg });
 
-exports.getBanks = async (req, res, next) => {
+exports.list   = async (req, res) => { try { ok(res, { items: await svc.list(req.user._id) }); } catch(e){ bad(res,e,"Cannot list bank accounts"); } };
+exports.create = async (req, res) => { try { ok(res, { item: await svc.create(req.user._id, req.body) }); } catch(e){ bad(res,e,"Cannot create bank account"); } };
+exports.update = async (req, res) => {
   try {
-    const banks = await BankAccount.find({ user_id: req.user.sub });
-    res.json(banks);
-  } catch (err) {
-    next(err);
-  }
+    const item = await svc.update(req.user._id, req.params.id, req.body);
+    if (!item) return nf(res, "Bank account not found");
+    ok(res, { item });
+  } catch(e){ bad(res,e,"Cannot update bank account"); }
 };
-
-exports.addBank = async (req, res, next) => {
+exports.remove = async (req, res) => {
   try {
-    const { bank_name, account_number, owner_name, logo } = req.body;
-    const newBank = new BankAccount({
-      _id: uuidv4(),
-      user_id: req.user.sub,
-      bank_name,
-      account_number,
-      owner_name,
-      logo,
-    });
-    await newBank.save();
-    res.status(201).json(newBank);
-  } catch (err) {
-    next(err);
-  }
-};
-
-exports.deleteBank = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    await BankAccount.deleteOne({ _id: id, user_id: req.user.sub });
-    res.json({ message: "Xóa tài khoản ngân hàng thành công" });
-  } catch (err) {
-    next(err);
-  }
+    const item = await svc.remove(req.user._id, req.params.id);
+    if (!item) return nf(res, "Bank account not found");
+    ok(res, { deleted_id: req.params.id });
+  } catch(e){ bad(res,e,"Cannot delete bank account"); }
 };

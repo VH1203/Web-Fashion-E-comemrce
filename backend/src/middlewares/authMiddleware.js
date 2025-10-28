@@ -15,7 +15,7 @@ exports.verifyToken = async (req, res, next) => {
     req.user = user;
     const safe = user.toObject?.() || {};
     delete safe.password_hash;
-    delete safe.refresh_token;
+    delete safe.refresh_token; 
     req.userSafe = safe;
 
     next();

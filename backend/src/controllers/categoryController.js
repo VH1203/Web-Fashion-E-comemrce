@@ -1,12 +1,10 @@
-const Category = require("../models/Category");
+const categoryService = require("../services/categoryService");
 
-async function getCategories(req, res, next) {
+exports.getAllCategories = async (req, res, next) => {
   try {
-    const categories = await Category.find().exec();
+    const categories = await categoryService.getAllCategories();
     res.json(categories);
   } catch (err) {
     next(err);
   }
-}
-
-module.exports = { getCategories };
+};

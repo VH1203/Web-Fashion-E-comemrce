@@ -7,7 +7,6 @@
   animation: fadeIn 0.8s ease;
 }
 
-/* ===== Fade in animation ===== */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -220,19 +219,15 @@
 
 .scroll-btn {
   position: absolute;
-  top: 45%;
+  top: 50%;
   transform: translateY(-50%);
-  background: white;
-  border: 1px solid #ddd;
   border-radius: 50%;
-  width: 42px;
-  height: 42px;
-  font-size: 24px;
-  color: #2563eb;
-  cursor: pointer;
-  z-index: 10;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  transition: all 0.3s;
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+  font-weight: bold;
+  z-index: 5;
+  transition: 0.3s;
 }
 
 .scroll-btn:hover {
@@ -247,7 +242,6 @@
 
 .scroll-btn.right {
   right: -20px;
-  font-size: 35px;
 }
 
 .product-card {

@@ -1,78 +1,87 @@
-import React, { Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
+;
+// Auth pages
+import Register from "../pages/auth/Register";
+import Login from "../pages/auth/Login";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import "mdb-react-ui-kit/dist/css/mdb.min.css";
+import HomePage from "../pages/customer/HomePage";
+import Dashboard from "../pages/shop/Dashboard";
+import SystemConfig from "../pages/admin/SystemConfig";
+import SalesOrders from "../pages/sales/SalesOrders";
+import Tickets from "../pages/support/Tickets";
+import { useAuth } from "../context/AuthContext";  
 
-import HomePage from "../pages/customer/HomePage.jsx";
-import SystemIntake from "../pages/admin/SystemIntake.jsx";
-import TicketList from "../pages/support/TicketList.jsx";
-import TicketDetail from "../pages/support/TicketDetail.jsx";
-import OwnerDesk from "../pages/shop/OwnerDesk.jsx";
-
-import Login from "../pages/auth/Login.jsx";
-import Register from "../pages/auth/Register.jsx";
-import ForgotPassword from "../pages/auth/ForgotPassword.jsx";
-
-import ProtectedRoute from "./ProtectedRoute.jsx";
-import Topbar from "../components/layout/Topbar.jsx";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRouter() {
+  const { user } = useAuth();
+
+  // Nếu người dùng đã đăng nhập và KHÔNG phải customer -> điều hướng sang dashboard role tương ứng
+  const redirectByRole = () => {
+    if (!user) return null;
+    switch (user.role) {
+      case "shop_owner":
+        return <Navigate to="/shop/dashboard" replace />;
+      case "system_admin":
+        return <Navigate to="/admin/system-config" replace />;
+      case "sales":
+        return <Navigate to="/sales/orders" replace />;
+      case "support":
+        return <Navigate to="/support/tickets" replace />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <>
-      <Topbar />
-      <Suspense fallback={<div className="p-4">Loading...</div>}>
-        <div className="container-fluid py-3">
-          <Routes>
-            {/* Public */}
-            <Route path="/" element={<HomePage />} />
+      <Routes>
+        {/* Customer */}
+        <Route path="/" element={<HomePage />} />
 
-            {/* System Admin (trung gian) */}
-            <Route
-              path="/admin/intake"
-              element={
-                <ProtectedRoute allowedRoles={["system_admin"]}>
-                  <SystemIntake />
-                </ProtectedRoute>
-              }
-            />
+        {/* Shop Owner */}
+        <Route
+          path="/shop/*"
+          element={
+            <ProtectedRoute allowedRoles={["shop_owner"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-            {/* Support (CSKH của shop) */}
-            <Route
-              path="/support/tickets"
-              element={
-                <ProtectedRoute allowedRoles={["support"]}>
-                  <TicketList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/support/tickets/:id"
-              element={
-                <ProtectedRoute allowedRoles={["support","shop_owner","system_admin"]}>
-                  <TicketDetail />
-                </ProtectedRoute>
-              }
-            />
+        {/* System Admin */}
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={["system_admin"]}>
+              <SystemConfig />
+            </ProtectedRoute>
+          }
+        />
 
-            {/* Shop Owner (duyệt) */}
-            <Route
-              path="/shop/desk"
-              element={
-                <ProtectedRoute allowedRoles={["shop_owner"]}>
-                  <OwnerDesk />
-                </ProtectedRoute>
-              }
-            />
+        {/* Sales */}
+        <Route
+          path="/sales/*"
+          element={
+            <ProtectedRoute allowedRoles={["sales"]}>
+              <SalesOrders />
+            </ProtectedRoute>
+          }
+        />
 
-            {/* Auth */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* Support */}
+        <Route path="/support/*" element={<ProtectedRoute allowedRoles={["support"]}><Tickets/></ProtectedRoute>} />
 
-            {/* tiện */}
-            <Route path="/home" element={<Navigate to="/" replace />} />
-            <Route path="*" element={<h1 className="p-4">404 - Not Found</h1>} />
-          </Routes>
-        </div>
-      </Suspense>
-    </>
+
+        {/* Auth */}
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+
+        {/* 404 */}
+        <Route path="*" element={<h1>404 - Not Found</h1>} />
+      </Routes>
+
   );
 }

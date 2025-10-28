@@ -1,102 +1,92 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import api from "../../utils/api";
-import StatusBadge from "../../components/StatusBadge.jsx";
-import EventTimeline from "../../components/EventTimeline.jsx";
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { TicketAPI } from '../../services/ticketService';
+import LogList from '../../components/tickets/LogList';
 
 export default function TicketDetail() {
   const { id } = useParams();
   const [t, setT] = useState(null);
-  const [message, setMessage] = useState("");
-  const [proposal, setProposal] = useState({ kind:"refund", amount:0, reason:"" });
-  const [approv, setApprov] = useState({ reason:"" });
+  const [logMsg, setLogMsg] = useState('');
+  const [type, setType] = useState('note');
+  const [status, setStatus] = useState('');
 
-  async function load() {
-    const res = await api.get(`/tickets/${id}`);
-    setT(res.data);
-  }
+  const load = async () => {
+    const data = await TicketAPI.detail(id);
+    setT(data);
+    setStatus(data?.status || '');
+  };
+
   useEffect(()=>{ load(); }, [id]);
 
-  if (!t) return <div>Loading...</div>;
-  async function call(path, body) { await api.post(`/tickets/${id}/${path}`, body||{}); await load(); }
+  const addLog = async (e) => {
+    e.preventDefault();
+    await TicketAPI.addLog(id, { type, message: logMsg });
+    setLogMsg('');
+    await load();
+  };
+
+  const updateStatus = async (e) => {
+    e.preventDefault();
+    if (!status) return;
+    await TicketAPI.setStatus(id, status);
+    await load();
+  };
+
+  if (!t) return <div className="container py-3">Loading...</div>;
 
   return (
-    <div className="row g-4">
-      <div className="col-12 col-lg-8">
-        <div className="card mb-3">
-          <div className="card-body">
-            <div className="d-flex justify-content-between">
-              <div>
-                <h5 className="mb-1">{t.title}</h5>
-                <div className="text-muted small">{t.code} · Order {t.orderId} · Customer {t.customerId}</div>
-              </div>
-              <div className="text-end">
-                <StatusBadge value={t.status}/>
-                <div className="small text-muted">Updated {new Date(t.updatedAt).toLocaleString()}</div>
-              </div>
-            </div>
-            <p className="mt-3">{t.description}</p>
-          </div>
-        </div>
+    <div className="container py-3">
+      <h4>Phiếu #{t._id} <span className="badge text-bg-secondary">{t.status}</span></h4>
 
-        <div className="card">
-          <div className="card-header">Timeline</div>
-          <div className="card-body">
-            <EventTimeline events={t.events || []}/>
+      <div className="row mt-3">
+        <div className="col-lg-7">
+          <div className="card mb-3">
+            <div className="card-body">
+              <h5 className="mb-1">{t.subject}</h5>
+              <div className="small text-muted">Shop: {t.shop_id}{t.order_id?` · Order: ${t.order_id}`:''}</div>
+              <p className="mt-2" style={{whiteSpace:'pre-wrap'}}>{t.message}</p>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="col-12 col-lg-4">
-        <div className="card mb-3">
-          <div className="card-header">Actions (Support)</div>
-          <div className="card-body vstack gap-2">
-            <button className="btn btn-sm btn-outline-primary" onClick={()=>call("claim")}>Claim</button>
-            <button className="btn btn-sm btn-outline-secondary" onClick={()=>call("process")}>Start Processing</button>
-            <div className="mt-2">
-              <label className="form-label">Ask more</label>
-              <div className="input-group">
-                <input className="form-control form-control-sm" placeholder="Message..." value={message} onChange={e=>setMessage(e.target.value)}/>
-                <button className="btn btn-sm btn-outline-warning" onClick={()=>call("ask-more",{ message })}>Send</button>
-              </div>
-            </div>
-            <div className="mt-2">
-              <label className="form-label">Proposal</label>
-              <select className="form-select form-select-sm" value={proposal.kind} onChange={e=>setProposal(p=>({...p, kind:e.target.value}))}>
-                <option value="refund">Refund</option>
-                <option value="exchange">Exchange</option>
-                <option value="warranty">Warranty</option>
-                <option value="reject">Reject</option>
-              </select>
-              {proposal.kind==="refund" && (
-                <input className="form-control form-control-sm mt-1" type="number" placeholder="Amount"
-                  value={proposal.amount} onChange={e=>setProposal(p=>({...p, amount:Number(e.target.value)}))}/>
-              )}
-              <input className="form-control form-control-sm mt-1" placeholder="Reason"
-                value={proposal.reason} onChange={e=>setProposal(p=>({...p, reason:e.target.value}))}/>
-              <button className="btn btn-sm btn-primary mt-2" onClick={()=>call("propose", proposal)}>Send Proposal</button>
-            </div>
-            <hr/>
-            <div className="mt-1">
-              <button className="btn btn-sm btn-success me-2" onClick={()=>call("resolve",{ note:"Done" })}>Mark Resolved</button>
-              <button className="btn btn-sm btn-outline-dark" onClick={()=>call("close",{ note:"Closed" })}>Close</button>
+          <div className="card">
+            <div className="card-header">Tương tác</div>
+            <div className="card-body">
+              <LogList logs={t.logs}/>
+              <form onSubmit={addLog} className="row g-2 mt-2">
+                <div className="col-md-3">
+                  <select className="form-select" value={type} onChange={e=>setType(e.target.value)}>
+                    <option value="note">note</option>
+                    <option value="chat">chat</option>
+                    <option value="call">call</option>
+                    <option value="email">email</option>
+                  </select>
+                </div>
+                <div className="col-md-7">
+                  <input className="form-control" placeholder="Nội dung..." value={logMsg} onChange={e=>setLogMsg(e.target.value)}/>
+                </div>
+                <div className="col-md-2">
+                  <button className="btn btn-primary w-100">Thêm</button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-header">Owner Decision</div>
-          <div className="card-body">
-            <div className="input-group input-group-sm">
-              <input className="form-control" placeholder="Reason" value={approv.reason} onChange={e=>setApprov({reason:e.target.value})}/>
-              <button className="btn btn-outline-success" onClick={()=>call("approve", approv)}>Approve</button>
-              <button className="btn btn-outline-danger" onClick={()=>call("reject", approv)}>Reject</button>
+        <div className="col-lg-5">
+          <div className="card">
+            <div className="card-header">Cập nhật trạng thái</div>
+            <div className="card-body">
+              <form onSubmit={updateStatus} className="d-flex gap-2">
+                <select className="form-select" value={status} onChange={e=>setStatus(e.target.value)}>
+                  <option value="pending">pending</option>
+                  <option value="in_progress">in_progress</option>
+                  <option value="escalated">escalated</option>
+                  <option value="resolved">resolved</option>
+                  <option value="closed">closed</option>
+                </select>
+                <button className="btn btn-success">Lưu</button>
+              </form>
             </div>
-            {t.approval?.status && (
-              <div className="mt-2 small">
-                Current: <span className={`badge text-bg-${t.approval.status==="approved"?"success":t.approval.status==="rejected"?"danger":"secondary"}`}>{t.approval.status}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>

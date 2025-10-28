@@ -1,13 +1,19 @@
+// src/middlewares/uploadMiddleware.js
 const multer = require('multer');
 
-// Giới hạn: 5MB/file, chấp nhận ảnh phổ biến
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    const ok = /image\/(png|jpe?g|webp|gif|svg\+xml)/.test(file.mimetype);
-    return ok ? cb(null, true) : cb(new Error('File không phải ảnh hợp lệ'));
-  },
-});
+// dùng memory để có req.file.buffer / req.files[].buffer
+const storage = multer.memoryStorage();
 
+const fileFilter = (req, file, cb) => {
+  // tùy nhu cầu lọc file: ảnh/video/pdf...
+  cb(null, true);
+};
+
+const limits = {
+  fileSize: 10 * 1024 * 1024, // 10MB / file
+};
+
+const upload = multer({ storage, fileFilter, limits });
+
+// export trực tiếp instance để dùng: upload.single / upload.array
 module.exports = upload;

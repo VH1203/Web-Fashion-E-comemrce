@@ -1,17 +1,22 @@
-function rbacMiddleware(allowedRoles = []) {
+// src/middlewares/rbacMiddleware.js
+function rbacMiddleware(roles = []) {
   return (req, res, next) => {
-    try {
-      const userRole = req.user?.role?.name;
-      if (!allowedRoles.includes(userRole)) {
-        return res.status(403).json({
-          message: "Bạn không có quyền truy cập chức năng này.",
-        });
-      }
-      next();
-    } catch (err) {
-      res.status(500).json({ message: "Lỗi xác thực quyền truy cập" });
+    const user = req.user;
+    if (!user) return res.status(401).json({ message: 'Unauthorized' });
+
+    const role =
+      user.role?.name ||
+      user.role ||
+      user.data?.role ||
+      user.data?.role?.name;
+
+    if (!role) return res.status(403).json({ message: 'Forbidden: no role' });
+    if (Array.isArray(roles) && roles.length && !roles.includes(role)) {
+      return res.status(403).json({ message: 'Forbidden: insufficient role' });
     }
+    next();
   };
 }
 
-module.exports = { rbacMiddleware };
+module.exports = rbacMiddleware;       // cho cách gọi: rbacMiddleware([...])
+module.exports.allow = rbacMiddleware; // cho cách gọi: const { allow } = ...

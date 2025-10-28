@@ -1,32 +1,50 @@
 .header {
   border-bottom: 1px solid #eee;
-  padding: 10px 40px;
+  padding: 20px 90px;
   background: #fff;
   position: sticky;
   top: 0;
   z-index: 1000;
+background: linear-gradient(90deg, #a5d8ff, #74c0fc);
+}
+
+.header-auth-page {
+  padding: 12px 400px;  /* nhỏ hơn */
 }
 .header-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
+/* Logo */
 .header-logo {
   display: flex;
   margin-left: 180px;
   align-items: center;
   gap: 10px;
 }
-.logo-img {
-  width: 40px;
-  height: 40px;
+.logo-wrapper {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
+  overflow: hidden;
+  display: inline-block;
+}
+.logo-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  transform: scale(2);
+  transform-origin: center;
 }
 .logo-text {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: bold;
   color: #0d6efd;
 }
+
 .main-nav {
   display: flex;
   gap: 30px;
@@ -39,8 +57,8 @@
   text-decoration: none;
   padding: 4px 0;
   transition: color 0.3s;
+  font-weight: 600;
 }
-
 .nav-link::after {
   content: "";
   position: absolute;
@@ -54,55 +72,70 @@
 .nav-link:hover {
   color: #0d6efd;
 }
-.nav-link:hover::after {
+.nav-link:hover::after,
+.nav-link.active::after {
   width: 100%;
 }
 .nav-link.active {
   color: #0d6efd;
 }
-.nav-link.active::after {
-  width: 100%;
-}
+
+/* Icons + User */
 .header-icons {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   margin-right: 180px;
 }
+.user-top {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.user-icons {
+  display: flex;
+  gap: 20px;
+}
 .icon-link {
-  color: #333;
-  font-size: 18px;
+  color: #ffffff;
+  font-size: 24px;
   text-decoration: none;
-  transition: color 0.3s;
+  transition: color 0.3s ease;
 }
 .icon-link:hover {
   color: #0d6efd;
 }
-.login-link {
-  color: #0d6efd;
-}
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.user-name {
-  color: #333;
-  font-size: 16px;
-}
-.logout-btn {
-  background: #0d6efd;
-  color: #fff;
-  padding: 6px 12px;
-  cursor: pointer;
-  transition: background 0.3s;
+
+/* User buttons (Hồ sơ / Đăng nhập / Đăng xuất) */
+.user-name,
+.logout-btn,
+.login-btn {
   border: 1px solid #0d6efd;
+  color: #0d6efd;
+  background: #fff;
+  padding: 6px 12px;
   border-radius: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
+  text-decoration: none;
 }
-.logout-btn:hover {
-  background: #0b5ed7;
+.user-name:hover,
+.logout-btn:hover,
+.login-btn:hover {
+  background: #0d6efd;
+  color: #fff !important;
 }
+.user-name.active {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
 .header-auth {
   display: flex;
   align-items: center;
@@ -120,17 +153,16 @@
   padding: 8px 16px;
   border-radius: 20px;
   text-align: center;
-  transition: 0.3s;
+  transition: all 0.3s;
   text-decoration: none;
 }
-.auth-btn:hover {
-  background: #0d6efd;
-  color: #fff;
-}
+.auth-btn:hover,
 .auth-btn.active {
   background: #0d6efd;
-  color: #fff;
+  color: #fff !important;
 }
+
+/* Switch ngôn ngữ */
 .lang-switch {
   width: 70px;
   height: 32px;
@@ -162,20 +194,154 @@
   border-radius: 50%;
   object-fit: cover;
 }
-.user-name {
-  border: 1px solid #0d6efd;
-  color: #0d6efd;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
+
+/* Thanh search */
+.header-search {
+  display: flex;
   align-items: center;
-  gap: 6px;
+  background: #f3f4f6;
+  border-radius: 50px;
+  padding: 5px 10px;
+  width: 500px;
+  transition: all 0.3s ease;
+  border: solid 1px #e5e7eb;
+}
+.header-search:focus-within {
+  background: #fff;
+  border: 1px solid #2563eb;
+  box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
+}
+.header-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 6px 8px;
+  font-size: 14px;
+}
+.header-search button {
+  background: #2563eb;
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+.header-search button:hover {
+  background: #ffffff;
+  color: #2563eb;
+}
+.header-search i {
+  font-size: 14px;
 }
 
-.user-name:hover {
-  background: #0d6efd;
-  color: #fff;
+@media (max-width: 1024px) {
+  .header {
+    padding: 15px 40px;
+  }
+
+  .header-logo {
+    margin-left: 40px; 
+  }
+
+  .header-icons {
+    margin-right: 40px;
+  }
+
+  .header-search {
+    width: 350px;
+  }
+
+  .main-nav {
+    gap: 20px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 12px 20px;
+    flex-direction: column;
+  }
+
+  .header-inner {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .header-logo {
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .logo-wrapper {
+    width: 60px;
+    height: 60px;
+  }
+  .logo-img {
+    width: 60px;
+    height: 60px;
+  }
+  .logo-text {
+    font-size: 20px;
+  }
+
+  .main-nav {
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .header-search {
+    width: 100%; 
+    max-width: 100%;
+  }
+
+  .header-icons {
+    margin-right: 0;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .user-top {
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .user-icons {
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .icon-link {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-nav {
+    font-size: 14px;
+    gap: 8px;
+  }
+
+  .auth-btn,
+  .login-btn,
+  .logout-btn,
+  .user-name {
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 14px;
+  }
+
+  .header-search input {
+    font-size: 13px;
+  }
+
+  .header-search button {
+    padding: 4px 10px;
+    font-size: 13px;
+  }
 }

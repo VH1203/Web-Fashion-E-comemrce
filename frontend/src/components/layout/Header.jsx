@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { authApi } from "../../services/authService";
-import logo from "../../assets/icons/DFS-NonBG1.png";
+import logo from "../../assets/icons/DFS-NonBG.png";
 import "../../assets/styles/Header.css";
 
 const flagVN = "https://flagcdn.com/w20/vn.png";
@@ -32,12 +32,14 @@ export default function Header() {
 
   return (
     <>
-      <header className="header">
+      <header className={`header ${isAuthPage ? "header-auth-page" : ""}`}>
         <div className="header-inner">
           {/* Logo */}
           <div className="header-logo">
             <Link to="/">
-              <img src={logo} alt="Daily Fit" className="logo-img" />
+              <div className="logo-wrapper">
+                <img src={logo} alt="Daily Fit" className="logo-img" />
+              </div>
             </Link>
             <span className="logo-text">Daily Fit</span>
           </div>
@@ -87,14 +89,14 @@ export default function Header() {
           ) : (
             <>
               {/* Navbar */}
-              <nav className="main-nav">
+              {/* <nav className="main-nav">
                 <Link
                   to="/"
                   className={`nav-link ${
                     location.pathname === "/" ? "active" : ""
                   }`}
                 >
-                  Shop
+                  Trang chủ
                 </Link>
                 <Link
                   to="/men"
@@ -102,7 +104,7 @@ export default function Header() {
                     location.pathname === "/men" ? "active" : ""
                   }`}
                 >
-                  Men
+                  Nam
                 </Link>
                 <Link
                   to="/women"
@@ -110,7 +112,7 @@ export default function Header() {
                     location.pathname === "/women" ? "active" : ""
                   }`}
                 >
-                  Women
+                  Nữ
                 </Link>
                 <Link
                   to="/combos"
@@ -120,39 +122,54 @@ export default function Header() {
                 >
                   Combos
                 </Link>
-                <Link
-                  to="/joggers"
-                  className={`nav-link ${
-                    location.pathname === "/joggers" ? "active" : ""
-                  }`}
-                >
-                  Joggers
-                </Link>
-              </nav>
+              </nav> */}
 
-              {/* Icons */}
+              {/* Search bar */}
+              <div className="header-search">
+                <input type="text" placeholder="Tìm sản phẩm..." />
+                <button type="button">
+                  <i className="fas fa-search"></i>
+                </button>
+              </div>
+
               <div className="header-icons">
-                <Link to="/wishlist" className="icon-link">
-                  <i className="fas fa-heart"></i>
-                </Link>
-                <Link to="/cart" className="icon-link">
-                  <i className="fas fa-shopping-cart"></i>
-                </Link>
+                {/* Hàng trên: Hồ sơ + Đăng xuất hoặc Đăng nhập */}
+                <div className="user-top">
+                  {user ? (
+                    <>
+                      <Link
+                        className={`user-name ${
+                          location.pathname === "/users/profile" ? "active" : ""
+                        }`}
+                        to="/users/profile"
+                      >
+                        <i className="fa-solid fa-user"></i> Hồ sơ
+                      </Link>
+                      <button className="logout-btn" onClick={handleLogout}>
+                        Đăng xuất
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link to="/login" className="login-btn">
+                        Đăng nhập
+                      </Link>
+                      <Link to="/register" className="login-btn">
+                        Đăng ký
+                      </Link>
+                    </>
+                  )}
+                </div>
 
-                {user ? (
-                  <div className="user-info">
-                    <span className="user-name">
-                      <i className="fa-solid fa-user"></i> Hồ sơ
-                    </span>
-                    <button className="logout-btn" onClick={handleLogout}>
-                      Đăng xuất
-                    </button>
-                  </div>
-                ) : (
-                  <Link to="/login" className="icon-link login-link">
-                    <i className="fas fa-user"></i> Đăng nhập
+                {/* Hàng dưới: Wishlist + Cart */}
+                <div className="user-icons">
+                  <Link to="/wishlist" className="icon-link">
+                    <i className="fas fa-heart"></i>
                   </Link>
-                )}
+                  <Link to="/cart" className="icon-link">
+                    <i className="fas fa-shopping-cart"></i>
+                  </Link>
+                </div>
               </div>
             </>
           )}

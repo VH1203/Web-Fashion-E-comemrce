@@ -1,12 +1,29 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import AppRouter from "./router/index.jsx";
+import App from "./App";
+import "./assets/styles/global.css";
+import "mdb-react-ui-kit/dist/css/mdb.min.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import "primereact/resources/themes/lara-light-blue/theme.css";
+import "primereact/resources/primereact.min.css";
+import "primeicons/primeicons.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./index.css";
+
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID || "your_google_client_id";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <BrowserRouter>
-    <AppRouter />
-  </BrowserRouter>
+  <React.StrictMode>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <BrowserRouter> 
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
+  </React.StrictMode>
 );

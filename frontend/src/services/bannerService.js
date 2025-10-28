@@ -1,5 +1,8 @@
 import apiClient from "./apiClient";
 
 export const bannerApi = {
-  getAll: () => apiClient.get("/banners").then(res => res.data),
+  getAll: async () => {
+    const res = await apiClient.get("/banners");
+    return res.data;
+  },
 };

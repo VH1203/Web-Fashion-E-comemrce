@@ -1,13 +1,41 @@
-const router = require('express').Router();
+// src/routes/uploadRoutes.js
+const express = require('express');
+const router = express.Router();
+
+const { authMiddleware: auth } = require('../middlewares/authMiddleware');
+const rbac = require('../middlewares/rbacMiddleware');
+// Hỗ trợ cả 2 kiểu export: default function hoặc { allow }
+const allow = rbac.allow || rbac;
+
 const upload = require('../middlewares/uploadMiddleware');
 const ctrl = require('../controllers/uploadController');
-// optional: auth + RBAC middleware
-const { authMiddleware } = require('../middlewares/authMiddleware');
-const {rbacMiddleware} = require("../middlewares/rbacMiddleware");
 
-// Tùy quyền: shop_owner, admin, sales có thể upload
-router.post('/single', authMiddleware, rbacMiddleware(['shop_owner','system_admin','sales']), upload.single('file'), ctrl.uploadSingle);
-router.post('/many',   authMiddleware, rbacMiddleware(['shop_owner','system_admin','sales']), upload.array('files', 8), ctrl.uploadMany);
-router.delete('/',     authMiddleware, rbacMiddleware(['shop_owner','system_admin']), ctrl.deleteFile);
+const UPLOAD_ROLES = ['shop_owner', 'system_admin', 'sales'];
+
+// single file (field name: file)
+router.post(
+  '/single',
+  auth,
+  allow(UPLOAD_ROLES),
+  upload.single('file'),
+  ctrl.uploadSingle
+);
+
+// many files (field name: files)
+router.post(
+  '/many',
+  auth,
+  allow(UPLOAD_ROLES),
+  upload.array('files', 8),
+  ctrl.uploadMany
+);
+
+// delete by public_id
+router.delete(
+  '/',
+  auth,
+  allow(UPLOAD_ROLES),
+  ctrl.deleteFile
+);
 
 module.exports = router;

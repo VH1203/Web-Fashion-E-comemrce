@@ -1,95 +1,44 @@
-// Ticket.js 
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const AttachmentSchema = new mongoose.Schema({
-  url: { type: String, required: true },
-  type: { type: String, enum: ["image", "video", "file"], default: "image" },
-  uploadedBy: { type: String, enum: ["customer", "cskh", "system"], required: true },
-  at: { type: Date, default: Date.now }
-}, {_id:false});
-
-const EventSchema = new mongoose.Schema({
-  at: { type: Date, default: Date.now },
-  by: { id: { type: String }, role: { type: String } },
-  action: { type: String },
-  note: { type: String },
-  from: { type: String }, to: { type: String }
-}, {_id:false});
-
-const ProposalSchema = new mongoose.Schema({
-  kind: { type: String, enum: ["refund","exchange","warranty","reject"], required: true },
-  amount: { type: Number, min: 0 },
-  exchangeSkuId: { type: String },
-  reason: { type: String, maxlength: 2000 },
-  createdAt: { type: Date, default: Date.now },
-  createdBy: { type: String, required: true }
-}, {_id:false});
-
-const ApprovalSchema = new mongoose.Schema({
-  status: { type: String, enum: ["approved","rejected","pending"], default: "pending" },
-  decidedBy: { type: String },
-  decidedAt: { type: Date },
-  reason: { type: String }
-}, {_id:false});
-
-const SLASchema = new mongoose.Schema({
-  createdAt: { type: Date, default: Date.now },
-  firstResponseAt: { type: Date },
-  resolvedAt: { type: Date }
-}, {_id:false});
-
-const TicketSchema = new mongoose.Schema({
-  _id: { type: String, required: true }, // UUID
-  code: { type: String, required: true, unique: true }, // e.g. TCK-2025-000123
-  orderId: { type: String },
-  shopId: { type: String, index: true },
-  customerId: { type: String, index: true },
-  type: { type: String, enum: ["refund","exchange","warranty","not_received","damaged","other"], required: true },
-  title: { type: String, required: true },
-  description: { type: String, maxlength: 4000 },
-  status: { 
-    type: String,
-     enum: [
-   "intake",               // ticket vào trung tâm (System)
-   "routed",               // đã route sang shop
-   "assigned",             // đã assign agent hoặc agent claim
-   "processing",
-   "waiting_customer",
-   "escalated",            // giữ để tương thích cũ
-   "escalated_to_owner",   // tên rõ ràng hơn cho flow mới
-   "approved",
-   "rejected",
-   "resolved",
-   "closed",
-   "returned_to_system",   // shop trả về System
-   "pending"               // giữ tương thích dữ liệu cũ
- ],
-
-    default: "pending",
-    index: true
+const LogSchema = new mongoose.Schema(
+  {
+    type: { type: String, enum: ['chat', 'email', 'sms', 'call', 'push', 'note'], default: 'note' },
+    message: { type: String, required: true },
+    by_user_id: { type: String, required: true }, // id của support/customer thực hiện log
   },
-   ownerShopId: { type: String, index: true },   // shop nhận xử lý (khác với shop tạo ticket nếu có)
- intakeBy: { id: String, role: String },       // ai tiếp nhận ban đầu (thường là system_admin)
- assignee: {                                   
-   team: { type: String, enum: ["support", "system"] }, // đội đang “nắm” ticket
-   shopId: { type: String },                   // shop hiện tại “giữ” ticket
-   userId: { type: String }                    // agent (support) nếu đã assign cụ thể
- },
- queue: { type: String, enum: ["system_inbox","shop_inbox","agent_inbox","waiting_customer"], default: "system_inbox", index:true },
- category: { type: String },                   // optional: phân loại (lost, damaged,...)
- severity: { type: String, enum: ["low","medium","high","critical"], default: "medium" },
-  priority: { type: String, enum:["low","medium","high","critical"], default:"medium", index:true },
-  attachments: [AttachmentSchema],
-  channel: { type: String, enum: ["web","zalo","hotline","email","chat_widget"], default: "web" },
-  events: [EventSchema],
-  proposal: { type: ProposalSchema },
-  approval: { type: ApprovalSchema, default: { status: "pending" } },
-  sla: { type: SLASchema, default: () => ({}) },
-  tags: [{ type: String }],
-  isDeleted: { type: Boolean, default: false }
-}, { timestamps: true });
+  { _id: true, timestamps: { createdAt: true, updatedAt: false } }
+);
 
-TicketSchema.index({ shopId: 1, status: 1, priority: 1, createdAt: -1 });
-TicketSchema.index({ customerId: 1, createdAt: -1 });
+const TicketSchema = new mongoose.Schema(
+  {
+    order_id: { type: String, default: null },
+    user_id: { type: String, required: true }, // customer tạo
+    shop_id: { type: String, required: true },
 
-module.exports = mongoose.model("Ticket", TicketSchema);
+    subject: { type: String, required: true, trim: true, maxlength: 200 },
+    message: { type: String, required: true, trim: true, maxlength: 5000 },
+    images: [{ type: String }],
+
+    status: {
+      type: String,
+      enum: ['pending', 'in_progress', 'escalated', 'resolved', 'closed'],
+      default: 'pending',
+      index: true,
+    },
+    priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
+
+    // optional: ai đang xử lý
+    assigned_to: { type: String, default: null }, // support id
+    escalated_to: { type: String, default: null }, // owner id
+
+    logs: { type: [LogSchema], default: [] },
+  },
+  { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } }
+);
+
+// Index phục vụ lọc
+TicketSchema.index({ user_id: 1, createdAt: -1 });
+TicketSchema.index({ shop_id: 1, status: 1, updatedAt: -1 });
+TicketSchema.index({ assigned_to: 1, status: 1 });
+
+module.exports = mongoose.model('Ticket', TicketSchema);

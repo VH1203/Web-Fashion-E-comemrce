@@ -17,7 +17,9 @@ import Tickets from "../pages/support/Tickets";
 import ProductDetail from "../pages/customer/ProductDetail";
 import ProfilePage from "../pages/customer/Profile";
 import NotFound from "../pages/errors/NotFound";
-
+import Cart from "../pages/customer/Cart";
+import Checkout from "../pages/customer/Checkout";
+import PaymentReturn from "../pages/customer/PaymentReturn";
 /** Đợi authReady để tránh redirect sớm */
 function ProtectedRoute({ children }) {
   const { isAuthenticated, authReady } = useAuth();
@@ -70,6 +72,18 @@ export default function AppRouter() {
             <ProfilePage />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/cart"
+        element={<ProtectedRoute><Cart /></ProtectedRoute>}
+      />
+      <Route
+        path="/checkout"
+        element={<ProtectedRoute><Checkout /></ProtectedRoute>}
+      />
+      <Route
+        path="/payment/return"
+        element={<ProtectedRoute><PaymentReturn /></ProtectedRoute>}
       />
 
       {/* Shop: cho shop_owner/sales hoặc ai có shop:access */}

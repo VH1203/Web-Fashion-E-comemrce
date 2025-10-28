@@ -1,11 +1,6 @@
 import React from "react";
 import { formatCurrency } from "../../utils/formatCurrency";
 
-/**
- * ProductCard
- * - Nhận `item` (có thể là { product, flash_price } hoặc chính product)
- * - `type="flash"` để hiện badge giảm %
- */
 export default function ProductCard({ item, type }) {
   const p = item?.product || item || {};
   const id = p?._id || p?.id || "";

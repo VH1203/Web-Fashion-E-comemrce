@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { productService } from "../../services/productService";
 import { formatCurrency } from "../../utils/formatCurrency";
 import "../../assets/styles/ProductDetail.css";
+import { cartService } from "../../services/cartService";
 
 /* ===== Helpers (no hooks) ===== */
 function Stars({ value = 0, size = 16 }) {
@@ -35,7 +36,7 @@ function groupVariantOptions(variants) {
       map[k].add(String(val));
     }
   }
-  const orderedKeys = Object.keys(map).sort((a,b)=>a.localeCompare(b)); // mặc định A→Z (có thể đổi Size trước Color nếu muốn)
+  const orderedKeys = Object.keys(map).sort((a,b)=>a.localeCompare(b));
   const optionGroups = {};
   for (const k of orderedKeys) optionGroups[k] = Array.from(map[k]);
   return { optionGroups, orderedKeys };
@@ -61,11 +62,9 @@ function findBestVariant(variants, selections) {
 
 /** Khi user chọn 1 giá trị cho 1 key, tự điều chỉnh selections → biến thể hợp lệ */
 function resolveSelectionsOnPick(variants, current, key, value) {
-  // 1) lấy tất cả biến thể có key=value
   const list = variants.filter(v => norm(v?.attributes?.[key]) === norm(value));
-  if (!list.length) return current; // không có giá trị này trong dữ liệu thật
+  if (!list.length) return current;
 
-  // 2) chọn biến thể trong list khớp nhiều nhất với current (các key khác)
   let best = null, bestScore = -1;
   for (const v of list) {
     const attrs = v.attributes || {};
@@ -78,7 +77,6 @@ function resolveSelectionsOnPick(variants, current, key, value) {
     if (score > bestScore) { best = v; bestScore = score; }
   }
 
-  // 3) selections mới = toàn bộ attributes của biến thể best (đảm bảo hợp lệ)
   const next = { ...current, [key]: value };
   if (best?.attributes) {
     for (const [k,v] of Object.entries(best.attributes)) next[k] = v;
@@ -111,6 +109,7 @@ export default function ProductDetail() {
   const [selectedAttrs, setSelectedAttrs] = useState({});
   const [selectedVar, setSelectedVar] = useState(null);
   const [qty, setQty] = useState(1);
+  const [adding, setAdding] = useState(false); // loading khi thêm giỏ
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -141,6 +140,10 @@ export default function ProductDetail() {
           const init = { ...v0.attributes };
           setSelectedAttrs(init);
           setSelectedVar(v0);
+          // đồng thời giới hạn qty tối đa (nếu stock có)
+          if (typeof v0.stock === "number" && v0.stock > 0) {
+            setQty((q) => Math.min(q, v0.stock));
+          }
         }
       } catch (e) {
         if (!mounted) return;
@@ -158,6 +161,10 @@ export default function ProductDetail() {
     if (!detail?.variants) { setSelectedVar(null); return; }
     const best = findBestVariant(detail.variants, selectedAttrs);
     setSelectedVar(best);
+    // điều chỉnh qty theo stock của biến thể mới
+    if (best && typeof best.stock === "number" && best.stock >= 1) {
+      setQty((q) => Math.min(Math.max(1, q), best.stock));
+    }
   }, [detail?.variants, selectedAttrs]);
 
   if (loading) return <div className="pd-wrap">Đang tải...</div>;
@@ -189,21 +196,39 @@ export default function ProductDetail() {
   };
 
   const chooseAttr = (key, val) => {
-    // Cho phép bấm TẤT CẢ giá trị đang tồn tại; tự ghép sang 1 biến thể hợp lệ
     setSelectedAttrs(prev => resolveSelectionsOnPick(variants, prev, key, val));
   };
 
-  const addToCart = () => {
-    if (!selectedVar) { alert("Vui lòng chọn tổ hợp hợp lệ."); return; }
-    navigate("/cart", {
-      state: {
+  const addToCart = async () => {
+    try {
+      if (!selectedVar) { alert("Vui lòng chọn tổ hợp hợp lệ."); return; }
+      if ((selectedVar.stock ?? 0) <= 0) { alert("Biến thể đã hết hàng."); return; }
+      if (qty > (selectedVar.stock ?? 0)) { alert("Không đủ tồn kho cho số lượng đã chọn."); return; }
+
+      setAdding(true);
+      await cartService.add({
         product_id: p._id,
         variant_id: selectedVar._id,
         qty,
-        selected_attrs: selectedAttrs
+      });
+      navigate("/cart");
+    } catch (e) {
+      const msg = e?.response?.data?.message || e.message || "Không thêm được vào giỏ";
+      // chưa đăng nhập → chuyển tới login, đính kèm returnUrl
+      if (e?.response?.status === 401 || e?.response?.status === 403) {
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        navigate(`/login?returnUrl=${returnUrl}`);
+        return;
       }
-    });
+      alert(msg);
+    } finally {
+      setAdding(false);
+    }
   };
+
+  const stockLabel = selectedVar
+    ? (selectedVar.stock > 0 ? `Tồn kho: ${selectedVar.stock}` : "Hết hàng")
+    : "";
 
   return (
     <div className="pd-wrap">
@@ -259,7 +284,7 @@ export default function ProductDetail() {
               {orderedKeys.map((key) => {
                 const values = optionGroups[key] || [];
                 const selected = selectedAttrs[key] ?? "";
-                const disabledMap = buildDisabledMapLoose(variants, key, values); // chỉ disable nếu giá trị không tồn tại / hết hàng toàn bộ
+                const disabledMap = buildDisabledMapLoose(variants, key, values);
                 return (
                   <div className="v-group" key={key}>
                     <div className="label">{prettyKey(key)}</div>
@@ -284,23 +309,77 @@ export default function ProductDetail() {
                   </div>
                 );
               })}
-              {selectedVar && (<div className="stock">Tồn kho: {selectedVar.stock}</div>)}
+              {selectedVar && (<div className={`stock ${selectedVar.stock > 0 ? "" : "oos"}`}>{stockLabel}</div>)}
             </div>
           )}
 
           {/* Qty & action */}
           <div className="pd-actions">
             <div className="qty">
-              <button type="button" onClick={() => setQty((q)=>Math.max(1,q-1))}>-</button>
+              <button
+                type="button"
+                onClick={() => setQty((q)=>Math.max(1,q-1))}
+                disabled={qty <= 1}
+                title={qty <= 1 ? "Số lượng tối thiểu là 1" : ""}
+              >
+                -
+              </button>
               <input
                 type="number"
                 value={qty}
                 min={1}
-                onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+                max={selectedVar?.stock ?? 999999}
+                onChange={(e) => {
+                  const next = Math.max(1, Number(e.target.value) || 1);
+                  if (selectedVar?.stock != null) {
+                    setQty(Math.min(next, selectedVar.stock));
+                  } else {
+                    setQty(next);
+                  }
+                }}
               />
-              <button type="button" onClick={() => setQty((q)=>q+1)}>+</button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedVar?.stock != null) {
+                    setQty((q) => Math.min(q + 1, selectedVar.stock));
+                  } else {
+                    setQty((q) => q + 1);
+                  }
+                }}
+                disabled={selectedVar?.stock != null && qty >= selectedVar.stock}
+                title={
+                  selectedVar?.stock != null && qty >= selectedVar.stock
+                    ? "Đã đạt tối đa tồn kho"
+                    : ""
+                }
+              >
+                +
+              </button>
             </div>
-            <button type="button" className="btn-primary" onClick={addToCart}>Thêm vào giỏ</button>
+
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={addToCart}
+              disabled={
+                adding ||
+                !selectedVar ||
+                (selectedVar?.stock ?? 0) === 0 ||
+                qty > (selectedVar?.stock ?? Infinity)
+              }
+              title={
+                !selectedVar
+                  ? "Vui lòng chọn tổ hợp hợp lệ"
+                  : (selectedVar?.stock ?? 0) === 0
+                  ? "Biến thể này đã hết hàng"
+                  : qty > (selectedVar?.stock ?? Infinity)
+                  ? "Số lượng vượt tồn kho"
+                  : ""
+              }
+            >
+              {adding ? "Đang thêm..." : "Thêm vào giỏ"}
+            </button>
           </div>
 
           {/* Specs */}
@@ -369,51 +448,50 @@ export default function ProductDetail() {
         </section>
       )}
 
-     <section className="pd-section">
-  <h2>Sản phẩm liên quan</h2>
+      <section className="pd-section">
+        <h2>Sản phẩm liên quan</h2>
 
-  {related.length ? (
-    <div className="rel-grid">
-      {related.map((rp) => {
-        const img = rp.images?.[0];
-        const price = rp.base_price || 0;
-        const compare = rp.compare_at_price; // nếu BE có trường này
-        const hasSale = compare && compare > price;
-        const rating = rp.rating_avg || 0;
-        const sold = rp.sold_count || 0;
+        {related.length ? (
+          <div className="rel-grid">
+            {related.map((rp) => {
+              const img = rp.images?.[0];
+              const price = rp.base_price || 0;
+              const compare = rp.compare_at_price;
+              const hasSale = compare && compare > price;
+              const rating = rp.rating_avg || 0;
+              const sold = rp.sold_count || 0;
 
-        return (
-          <Link className="rel-card" to={`/product/${rp.slug || rp._id}`} key={rp._id}>
-            <div className="rel-thumb">
-              {img ? <img src={img} alt={rp.name} /> : <div className="noimg">No Image</div>}
-              {hasSale && <span className="rel-badge">SALE</span>}
-            </div>
+              return (
+                <Link className="rel-card" to={`/product/${rp.slug || rp._id}`} key={rp._id}>
+                  <div className="rel-thumb">
+                    {img ? <img src={img} alt={rp.name} /> : <div className="noimg">No Image</div>}
+                    {hasSale && <span className="rel-badge">SALE</span>}
+                  </div>
 
-            <div className="rel-info">
-              <div className="rel-name" title={rp.name}>{rp.name}</div>
+                  <div className="rel-info">
+                    <div className="rel-name" title={rp.name}>{rp.name}</div>
 
-              <div className="rel-price-row">
-                <span className="price-cur">{formatCurrency(price)}</span>
-                {hasSale && <span className="price-base">{formatCurrency(compare)}</span>}
-              </div>
+                    <div className="rel-price-row">
+                      <span className="price-cur">{formatCurrency(price)}</span>
+                      {hasSale && <span className="price-base">{formatCurrency(compare)}</span>}
+                    </div>
 
-              <div className="rel-meta">
-                <span className="rel-rating">
-                  <span className="stars-mini">{"★".repeat(Math.round(rating)).padEnd(5, "☆")}</span>
-                  <span className="score">{(rating || 0).toFixed ? (rating || 0).toFixed(1) : rating}</span>
-                </span>
-                <span className="rel-sold">Đã bán {sold}</span>
-              </div>
-            </div>
-          </Link>
-        );
-      })}
-    </div>
-  ) : (
-    <div className="muted">Chưa có sản phẩm liên quan.</div>
-  )}
-</section>
-
+                    <div className="rel-meta">
+                      <span className="rel-rating">
+                        <span className="stars-mini">{"★".repeat(Math.round(rating)).padEnd(5, "☆")}</span>
+                        <span className="score">{(rating || 0).toFixed ? (rating || 0).toFixed(1) : rating}</span>
+                      </span>
+                      <span className="rel-sold">Đã bán {sold}</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="muted">Chưa có sản phẩm liên quan.</div>
+        )}
+      </section>
     </div>
   );
 }

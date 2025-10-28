@@ -24,8 +24,12 @@ export const productService = {
     return res.data.data;
   },
 
-  getAllProducts: async () => {
+ async getAllProducts () {
     const res = await apiClient.get("/products/all-products");
     return res.data.data;
   },
+  async searchProducts(query) {
+    const res = await apiClient.get(`/products/search`, { params: { q: query } });
+    return res.data.data;
+  }
 };

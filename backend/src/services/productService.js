@@ -157,6 +157,32 @@ async function getAllproductsofShop() {
   }
 }
 
+async function searchProductsByName(keyword) {
+  try {
+    if (!keyword || typeof keyword !== 'string') {
+      return await Product.find().sort({ createdAt: -1 }).lean();
+    }
+
+    // Ưu tiên $text search
+    let products = await Product.find(
+      { $text: { $search: keyword } },
+      { score: { $meta: "textScore" } }
+    ).sort({ score: { $meta: "textScore" } }).lean();
+
+    // Nếu không có kết quả, fallback sang regex
+    if (products.length === 0) {
+      products = await Product.find({
+        name: { $regex: keyword, $options: "i" }
+      }).lean();
+    }
+
+    console.log(`✅ Found ${products.length} products matching "${keyword}"`);
+    return products;
+  } catch (err) {
+    console.error("🔥 Lỗi Mongo khi tìm kiếm Product:", err);
+    return [];
+  }
+}
 
 module.exports = {
   getProductDetail,
@@ -164,4 +190,5 @@ module.exports = {
   getRatingsSummary,
   getRelated,
   getAllproductsofShop,
+  searchProductsByName,
 };

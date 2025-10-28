@@ -4,6 +4,7 @@ const productController = require('../controllers/productController');
 
 
 router.get("/all-products", productController.getAllProducts);
+router.get("/search", productController.searchProducts);
 
 router.get('/:idOrSlug', productController.getDetail);
 router.get('/:idOrSlug/reviews', productController.getReviews);

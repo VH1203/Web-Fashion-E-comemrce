@@ -51,3 +51,19 @@ exports.getAllProducts = async (req, res) => {
     });
   }
 };
+exports.searchProducts = async (req, res) => {
+  try {
+    const { q } = req.query;   
+    const products = await productService.searchProductsByName(q);
+    return res.status(200).json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm Product:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ khi tìm kiếm Product",
+    });
+  }
+};

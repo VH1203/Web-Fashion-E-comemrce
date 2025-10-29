@@ -21,6 +21,7 @@ import NotFound from "../pages/errors/NotFound";
 import ShopLayout from "../components/layout/ShopLayout";
 import Dashboard from "../pages/shop/Dashboard";
 import ManageVoucher from "../pages/shop/ManageVoucher";
+import ManageBanner from "../pages/shop/ManageBanner";
 
 /** Đợi authReady để tránh redirect sớm */
 function ProtectedRoute({ children }) {
@@ -88,6 +89,7 @@ export default function AppRouter() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="voucher" element={<ManageVoucher />} />
+        <Route path="banner" element={<ManageBanner />} />
       </Route>
 
 

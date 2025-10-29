@@ -16,6 +16,7 @@ const userRoutes = require('./routes/userRoutes');
 const voucherRouters = require("./routes/voucherRoutes");
 const addressRoutes = require('./routes/addressRoutes');
 const bankRoutes = require('./routes/bankRoutes');
+const bannerRoutes = require("./routes/bannerRoutes");
 
 
 // const orderRoutes = require("./routes/orderRoutes");
@@ -55,6 +56,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/banks", bankRoutes);
 app.use("/api/vouchers", voucherRouters);
+app.use("/api/banners", bannerRoutes);
 
 // app.use("/api/orders", orderRoutes);
 // app.use("/api/wallets", walletRoutes);

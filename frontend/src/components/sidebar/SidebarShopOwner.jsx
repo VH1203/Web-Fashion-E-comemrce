@@ -5,6 +5,7 @@ const Sidebar = () => {
   const menuItems = [
     { icon: '⚙️', name: 'Dashboard', path: '/shop/dashboard' },
     { icon: '🎫', name: 'Voucher', path: '/shop/voucher' },
+    { icon: '🖼️', name: 'Banner', path: '/shop/banner' },
     { icon: '🛍️', name: 'Products', path: '/shop/products' },
   ];
 

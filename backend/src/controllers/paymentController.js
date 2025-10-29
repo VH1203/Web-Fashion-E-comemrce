@@ -1,74 +1,53 @@
-const Payment = require("../models/Payment");
-const PaymentWebhook = require("../models/PaymentWebhook");
+// backend/src/controllers/paymentController.js
+const { verifyVNPay } = require("../services/paymentGateway");
 const Order = require("../models/Order");
-const paymentGw = require("../services/paymentGateway");
+const Payment = require("../models/Payment");
 
-// Helper cập nhật order/payment
-async function settle(orderId, status, provider_txn_id) {
-  const order = await Order.findById(orderId);
-  if (!order) return null;
-  order.payment_status = status === "paid" ? "paid" : status;
-  if (status === "paid") order.status = "confirmed";
-  await order.save();
-  await Payment.updateOne({ order_id: orderId }, { $set: { status, provider_txn_id, webhook_verified: status === "paid" } });
-  return order;
+// cập nhật nhanh (browser), IPN vẫn là nguồn tin cậy cuối
+async function settle(orderCode, isPaid, gatewayTxn) {
+  const order = await Order.findOne({ order_code: orderCode });
+  if (!order) return;
+  await Payment.updateMany(
+    { order_id: order._id },
+    { $set: { status: isPaid ? "paid" : "failed", gateway_txn_id: gatewayTxn || null } }
+  );
+  await Order.updateOne(
+    { _id: order._id },
+    { $set: { payment_status: isPaid ? "paid" : "failed", status: isPaid ? "confirmed" : "pending" } }
+  );
 }
 
-// ===== VNPay Return (browser) =====
+// VNPay browser return
 exports.vnpayReturn = async (req, res) => {
   try {
-    const v = paymentGw.verifyVNPay(req.query);
-    if (!v.valid) return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=fail&reason=checksum`);
+    const v = verifyVNPay(req.query);
+    if (!v.valid) {
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=fail&reason=checksum`);
+    }
     if (v.code === "00") {
-      await settle(v.orderId, "paid", req.query.vnp_TransactionNo);
-      return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=success&order_id=${v.orderId}`);
+      await settle(v.orderCode, true, v.transId);
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=success&provider=vnpay&order_code=${v.orderCode}`);
     }
-    await settle(v.orderId, "failed");
-    return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=fail&order_id=${v.orderId}&code=${v.code}`);
-  } catch (e) {
-    return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=fail&reason=exception`);
-  }
-};
-
-// ===== VNPay Webhook (optional)
-exports.vnpayWebhook = async (req, res) => {
-  // nhiều tích hợp không có webhook; trả 200 luôn để tránh retry
-  res.status(200).json({ RspCode: "00", Message: "Ok" });
-};
-
-// ===== MoMo Return (browser)
-exports.momoReturn = async (req, res) => {
-  try {
-    // MoMo return qua query; verify ở webhook chắc hơn
-    const { resultCode, orderId, transId } = req.query;
-    if (String(resultCode) === "0") {
-      await settle(orderId, "paid", transId);
-      return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=success&order_id=${orderId}`);
-    }
-    await settle(orderId, "failed");
-    return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=fail&order_id=${orderId}&code=${resultCode}`);
+    await settle(v.orderCode, false, v.transId);
+    return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=fail&provider=vnpay&order_code=${v.orderCode}&code=${v.code}`);
   } catch {
     return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=fail&reason=exception`);
   }
 };
 
-// ===== MoMo Webhook (server-to-server)
-exports.momoWebhook = async (req, res) => {
+// MoMo browser return (MoMo đã ký ở IPN; return chủ yếu để UX)
+exports.momoReturn = async (req, res) => {
   try {
-    const ver = paymentGw.verifyMoMo(req.body);
-    await PaymentWebhook.create({
-      payment_id: req.body?.orderId || "unknown",
-      headers: req.headers, raw_body: req.body,
-      signature_valid: ver.valid, error: ver.valid ? undefined : "signature"
-    });
-
-    if (!ver.valid) return res.status(200).json({ resultCode: 97, message: "invalid signature" });
-
-    if (String(ver.resultCode) === "0") { await settle(ver.orderId, "paid", ver.transId); }
-    else { await settle(ver.orderId, "failed"); }
-
-    return res.status(200).json({ resultCode: 0, message: "ok" });
-  } catch (e) {
-    return res.status(500).json({ resultCode: 99, message: e.message });
+    const resultCode = String(req.query.resultCode || "");
+    const orderCode = req.query.orderId;
+    const transId = req.query.transId;
+    if (resultCode === "0") {
+      await settle(orderCode, true, transId);
+      return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=success&provider=momo&order_code=${orderCode}`);
+    }
+    await settle(orderCode, false, transId);
+    return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=fail&provider=momo&order_code=${orderCode}&code=${resultCode}`);
+  } catch {
+    return res.redirect(`${process.env.FRONTEND_URL}/payment/return?status=fail&reason=exception`);
   }
 };

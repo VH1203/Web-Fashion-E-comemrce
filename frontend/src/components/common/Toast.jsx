@@ -1,35 +1,39 @@
-import React, { useEffect, useState } from "react";
-import Alert from "@mui/material/Alert";
-import Stack from "@mui/material/Stack";
+import React, { createContext, useContext, useState, useCallback } from "react";
+import { Snackbar, Alert } from "@mui/material";
 
-export default function Toast({ type = "info", message, duration = 3000, onClose }) {
-  const [open, setOpen] = useState(true);
+const ToastCtx = createContext(null);
+export const useToast = () => useContext(ToastCtx);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setOpen(false);
-      if (onClose) onClose();
-    }, duration);
-    return () => clearTimeout(timer);
-  }, [duration, onClose]);
+export default function ToastProvider({ children }) {
+  const [open, setOpen] = useState(false);
+  const [opts, setOpts] = useState({ message: "", severity: "info", duration: 3000 });
 
-  if (!open) return null;
+  const show = useCallback((message, severity = "info", duration = 3000) => {
+    setOpts({ message, severity, duration });
+    setOpen(true);
+  }, []);
+
+  const toast = {
+    show,
+    success: (m, d) => show(m, "success", d),
+    info: (m, d) => show(m, "info", d),
+    warning: (m, d) => show(m, "warning", d),
+    error: (m, d) => show(m, "error", d),
+  };
 
   return (
-    <Stack
-      sx={{
-        position: "fixed",
-        top: 250,
-        right: 20,
-        zIndex: 2000,
-        width: "auto",
-        maxWidth: "400px"
-      }}
-      spacing={2}
-    >
-      <Alert severity={type} variant="filled">
-        {message}
-      </Alert>
-    </Stack>
+    <ToastCtx.Provider value={toast}>
+      {children}
+      <Snackbar
+        open={open}
+        autoHideDuration={opts.duration}
+        onClose={() => setOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={() => setOpen(false)} severity={opts.severity} variant="filled" sx={{ width: "100%" }}>
+          {opts.message}
+        </Alert>
+      </Snackbar>
+    </ToastCtx.Provider>
   );
 }

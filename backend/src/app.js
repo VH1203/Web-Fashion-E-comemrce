@@ -18,6 +18,7 @@ const bankRoutes = require('./routes/bankRoutes');
 const cartRoutes = require("./routes/cartRoutes");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
+const FE_ORIGIN = "https://resplendent-flow-production-eb08.up.railway.app";
 
 
 // const orderRoutes = require("./routes/orderRoutes");
@@ -33,10 +34,12 @@ const paymentRoutes = require("./routes/paymentRoutes");
 
 app.use(helmet()); 
 app.use(cors({
-  origin: '*',
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: [FE_ORIGIN],
+  credentials: true,
+  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"]
 }));
+
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(compression()); 

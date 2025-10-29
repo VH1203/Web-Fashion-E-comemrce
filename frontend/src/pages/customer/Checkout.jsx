@@ -1,5 +1,5 @@
-// Checkout.jsx
-import React, { useEffect, useMemo, useState } from "react";
+// src/pages/customer/Checkout.jsx
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Box,
@@ -12,15 +12,12 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  Chip,    
+  Chip,
+  Paper,
 } from "@mui/material";
-import Add from "@mui/icons-material/Add";
-import Edit from "@mui/icons-material/Edit";
 import LocalShipping from "@mui/icons-material/LocalShipping";
-import SwapHoriz from "@mui/icons-material/SwapHoriz";
 import LocationOn from "@mui/icons-material/LocationOn";
 import ArrowBack from "@mui/icons-material/ArrowBack";
-import Paper from "@mui/material/Paper";
 import PersonOutline from "@mui/icons-material/PersonOutline";
 import FmdGood from "@mui/icons-material/FmdGood";
 
@@ -28,20 +25,23 @@ import { addressService } from "../../services/addressService";
 import { checkoutService } from "../../services/checkoutService";
 import { formatCurrency } from "../../utils/formatCurrency";
 import AddressDialog from "../../components/AddressDialog";
+import AddressPickerDialog from "../../components/AddressPickerDialog";
+import PaymentMethodPanel from "../../components/PaymentMethodPanel";
+import { useToast } from "../../components/common/Toast";
 
 export default function Checkout() {
+  const toast = useToast();
+  const [paymentExtra, setPaymentExtra] = useState({});
   const nav = useNavigate();
   const loc = useLocation();
   const selectedIds = loc.state?.selected_item_ids || [];
 
   const [addresses, setAddresses] = useState([]);
   const [addressId, setAddressId] = useState("");
+
+  const [openPicker, setOpenPicker] = useState(false);
   const [openAddr, setOpenAddr] = useState(false);
   const [editAddr, setEditAddr] = useState(null);
-
-  // 🔀 Chọn địa chỉ cũ/mới
-  const [useSavedAddress, setUseSavedAddress] = useState(true);
-  const [newAddress, setNewAddress] = useState(null); // {name, phone, city, district, ward, street}
 
   const [shipper, setShipper] = useState("GHN");
   const [voucherCode, setVoucherCode] = useState("");
@@ -51,52 +51,49 @@ export default function Checkout() {
   const [method, setMethod] = useState("COD");
   const [loading, setLoading] = useState(false);
 
+  const extractNewId = (created) =>
+    created?._id ||
+    created?.item?._id ||
+    created?.data?.item?._id ||
+    created?.data?._id ||
+    created?.id ||
+    created?.data?.id ||
+    "";
+
   const loadAddresses = async () => {
     const list = await addressService.list();
     const arr = Array.isArray(list)
       ? list
       : list?.items || list?.addresses || list?.data || [];
     setAddresses(arr);
-    const d = arr.find((x) => x.is_default) || arr[0];
-    setAddressId(d?._id || "");
+    const def = arr.find((x) => x.is_default);
+    const keep = arr.find((x) => x._id === addressId);
+    setAddressId(def?._id || keep?._id || arr[0]?._id || "");
   };
 
-  const runPreview = async () => {
-    // chạy theo mode địa chỉ
+  const runPreview = async (addrId = addressId) => {
+    if (!addrId) return;
     const payload = {
       selected_item_ids: selectedIds,
       shipping_provider: shipper,
       voucher_code: voucherCode,
+      address_id: addrId,
     };
-    if (useSavedAddress) {
-      if (!addressId) return;
-      payload.address_id = addressId;
-    } else {
-      if (!newAddress) return;
-      payload.address = newAddress; // dùng địa chỉ mới (không cần lưu DB)
-    }
     const p = await checkoutService.preview(payload);
     setPreview(p);
   };
 
+  /* ---------------- Effects ---------------- */
   useEffect(() => {
     loadAddresses();
   }, []);
-
-  // Re-preview khi đổi địa chỉ / shipper / voucher / mode
   useEffect(() => {
-    if (useSavedAddress && addressId) runPreview();
-    if (!useSavedAddress && newAddress) runPreview();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useSavedAddress, addressId, newAddress, shipper, voucherCode]);
+    if (addressId) runPreview(addressId);
+  }, [addressId, shipper, voucherCode]); // eslint-disable-line
 
-  const total = preview?.total || 0;
-  const payBtnText =
-    method === "COD"
-      ? "Đặt hàng (COD)"
-      : `Thanh toán ${formatCurrency(total)} VND`;
-
+  /* ---------------- Actions ---------------- */
   const payment = async () => {
+    if (!addressId) return;
     setLoading(true);
     try {
       const payload = {
@@ -104,32 +101,86 @@ export default function Checkout() {
         note,
         shipping_provider: shipper,
         voucher_code: voucherCode,
-        payment_method: method, // COD|VNPAY|MOMO|WALLET|CARD
+        payment_method: method,
+        address_id: addressId,
         return_urls: {
           success: `${window.location.origin}/payment/return?status=success`,
           vnpay: `${window.location.origin}/payment/return?vnpay=1`,
           momo: `${window.location.origin}/payment/return?momo=1`,
         },
       };
-      if (useSavedAddress) payload.address_id = addressId;
-      else payload.address = newAddress;
-
       const data = await checkoutService.confirm(payload);
-      if (data.pay_url) window.location.href = data.pay_url;
-      else nav(`/orders`); // COD: về danh sách đơn
+      if (data.pay_url) {
+        toast.info("Chuyển đến cổng thanh toán...");
+        window.location.href = data.pay_url;
+      } else {
+        toast.success("Đơn hàng đã được tạo thành công.");
+         nav(`/payment/return?status=success&cod=1`);
+      }
+      
     } catch (e) {
-      alert(e?.response?.data?.message || e.message);
+      toast.error(e?.response?.data?.message || e.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const addr = useSavedAddress
-    ? addresses.find((a) => a._id === addressId)
-    : newAddress;
+  /* -------- Popup Picker handlers (Thêm/Sửa/Xoá/Chọn) -------- */
+  const handleOpenAddFromPicker = () => {
+    setOpenPicker(false);
+    setEditAddr(null);
+    setOpenAddr(true);
+  };
+
+  const handleOpenEditFromPicker = (a) => {
+    setOpenPicker(false);
+    setEditAddr(a);
+    setOpenAddr(true);
+  };
+
+  const handleDeleteFromPicker = async (id) => {
+    try {
+      await addressService.remove(id);
+      await loadAddresses();
+      if (id === addressId) setAddressId(""); // nếu xoá địa chỉ đang dùng
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message);
+    }
+  };
+
+  /* -------- Dialog Thêm/Sửa submit -------- */
+  const handleSubmitAddress = async (payload) => {
+    try {
+      if (editAddr) {
+        await addressService.update(editAddr._id, payload);
+        await loadAddresses();
+        setOpenAddr(false);
+        toast.success("Đã cập nhật địa chỉ.");
+      } else {
+        const created = await addressService.create(payload);
+        const newId = extractNewId(created);
+        await loadAddresses();
+        if (newId) setAddressId(newId); // dùng luôn địa chỉ mới
+        setOpenAddr(false);
+        toast.success("Đã thêm địa chỉ mới.");
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || e.message);
+    }
+  };
+
+  const addr = addresses.find((a) => a._id === addressId);
+  const total = preview?.total || 0;
+  const payBtnText =
+    method === "COD"
+      ? "Đặt hàng (COD)"
+      : `Thanh toán ${formatCurrency(total)} VND`;
 
   return (
-    <Box sx={{ background: "#f6f7fb", minHeight: "100dvh", py: 4 }}>
+    <Box
+      className="soft-wrap"
+      sx={{ background: "#f6f7fb", minHeight: "100dvh", py: 4 }}
+    >
       <Box sx={{ maxWidth: 1100, mx: "auto", px: 2 }}>
         <Stack
           direction="row"
@@ -142,7 +193,7 @@ export default function Checkout() {
           </Typography>
           <Button
             component={RouterLink}
-            to="/cart" // đổi lại nếu route giỏ hàng của bạn khác
+            to="/cart"
             variant="outlined"
             size="small"
             startIcon={<ArrowBack />}
@@ -152,8 +203,8 @@ export default function Checkout() {
           </Button>
         </Stack>
 
-        {/* Địa chỉ */}
-        <Card sx={{ borderRadius: 3, mb: 2 }}>
+        {/* Địa chỉ đang chọn + Thay đổi */}
+        <Card className="soft-card" sx={{ borderRadius: 3, mb: 2 }}>
           <CardContent>
             <Stack
               direction="row"
@@ -164,133 +215,54 @@ export default function Checkout() {
               <Typography fontWeight={700}>
                 <LocationOn sx={{ mr: 0.5 }} /> Địa chỉ nhận hàng
               </Typography>
-              <Stack direction="row" spacing={1}>
-                <Button
-                  size="small"
-                  startIcon={<SwapHoriz />}
-                  onClick={() => setUseSavedAddress((v) => !v)}
-                >
-                  {useSavedAddress
-                    ? "Chuyển sang địa chỉ mới"
-                    : "Dùng địa chỉ đã lưu"}
-                </Button>
-                {useSavedAddress ? (
-                  <>
-                    <Button
-                      size="small"
-                      startIcon={<Add />}
-                      onClick={() => {
-                        setEditAddr(null);
-                        setOpenAddr(true);
-                      }}
-                    >
-                      Thêm
-                    </Button>
-                    {addr && (
-                      <Button
-                        size="small"
-                        startIcon={<Edit />}
-                        onClick={() => {
-                          setEditAddr(addr);
-                          setOpenAddr(true);
-                        }}
-                      >
-                        Sửa
-                      </Button>
-                    )}
-                  </>
-                ) : (
-                  <Button
-                    size="small"
-                    startIcon={<Add />}
-                    onClick={() => {
-                      setEditAddr(null);
-                      setOpenAddr(true);
-                    }}
-                  >
-                    Chọn địa chỉ (63/34)
-                  </Button>
-                )}
-              </Stack>
+              <Button size="small" onClick={() => setOpenPicker(true)}>
+                Thay đổi
+              </Button>
             </Stack>
 
-            {/* Mode: địa chỉ đã lưu */}
-            {useSavedAddress ? (
-              <>
-                {/* Thay thế phần: <Stack direction="row" spacing={1} ...> Chips </Stack> */}
-<Stack spacing={1}>
-  {addresses.map((a) => {
-    const selected = a._id === addressId;
-    return (
-      <Paper
-        key={a._id}
-        variant="outlined"
-        onClick={() => setAddressId(a._id)}
-        sx={{
-          p: 1.25, borderRadius: 2, cursor: "pointer",
-          borderColor: selected ? "primary.main" : "divider",
-          bgcolor: selected ? "primary.50" : "background.paper"
-        }}
-      >
-        <Stack spacing={0.5}>
-          <Typography component="div" sx={{ display: "flex", alignItems: "center", gap: .75 }}>
-            <PersonOutline fontSize="small" /> <b>{a.name}</b>
-            <Chip size="small" variant={selected ? "filled" : "outlined"} label={a.phone} />
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ display:"flex", alignItems:"center", gap:.75 }}>
-            <FmdGood fontSize="small" />
-            {[a.street, a.ward, a.district, a.city].filter(Boolean).join(", ")}
-          </Typography>
-        </Stack>
-      </Paper>
-    );
-  })}
-</Stack>
-
-                {!addresses.length && (
+            {addr ? (
+              <Paper
+                variant="outlined"
+                className="soft-item"
+                sx={{
+                  p: 1.25,
+                  borderRadius: 2,
+                  transition: "box-shadow .25s ease, transform .25s ease",
+                }}
+              >
+                <Stack spacing={0.5}>
+                  <Typography
+                    component="div"
+                    sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+                  >
+                    <PersonOutline fontSize="small" /> <b>{addr.name}</b>
+                    <Chip size="small" variant="outlined" label={addr.phone} />
+                    {addr.is_default && (
+                      <Chip size="small" color="primary" label="Mặc định" />
+                    )}
+                  </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ mt: 1 }}
+                    sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
                   >
-                    Bạn chưa có địa chỉ. Hãy bấm <b>Thêm</b> để tạo địa chỉ mới.
+                    <FmdGood fontSize="small" />
+                    {[addr.street, addr.ward, addr.district, addr.city]
+                      .filter(Boolean)
+                      .join(", ")}
                   </Typography>
-                )}
-              </>
+                </Stack>
+              </Paper>
             ) : (
-              <>
-                {newAddress ? (
-                  <Stack
-                    spacing={0.25}
-                    sx={{ p: 1.25, borderRadius: 2, bgcolor: "#f3f5f8" }}
-                  >
-                    <Typography fontWeight={700}>
-                      {newAddress.name} • {newAddress.phone}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {[
-                        newAddress.street,
-                        newAddress.ward,
-                        newAddress.district,
-                        newAddress.city,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </Typography>
-                  </Stack>
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    Chưa chọn địa chỉ mới. Nhấn <b>Chọn địa chỉ (63/34)</b> để
-                    chọn nhanh theo 2 bộ dữ liệu.
-                  </Typography>
-                )}
-              </>
+              <Typography variant="body2" color="text.secondary">
+                Chưa có địa chỉ. Nhấn <b>Thay đổi</b> để thêm/chọn.
+              </Typography>
             )}
           </CardContent>
         </Card>
 
         {/* Sản phẩm đã chọn */}
-        <Card sx={{ borderRadius: 3, mb: 2 }}>
+        <Card className="soft-card" sx={{ borderRadius: 3, mb: 2 }}>
           <CardContent>
             <Typography fontWeight={700} mb={1}>
               Sản phẩm đã chọn
@@ -300,7 +272,7 @@ export default function Checkout() {
                 Chưa có dữ liệu. Hãy chọn địa chỉ để tải tạm tính.
               </Typography>
             )}
-            <Stack spacing={1.25}>
+            <Stack spacing={1.25} className="stagger">
               {preview?.items?.map((it) => (
                 <Stack
                   key={`${it.product_id}-${it.variant_id}`}
@@ -367,7 +339,7 @@ export default function Checkout() {
         </Card>
 
         {/* Đơn vị vận chuyển + voucher + note */}
-        <Card sx={{ borderRadius: 3, mb: 2 }}>
+        <Card className="soft-card" sx={{ borderRadius: 3, mb: 2 }}>
           <CardContent>
             <Stack
               direction={{ xs: "column", md: "row" }}
@@ -419,7 +391,10 @@ export default function Checkout() {
                     value={voucherCode}
                     onChange={(e) => setVoucherCode(e.target.value)}
                   />
-                  <Button variant="outlined" onClick={runPreview}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => runPreview(addressId)}
+                  >
                     Áp dụng
                   </Button>
                 </Stack>
@@ -457,7 +432,7 @@ export default function Checkout() {
           spacing={2}
           alignItems="flex-start"
         >
-          <Card sx={{ borderRadius: 3, flex: 1 }}>
+          <Card className="soft-card" sx={{ borderRadius: 3, mb: 2 }}>
             <CardContent>
               <Typography fontWeight={700} mb={1}>
                 Phương thức thanh toán
@@ -484,18 +459,18 @@ export default function Checkout() {
                 <FormControlLabel
                   value="CARD"
                   control={<Radio />}
-                  label="Thẻ tín dụng/ghi nợ (qua VNPay)"
-                />
-                <FormControlLabel
-                  value="WALLET"
-                  control={<Radio />}
-                  label="Ví nền tảng"
+                  label="Thẻ tín dụng/ghi nợ"
                 />
               </RadioGroup>
+
+              <PaymentMethodPanel
+                method={method}
+                onExtraChange={(extra) => setPaymentExtra(extra)}
+              />
             </CardContent>
           </Card>
 
-          <Card sx={{ borderRadius: 3, width: { lg: 380 } }}>
+          <Card className="soft-card" sx={{ borderRadius: 3, width: { lg: 380 } }}>
             <CardContent>
               <Typography fontWeight={800} mb={1}>
                 Tóm tắt
@@ -531,11 +506,7 @@ export default function Checkout() {
               <Button
                 fullWidth
                 sx={{ mt: 2 }}
-                disabled={
-                  loading ||
-                  !preview ||
-                  (useSavedAddress ? !addressId : !newAddress)
-                }
+                disabled={loading || !preview || !addressId}
                 variant="contained"
                 onClick={payment}
               >
@@ -555,26 +526,24 @@ export default function Checkout() {
         </Stack>
       </Box>
 
-      {/* AddressDialog:
-          - Mode địa chỉ CŨ: onSubmit => lưu DB (create/update) rồi reload list
-          - Mode địa chỉ MỚI: onSubmit => chỉ set local newAddress, không lưu DB
-      */}
+      {/* Popup chọn địa chỉ đã lưu (quản lý Thêm/Sửa/Xoá/Chọn) */}
+      <AddressPickerDialog
+        open={openPicker}
+        onClose={() => setOpenPicker(false)}
+        addresses={addresses}
+        selectedId={addressId}
+        onSelect={(id) => setAddressId(id)}
+        onAdd={handleOpenAddFromPicker}
+        onEdit={handleOpenEditFromPicker}
+        onDelete={handleDeleteFromPicker}
+      />
+
+      {/* Dialog Thêm/Sửa — create -> chọn luôn địa chỉ mới */}
       <AddressDialog
         open={openAddr}
-        initial={useSavedAddress ? editAddr : null}
+        initial={editAddr}
         onClose={() => setOpenAddr(false)}
-        onSubmit={async (payload) => {
-          if (useSavedAddress) {
-            if (editAddr) await addressService.update(editAddr._id, payload);
-            else await addressService.create(payload);
-            setOpenAddr(false);
-            await loadAddresses();
-          } else {
-            setNewAddress(payload);
-            setAddressId("");
-            setOpenAddr(false);
-          }
-        }}
+        onSubmit={handleSubmitAddress}
       />
     </Box>
   );

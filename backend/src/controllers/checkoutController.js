@@ -23,7 +23,8 @@ exports.confirm = async (req, res, next) => {
       note: req.body.note,
       ship_provider: req.body.shipping_provider,
       voucher_code: req.body.voucher_code,
-      payment_method: req.body.payment_method, // COD | VNPAY | MOMO | WALLET | CARD
+      payment_method: req.body.payment_method,
+      payment_extra: req.body.payment_extra || {},
       return_urls: req.body.return_urls
     });
     res.json({ status: "success", data: r });

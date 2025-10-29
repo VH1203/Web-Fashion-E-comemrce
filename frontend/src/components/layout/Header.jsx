@@ -266,6 +266,14 @@ export default function Header({
                     <MenuItem
                       onClick={() => {
                         closeMenu();
+                        navigate("/shop");
+                      }}
+                    >
+                      Cửa hàng của tôi
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        closeMenu();
                         navigate("/profile");
                       }}
                     >

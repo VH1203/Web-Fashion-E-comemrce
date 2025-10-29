@@ -18,7 +18,7 @@ const bankRoutes = require('./routes/bankRoutes');
 const cartRoutes = require("./routes/cartRoutes");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
-const FE_ORIGIN = "https://resplendent-flow-production-eb08.up.railway.app";
+const FE_ORIGIN = "https://web-fashion-e-comemrce-production.up.railway.app";
 
 
 // const orderRoutes = require("./routes/orderRoutes");

@@ -10,13 +10,17 @@ import ChangePassword from "../pages/auth/ChangePassword";
 
 // ===== Role Pages =====
 import HomePage from "../pages/customer/HomePage";
-import Dashboard from "../pages/shop/Dashboard";
 import SystemConfig from "../pages/admin/SystemConfig";
 import SalesOrders from "../pages/sales/SalesOrders";
 import Tickets from "../pages/support/Tickets";
 import ProductDetail from "../pages/customer/ProductDetail";
 import ProfilePage from "../pages/customer/Profile";
 import NotFound from "../pages/errors/NotFound";
+
+// ==== Shop ======
+import ShopLayout from "../components/layout/ShopLayout";
+import Dashboard from "../pages/shop/Dashboard";
+import ManageVoucher from "../pages/shop/ManageVoucher";
 
 /** Đợi authReady để tránh redirect sớm */
 function ProtectedRoute({ children }) {
@@ -73,14 +77,19 @@ export default function AppRouter() {
       />
 
       {/* Shop: cho shop_owner/sales hoặc ai có shop:access */}
-      <Route
-        path="/shop/dashboard"
+       <Route
+        path="/shop"
         element={
           <RoleRoute roles={["shop_owner", "sales"]} permAny={["shop:access"]}>
-            <Dashboard />
+            <ShopLayout />
           </RoleRoute>
         }
-      />
+      >
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="voucher" element={<ManageVoucher />} />
+      </Route>
+
 
       {/* Sales */}
       <Route

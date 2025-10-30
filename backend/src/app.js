@@ -18,8 +18,7 @@ const bankRoutes = require('./routes/bankRoutes');
 const cartRoutes = require("./routes/cartRoutes");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
-const FE_ORIGIN = "https://web-fashion-e-comemrce-production.up.railway.app";
-
+const FE_ORIGIN = process.env.FE_ORIGIN || 'http://localhost:5173';
 
 // const orderRoutes = require("./routes/orderRoutes");
 // const walletRoutes = require("./routes/walletRoutes");
@@ -36,8 +35,8 @@ app.use(helmet());
 app.use(cors({
   origin: [FE_ORIGIN],
   credentials: true,
-  methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: "2mb" }));

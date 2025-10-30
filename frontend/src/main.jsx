@@ -2,22 +2,26 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./assets/styles/global.css";
-
+import {ToastProvider} from "./components/common/ToastProvider";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import ToastProvider from "./components/common/Toast";
-import ConfirmProvider from "./components/common/Confirm";
+import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
+import theme from "./theme";
+import CssBaseline from "@mui/material/CssBaseline";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <ConfirmProvider>
-            <App />
-          </ConfirmProvider>
-        </ToastProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <ToastProvider>
+      <StyledEngineProvider injectFirst>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <BrowserRouter>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </BrowserRouter>
+        </ThemeProvider>
+      </StyledEngineProvider>
+    </ToastProvider>
   </React.StrictMode>
 );

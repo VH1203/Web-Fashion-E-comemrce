@@ -4,8 +4,11 @@ const router = express.Router();
 const paymentCtrl = require("../controllers/paymentController");
 const paymentWebhook = require("../controllers/paymentWebhookController");
 
-// User is redirected về đây (browser)
+// VNPay
 router.get("/vnpay/return", paymentCtrl.vnpayReturn);
+router.get("/vnpay/ipn", paymentCtrl.vnpayIpn);       
+
+// MoMo
 router.get("/momo/return", paymentCtrl.momoReturn);
 
 router.get("/vnpay/ipn", paymentWebhook.vnpayIpn); 

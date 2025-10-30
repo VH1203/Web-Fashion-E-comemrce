@@ -86,9 +86,50 @@ exports.confirm = async ({
     },
   });
 
-  // 3) COD -> return ngay
-  if (!payment_method || payment_method === "COD") {
-    return { order_id: order._id, order_code: order.order_code, pay_url: null };
+  // Online → tạo Payment và payUrl
+  if (payment_method && payment_method !== "COD") {
+    const pay = await Payment.create({
+      order_id: order._id,
+      user_id: userId,
+      shop_id: order.shop_id,
+      gateway: payment_method === "MOMO" ? "MOMO" : payment_method === "VNPAY" ? "VNPAY" : "BANK",
+      method: payment_method === "WALLET" ? "wallet" : "bank_transfer",
+      amount: pv.total,
+      currency: "VND",
+      status: "pending",
+      return_url: return_urls?.success,
+      idempotency_key: uuidv4(),
+      expires_at: new Date(Date.now() + 15 * 60 * 1000),
+    });
+
+    let redirectUrl = null;
+  if (payment_method === "VNPAY") {
+    redirectUrl = paymentGw.buildVNPayUrl({
+      amount: pv.total,
+      orderId: order.order_code,                    
+      orderInfo: `DFS ${order.order_code}`,
+      returnUrl: return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`,
+    });
+    } else if (payment_method === "MOMO") {
+      const momo = await paymentGw.createMoMoPayment({
+        amount: pv.total,
+        orderId: order._id,
+        orderInfo: `DFS ${orderCode}`,
+        returnUrl: return_urls?.momo || `${process.env.FRONTEND_URL}/payment/return?momo=1`,
+        notifyUrl: `${process.env.API_URL}/api/payment/momo/webhook`,
+      });
+      redirectUrl = momo.payUrl;
+   } else if (payment_method === "CARD" || payment_method === "BANK") {
+    redirectUrl = paymentGw.buildVNPayUrl({
+      amount: pv.total,
+      orderId: order.order_code,                    
+      orderInfo: `DFS ${order.order_code}`,
+      returnUrl: return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`,
+      bankCode: "VNBANK"
+    });
+    }
+
+    return { order_id: order._id, order_code: order.order_code, pay_url: redirectUrl };
   }
 
   // 4) Online -> tạo Payment

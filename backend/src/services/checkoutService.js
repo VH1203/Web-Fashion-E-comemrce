@@ -90,13 +90,13 @@ exports.confirm = async ({ userId, shopId, address_id, note, ship_provider, vouc
     });
 
     let redirectUrl = null;
-    if (payment_method === "VNPAY") {
-      redirectUrl = paymentGw.buildVNPayUrl({
-        amount: pv.total,
-        orderId: order._id,
-        orderInfo: `DFS ${orderCode}`,
-        returnUrl: return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`,
-      });
+  if (payment_method === "VNPAY") {
+    redirectUrl = paymentGw.buildVNPayUrl({
+      amount: pv.total,
+      orderId: order.order_code,                    
+      orderInfo: `DFS ${order.order_code}`,
+      returnUrl: return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`,
+    });
     } else if (payment_method === "MOMO") {
       const momo = await paymentGw.createMoMoPayment({
         amount: pv.total,
@@ -106,13 +106,14 @@ exports.confirm = async ({ userId, shopId, address_id, note, ship_provider, vouc
         notifyUrl: `${process.env.API_URL}/api/payment/momo/webhook`,
       });
       redirectUrl = momo.payUrl;
-    } else if (payment_method === "CARD" || payment_method === "BANK") {
-      // tuỳ chọn khác → tạm thời dùng VNPay thẻ nội địa/quốc tế
-      redirectUrl = paymentGw.buildVNPayUrl({
-        amount: pv.total, orderId: order._id, orderInfo: `DFS ${orderCode}`,
-        returnUrl: return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`,
-        bankCode: "VNBANK"
-      });
+   } else if (payment_method === "CARD" || payment_method === "BANK") {
+    redirectUrl = paymentGw.buildVNPayUrl({
+      amount: pv.total,
+      orderId: order.order_code,                    
+      orderInfo: `DFS ${order.order_code}`,
+      returnUrl: return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`,
+      bankCode: "VNBANK"
+    });
     }
 
     return { order_id: order._id, order_code: order.order_code, pay_url: redirectUrl };

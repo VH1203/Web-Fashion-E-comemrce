@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
-import dfsLogo from "../../assets/icons/DFS-NonBG1.png";
+import dfsLogo from "../../assets/icons/DFS-NonBG.png";
 
 // MUI
 import AppBar from "@mui/material/AppBar";

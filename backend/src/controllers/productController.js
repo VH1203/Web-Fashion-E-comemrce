@@ -67,3 +67,43 @@ exports.searchProducts = async (req, res) => {
     });
   }
 };
+exports.updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedProduct = await productService.updateProduct(id, req.body);
+
+    res.status(200).json({
+      success: true,
+      message: "Cập nhật sản phẩm thành công",
+      data: updatedProduct,
+    });
+  } catch (error) {
+    console.error("Lỗi controller:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Lỗi máy chủ khi cập nhật sản phẩm",
+    });
+  }
+};
+// Xóa sản phẩm
+exports.deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await productService.deleteProductById(id);
+
+    if (!result.success) {
+      return res.status(404).json({ success: false, message: result.message });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    console.error("Lỗi controller khi xóa sản phẩm:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi máy chủ khi xóa sản phẩm!",
+    });
+  }
+};

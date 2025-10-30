@@ -176,13 +176,53 @@ async function searchProductsByName(keyword) {
       }).lean();
     }
 
-    console.log(`✅ Found ${products.length} products matching "${keyword}"`);
+    console.log(` Found ${products.length} products matching "${keyword}"`);
     return products;
   } catch (err) {
     console.error("🔥 Lỗi Mongo khi tìm kiếm Product:", err);
     return [];
   }
 }
+ async function updateProduct(id, data){
+ try {
+    const product = await Product.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          name: data.name,
+          description: data.description,
+          base_price: data.base_price,
+          stock_total: data.stock_total,
+          status: data.status,  
+        },
+      },
+      { new: true } // trả về document sau khi update
+    );
+
+    if (!product) {
+      throw new Error("Không tìm thấy sản phẩm");
+    }
+
+    return product;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật sản phẩm:", error);
+    throw error;
+  }
+ }
+
+ async function deleteProductById(id){
+  try {
+     const product = await Product.findById(id);
+     if (!product) {
+       throw new Error("Không tìm thấy sản phẩm");
+     }
+      await Product.findByIdAndDelete(id);
+     return {success: true, message: "Xóa sản phẩm thành công"}; 
+       } catch (error) {
+     console.error("Lỗi khi xóa sản phẩm:", error);
+     throw error;
+   }
+ }
 
 module.exports = {
   getProductDetail,
@@ -191,4 +231,6 @@ module.exports = {
   getRelated,
   getAllproductsofShop,
   searchProductsByName,
+  updateProduct,
+  deleteProductById,
 };

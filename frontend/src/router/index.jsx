@@ -49,6 +49,7 @@ export default function AppRouter() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      
 
       {/* Đổi mật khẩu: cần đăng nhập */}
       <Route

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Tabs, Tab, Stack, TextField, Button, Alert, Typography
@@ -66,14 +66,18 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
   const [quanId, setQuanId] = useState("");
   const [phuongId, setPhuongId] = useState("");
 
-  // 34 tỉnh
+  // 34 tỉnh (không có Quận)
   const [db34, setDb34] = useState([]);
   const [provCode, setProvCode] = useState("");
   const [wardCode, setWardCode] = useState("");
 
+  // guard để không bị useEffect reset trong lúc prefill
+  const hydratingRef = useRef(false);
+
+  /* ================= INIT ================= */
   useEffect(() => {
     if (!open) return;
-    setTab(0);
+
     setName(initial?.name || "");
     setPhone(initial?.phone || "");
     setStreet(initial?.street || "");
@@ -159,6 +163,96 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
     })();
   }, [quanId]);
 
+  /* ================= Prefill helpers ================= */
+  async function prefill63(init, tinh) {
+    // 1) Tỉnh theo code → fallback theo tên
+    let foundTinh =
+      init.province_code &&
+      tinh.find((t) => String(t.id) === String(init.province_code));
+    if (!foundTinh && init.city) {
+      const target = norm(init.city);
+      foundTinh = tinh.find((t) => norm(t.full_name) === target);
+    }
+    if (!foundTinh) return; // không xác định được tỉnh
+    setTinhId(foundTinh.id);
+
+    // 2) Quận
+    const qList = await fetchQuan(foundTinh.id);
+    setQuanList(qList);
+    let foundQuan =
+      init.district_code &&
+      qList.find((q) => String(q.id) === String(init.district_code));
+    if (!foundQuan && init.district) {
+      const target = norm(init.district);
+      foundQuan = qList.find((q) => norm(q.full_name) === target);
+    }
+    if (!foundQuan) {
+      setQuanId("");
+      setPhuongList([]);
+      setPhuongId("");
+      return;
+    }
+    setQuanId(foundQuan.id);
+
+    // 3) Phường
+    const pList = await fetchPhuong(foundQuan.id);
+    setPhuongList(pList);
+    let foundPhuong =
+      init.ward_code &&
+      pList.find((p) => String(p.id) === String(init.ward_code));
+    if (!foundPhuong && init.ward) {
+      const target = norm(init.ward);
+      foundPhuong = pList.find((p) => norm(p.full_name) === target);
+    }
+    if (foundPhuong) setPhuongId(foundPhuong.id);
+  }
+
+  async function prefill34(init, db34All) {
+    // 1) Tỉnh 34
+    let province = null;
+    if (init.province_code) {
+      province = db34All.find(
+        (p) => String(p.Code || p.code) === String(init.province_code)
+      );
+    }
+    if (!province && init.city) {
+      const target = norm(init.city);
+      province = db34All.find((p) =>
+        [p.FullName, p.Name, p.name].some((n) => n && norm(n) === target)
+      );
+    }
+    if (!province) return;
+    const pCode = String(province.Code || province.code);
+    setProvCode(pCode);
+
+    // 2) Phường 34
+    const wards = province.Wards || [];
+    let ward = null;
+    if (init.ward_code) {
+      ward = wards.find(
+        (w) => String(w.Code || w.code) === String(init.ward_code)
+      );
+    }
+    if (!ward && init.ward) {
+      const target = norm(init.ward);
+      ward = wards.find((w) => {
+        const base = String(w.FullName || w.Name || w.name || "").trim();
+        const short = String(
+          w.AdministrativeUnitShortName || w.AdministrativeUnitShort || ""
+        ).trim();
+        const text =
+          short && base.toLowerCase().startsWith(short.toLowerCase() + " ")
+            ? base
+            : short
+            ? `${short} ${base}`
+            : base;
+        return norm(text) === target || norm(base) === target;
+      });
+    }
+    if (ward) setWardCode(String(ward.Code || ward.code));
+  }
+
+  /* ================= derived ================= */
   const wards34 = useMemo(() => {
     const p = db34.find(x => (x.Code || x.code || "") === provCode);
     return p?.Wards || [];
@@ -223,6 +317,13 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
     }
   };
 
+  const disabledSave =
+    !name.trim() ||
+    !phone.trim() ||
+    !street.trim() ||
+    !(mode === "63" ? city63 && ward63 : city34 && ward34);
+
+  /* ============== UI ============== */
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle> {initial ? "Sửa địa chỉ" : "Thêm địa chỉ"} </DialogTitle>

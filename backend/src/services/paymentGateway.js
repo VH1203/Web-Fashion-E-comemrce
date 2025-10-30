@@ -1,7 +1,7 @@
 // backend/src/services/paymentGateway.js
 const crypto = require("crypto");
-const axios = require("axios");
 const qs = require("qs");
+const fetch = require("node-fetch");
 
 /* ===== helpers ===== */
 function sortObject(obj) {
@@ -50,7 +50,7 @@ exports.buildVNPayUrl = ({ amount, orderId, orderInfo, returnUrl, bankCode, ipAd
     vnp_IpAddr: ipAddr,
     vnp_CreateDate,
   };
-  if (bankCode) vnpParams.vnp_BankCode = bankCode;
+  if (bankCode) input.vnp_BankCode = bankCode;
 
   // sort + sign đúng chuẩn
   const sorted = sortObject(vnpParams);
@@ -102,21 +102,23 @@ exports.createMoMoPayment = async ({ amount, orderId, orderInfo, returnUrl, noti
   const orderInfoStr = orderInfo || `Thanh toan don hang ${orderId}`;
 
   const body = {
-    partnerCode, accessKey,
-    requestId, amount: String(amount),
-    orderId, orderInfo: orderInfoStr,
-    returnUrl, notifyUrl,
-    requestType: "captureWallet",
-    extraData: "",
-    lang: "vi"
+    partnerCode: partner,
+    partnerName: "DFS",
+    storeId: "DFS-STORE",
+    requestId,
+    amount,
+    orderId: orderCode,
+    orderInfo,
+    redirectUrl: returnUrl || process.env.MOMO_RETURN_URL,
+    ipnUrl: notifyUrl || process.env.MOMO_IPN_URL,
+    lang: "vi",
+    extraData,
+    requestType,
+    signature,
   };
 
-  const raw = `accessKey=${accessKey}&amount=${body.amount}&extraData=${body.extraData}&ipnUrl=${notifyUrl}&orderId=${orderId}&orderInfo=${orderInfoStr}&partnerCode=${partnerCode}&redirectUrl=${returnUrl}&requestId=${requestId}&requestType=${body.requestType}`;
-  body.signature = crypto.createHmac("sha256", secretKey).update(raw).digest("hex");
-
-  const { data } = await axios.post(process.env.MOMO_API_URL, body, { headers: { "Content-Type": "application/json" } });
-  if (data?.payUrl) return { payUrl: data.payUrl, raw: data };
-  throw new Error(`MoMo error: ${data?.message || "unknown"}`);
+  const res = await fetch(endpoint, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+  return await res.json(); // { payUrl, resultCode, message, ... }
 };
 
 exports.verifyMoMo = (rawBody = {}) => {
@@ -125,8 +127,12 @@ exports.verifyMoMo = (rawBody = {}) => {
   const accessKey  = process.env.MOMO_ACCESS_KEY;
   const secretKey  = process.env.MOMO_SECRET_KEY;
 
-  const raw = `accessKey=${accessKey}&amount=${rest.amount}&extraData=${rest.extraData}&message=${rest.message}&orderId=${rest.orderId}&orderInfo=${rest.orderInfo}&orderType=${rest.orderType}&partnerCode=${partnerCode}&payType=${rest.payType}&requestId=${rest.requestId}&responseTime=${rest.responseTime}&resultCode=${rest.resultCode}&transId=${rest.transId}`;
   const sign = crypto.createHmac("sha256", secretKey).update(raw).digest("hex");
-  const valid = sign === signature;
-  return { valid, orderId: rest.orderId, amount: Number(rest.amount || 0), resultCode: rest.resultCode, transId: rest.transId };
+  const valid = String(sign) === String(signature);
+  return {
+    valid,
+    resultCode: Number(resultCode),
+    orderCode: orderId,  // chính là order_code
+    transId
+  };
 };

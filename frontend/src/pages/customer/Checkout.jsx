@@ -111,6 +111,7 @@ export default function Checkout() {
     }
   };
 
+  /* ---------------- Effects ---------------- */
   useEffect(() => {
     loadAddresses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -417,6 +418,11 @@ export default function Checkout() {
                 <FormControlLabel value="CARD" control={<Radio />} label="Thẻ tín dụng/ghi nợ (qua VNPay)" />
                 <FormControlLabel value="WALLET" control={<Radio />} label="Ví nền tảng" />
               </RadioGroup>
+
+              <PaymentMethodPanel
+                method={method}
+                onExtraChange={(extra) => setPaymentExtra(extra)}
+              />
             </CardContent>
           </Card>
 

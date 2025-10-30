@@ -2,7 +2,7 @@
 const Payment = require("../models/Payment");
 const PaymentWebhook = require("../models/PaymentWebhook");
 const Order = require("../models/Order");
-const paymentGw = require("../services/paymentGateway");
+const Payment = require("../models/Payment");
 
 // cập nhật order/payment theo orderRef (có thể là _id hoặc order_code)
 async function settle(orderRef, status, provider_txn_id) {

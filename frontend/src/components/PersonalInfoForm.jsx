@@ -53,7 +53,7 @@ export default function PersonalInfoForm({ me, onUpdated }) {
     try {
       const payload = { ...form };
       if (!payload.dob) delete payload.dob; // không gửi dob rỗng
-      const { user } = await userService.updateMe(payload);
+      const { user } = await userService.update(payload);
       onUpdated && onUpdated(user);
       setMsg("Đã lưu thông tin cá nhân");
     } catch (e) {

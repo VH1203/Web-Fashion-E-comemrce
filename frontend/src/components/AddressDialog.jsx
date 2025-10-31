@@ -1,7 +1,7 @@
-import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Tabs, Tab, Stack, TextField, Button, Alert, Typography
+  Tabs, Tab, Stack, TextField, Button, Alert, Typography, MenuItem
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useToast } from "./common/ToastProvider";
@@ -66,17 +66,18 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
   const [quanId, setQuanId] = useState("");
   const [phuongId, setPhuongId] = useState("");
 
-  // 34 tỉnh (không có Quận)
+  // 34 tỉnh
   const [db34, setDb34] = useState([]);
   const [provCode, setProvCode] = useState("");
   const [wardCode, setWardCode] = useState("");
 
-  // guard để không bị useEffect reset trong lúc prefill
-  const hydratingRef = useRef(false);
-
-  /* ================= INIT ================= */
+  // Open → load data + reset state
   useEffect(() => {
     if (!open) return;
+
+    // Chọn tab mặc định theo initial.source nếu có
+    const initTab = initial?.source === "34" ? 1 : 0;
+    setTab(initTab);
 
     setName(initial?.name || "");
     setPhone(initial?.phone || "");
@@ -93,14 +94,14 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
       } catch {}
     })();
 
+    // reset lựa chọn
     setTinhId(""); setQuanId(""); setPhuongId("");
     setProvCode(""); setWardCode("");
   }, [open, initial]);
 
-  // Prefill từ initial
+  // Prefill từ initial khi list đã sẵn sàng
   useEffect(() => {
     if (!open || !initial) return;
-
     (async () => {
       try {
         if (!tinhList.length && !db34.length) return;
@@ -108,6 +109,20 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
         const cityName = rmPrefix(initial.city || "");
         const districtName = rmPrefix(initial.district || "");
         const wardName = rmPrefix(initial.ward || "");
+
+        // Nếu source 34 (ưu tiên), thử 34 trước
+        if (initial?.source === "34" && db34.length) {
+          const foundProv = db34.find(p => strip(rmPrefix(p.FullName || p.Name || p.name)) === strip(cityName));
+          if (foundProv) {
+            setTab(1);
+            const code = String(foundProv.Code || foundProv.code);
+            setProvCode(code);
+            const wards = foundProv.Wards || [];
+            const foundWard = wards.find(w => strip(rmPrefix(w.FullName || w.Name || w.name)) === strip(wardName));
+            if (foundWard) setWardCode(String(foundWard.Code || foundWard.code));
+            return;
+          }
+        }
 
         // Thử 63 tỉnh
         if (tinhList.length) {
@@ -128,7 +143,8 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
             return;
           }
         }
-        // Thử 34 tỉnh
+
+        // Thử 34 tỉnh (fallback)
         if (db34.length) {
           const foundProv = db34.find(p => strip(rmPrefix(p.FullName || p.Name || p.name)) === strip(cityName));
           if (foundProv) {
@@ -163,104 +179,25 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
     })();
   }, [quanId]);
 
-  /* ================= Prefill helpers ================= */
-  async function prefill63(init, tinh) {
-    // 1) Tỉnh theo code → fallback theo tên
-    let foundTinh =
-      init.province_code &&
-      tinh.find((t) => String(t.id) === String(init.province_code));
-    if (!foundTinh && init.city) {
-      const target = norm(init.city);
-      foundTinh = tinh.find((t) => norm(t.full_name) === target);
-    }
-    if (!foundTinh) return; // không xác định được tỉnh
-    setTinhId(foundTinh.id);
-
-    // 2) Quận
-    const qList = await fetchQuan(foundTinh.id);
-    setQuanList(qList);
-    let foundQuan =
-      init.district_code &&
-      qList.find((q) => String(q.id) === String(init.district_code));
-    if (!foundQuan && init.district) {
-      const target = norm(init.district);
-      foundQuan = qList.find((q) => norm(q.full_name) === target);
-    }
-    if (!foundQuan) {
-      setQuanId("");
-      setPhuongList([]);
-      setPhuongId("");
-      return;
-    }
-    setQuanId(foundQuan.id);
-
-    // 3) Phường
-    const pList = await fetchPhuong(foundQuan.id);
-    setPhuongList(pList);
-    let foundPhuong =
-      init.ward_code &&
-      pList.find((p) => String(p.id) === String(init.ward_code));
-    if (!foundPhuong && init.ward) {
-      const target = norm(init.ward);
-      foundPhuong = pList.find((p) => norm(p.full_name) === target);
-    }
-    if (foundPhuong) setPhuongId(foundPhuong.id);
-  }
-
-  async function prefill34(init, db34All) {
-    // 1) Tỉnh 34
-    let province = null;
-    if (init.province_code) {
-      province = db34All.find(
-        (p) => String(p.Code || p.code) === String(init.province_code)
-      );
-    }
-    if (!province && init.city) {
-      const target = norm(init.city);
-      province = db34All.find((p) =>
-        [p.FullName, p.Name, p.name].some((n) => n && norm(n) === target)
-      );
-    }
-    if (!province) return;
-    const pCode = String(province.Code || province.code);
-    setProvCode(pCode);
-
-    // 2) Phường 34
-    const wards = province.Wards || [];
-    let ward = null;
-    if (init.ward_code) {
-      ward = wards.find(
-        (w) => String(w.Code || w.code) === String(init.ward_code)
-      );
-    }
-    if (!ward && init.ward) {
-      const target = norm(init.ward);
-      ward = wards.find((w) => {
-        const base = String(w.FullName || w.Name || w.name || "").trim();
-        const short = String(
-          w.AdministrativeUnitShortName || w.AdministrativeUnitShort || ""
-        ).trim();
-        const text =
-          short && base.toLowerCase().startsWith(short.toLowerCase() + " ")
-            ? base
-            : short
-            ? `${short} ${base}`
-            : base;
-        return norm(text) === target || norm(base) === target;
-      });
-    }
-    if (ward) setWardCode(String(ward.Code || ward.code));
-  }
-
-  /* ================= derived ================= */
   const wards34 = useMemo(() => {
     const p = db34.find(x => (x.Code || x.code || "") === provCode);
     return p?.Wards || [];
   }, [db34, provCode]);
 
+  // Khi đổi tab → reset lựa chọn tab đó
+  const handleChangeTab = (_e, v) => {
+    setTab(v);
+    if (v === 0) { // 63
+      setProvCode(""); setWardCode("");
+    } else {       // 34
+      setTinhId(""); setQuanId(""); setPhuongId("");
+    }
+  };
+
   const handleSave = async () => {
     let city = "", district = "", ward = "";
     let province_code = "", ward_code = "";
+    const source = tab === 0 ? "63" : "34";
 
     if (tab === 0) {
       const t = tinhList.find(x => x.id === tinhId);
@@ -280,7 +217,7 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
         : (short ? `${short} ${baseWard}` : baseWard);
 
       city = baseProv || "";
-      district = ""; // ✅ không gán "-"
+      district = ""; // không gán "-"
       ward = wardText || "";
       province_code = String(p?.Code || p?.code || "");
       ward_code = String(w?.Code || w?.code || "");
@@ -298,11 +235,24 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
       name: clean(name),
       phone: clean(phone),
       city: clean(city),
-      district: clean(district),
       ward: clean(ward),
       street: clean(street),
-      province_code, ward_code, country: "VN",
+      province_code,
+      ward_code,
+      country: "VN",
+      source, // 👈 quan trọng để BE không yêu cầu district khi 34
     };
+
+    // district chỉ gửi khi tab 0 (63) và có giá trị
+    if (tab === 0) {
+      const d = clean(district);
+      if (d) payload.district = d;
+    }
+
+    // Bỏ key rỗng/null/undefined
+    Object.keys(payload).forEach((k) => {
+      if (payload[k] === "" || payload[k] === null || payload[k] === undefined) delete payload[k];
+    });
 
     if (!payload.name || !payload.phone || !payload.city || !payload.ward || !payload.street) {
       toast.error("Vui lòng nhập đủ Họ tên, SĐT, Tỉnh/TP, Phường/Xã và Địa chỉ chi tiết.");
@@ -317,16 +267,9 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
     }
   };
 
-  const disabledSave =
-    !name.trim() ||
-    !phone.trim() ||
-    !street.trim() ||
-    !(mode === "63" ? city63 && ward63 : city34 && ward34);
-
-  /* ============== UI ============== */
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle> {initial ? "Sửa địa chỉ" : "Thêm địa chỉ"} </DialogTitle>
+      <DialogTitle>{initial ? "Sửa địa chỉ" : "Thêm địa chỉ"}</DialogTitle>
       <DialogContent
         dividers
         sx={(theme)=>({
@@ -340,45 +283,93 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
             <TextField label="SĐT" value={phone} onChange={(e)=>setPhone(e.target.value)} fullWidth />
           </Stack>
 
-          <Tabs value={tab} onChange={(_, v)=>setTab(v)} sx={{ mt: .5 }}>
+          <Tabs value={tab} onChange={handleChangeTab} sx={{ mt: .5 }}>
             <Tab label="63 Tỉnh/TP (Tỉnh → Quận → Phường)" />
             <Tab label="34 Tỉnh/TP (sau sáp nhập: Tỉnh → Phường)" />
           </Tabs>
 
           {tab === 0 && (
             <Stack direction={{ xs:"column", sm:"row" }} spacing={1.25}>
-              <TextField select fullWidth label="Tỉnh/Thành phố" value={tinhId} onChange={(e)=>setTinhId(e.target.value)}>
-                <option value="">— Chọn Tỉnh/TP —</option>
-                {tinhList.map(t => <option key={t.id} value={t.id}>{t.full_name}</option>)}
+              <TextField
+                select
+                fullWidth
+                label="Tỉnh/Thành phố"
+                value={tinhId}
+                onChange={(e)=>setTinhId(e.target.value)}
+                SelectProps={{ MenuProps: { disablePortal: true }}}
+              >
+                <MenuItem value="">— Chọn Tỉnh/TP —</MenuItem>
+                {tinhList.map(t => (
+                  <MenuItem key={t.id} value={t.id}>{t.full_name}</MenuItem>
+                ))}
               </TextField>
-              <TextField select fullWidth label="Quận/Huyện" value={quanId} onChange={(e)=>setQuanId(e.target.value)} disabled={!tinhId}>
-                <option value="">— Chọn Quận/Huyện —</option>
-                {quanList.map(q => <option key={q.id} value={q.id}>{q.full_name}</option>)}
+
+              <TextField
+                select
+                fullWidth
+                label="Quận/Huyện"
+                value={quanId}
+                onChange={(e)=>setQuanId(e.target.value)}
+                disabled={!tinhId}
+                SelectProps={{ MenuProps: { disablePortal: true }}}
+              >
+                <MenuItem value="">— Chọn Quận/Huyện —</MenuItem>
+                {quanList.map(q => (
+                  <MenuItem key={q.id} value={q.id}>{q.full_name}</MenuItem>
+                ))}
               </TextField>
-              <TextField select fullWidth label="Phường/Xã" value={phuongId} onChange={(e)=>setPhuongId(e.target.value)} disabled={!quanId}>
-                <option value="">— Chọn Phường/Xã —</option>
-                {phuongList.map(p => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+
+              <TextField
+                select
+                fullWidth
+                label="Phường/Xã"
+                value={phuongId}
+                onChange={(e)=>setPhuongId(e.target.value)}
+                disabled={!quanId}
+                SelectProps={{ MenuProps: { disablePortal: true }}}
+              >
+                <MenuItem value="">— Chọn Phường/Xã —</MenuItem>
+                {phuongList.map(p => (
+                  <MenuItem key={p.id} value={p.id}>{p.full_name}</MenuItem>
+                ))}
               </TextField>
             </Stack>
           )}
 
           {tab === 1 && (
             <Stack direction={{ xs:"column", sm:"row" }} spacing={1.25}>
-              <TextField select fullWidth label="Tỉnh/Thành phố" value={provCode} onChange={(e)=>setProvCode(e.target.value)}>
-                <option value="">— Chọn Tỉnh/TP —</option>
-                {db34.map(p=>{
+              <TextField
+                select
+                fullWidth
+                label="Tỉnh/Thành phố"
+                value={provCode}
+                onChange={(e)=>setProvCode(e.target.value)}
+                SelectProps={{ MenuProps: { disablePortal: true }}}
+              >
+                <MenuItem value="">— Chọn Tỉnh/TP —</MenuItem>
+                {db34.map(p => {
+                  const code = p.Code || p.code;
                   const name = p.FullName || p.Name || p.name;
-                  return <option key={p.Code || p.code} value={p.Code || p.code}>{name}</option>;
+                  return <MenuItem key={code} value={code}>{name}</MenuItem>;
                 })}
               </TextField>
-              <TextField select fullWidth label="Phường/Xã" value={wardCode} onChange={(e)=>setWardCode(e.target.value)} disabled={!provCode}>
-                <option value="">— Chọn Phường/Xã —</option>
-                {(wards34||[]).map(w=>{
+
+              <TextField
+                select
+                fullWidth
+                label="Phường/Xã"
+                value={wardCode}
+                onChange={(e)=>setWardCode(e.target.value)}
+                disabled={!provCode}
+                SelectProps={{ MenuProps: { disablePortal: true }}}
+              >
+                <MenuItem value="">— Chọn Phường/Xã —</MenuItem>
+                {wards34.map(w => {
                   const base = String(w.FullName || w.Name || w.name || "").trim();
                   const short = String(w.AdministrativeUnitShortName || w.AdministrativeUnitShort || "").trim();
                   const already = short && base.toLowerCase().startsWith(short.toLowerCase() + " ");
                   const text = already ? base : (short ? `${short} ${base}` : base);
-                  return <option key={w.Code || w.code} value={w.Code || w.code}>{text}</option>;
+                  return <MenuItem key={w.Code || w.code} value={w.Code || w.code}>{text}</MenuItem>;
                 })}
               </TextField>
             </Stack>
@@ -393,7 +384,7 @@ export default function AddressDialog({ open, onClose, initial, onSubmit }) {
           )}
 
           <Alert severity="info">
-            Có thể chọn <b>1 trong 2 cách</b> để điền địa chỉ. Bộ 34 tỉnh không có Quận/Huyện – hệ thống đã tự bỏ dấu “-” và để trống field này.
+            Có thể chọn <b>1 trong 2 cách</b> để điền địa chỉ. Bộ 34 tỉnh không có Quận/Huyện – hệ thống sẽ bỏ dấu “-” và để trống field này.
           </Alert>
         </Stack>
       </DialogContent>

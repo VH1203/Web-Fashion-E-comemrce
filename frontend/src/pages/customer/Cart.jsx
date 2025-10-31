@@ -1,9 +1,23 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
-  Box, Grid, Paper, Typography, Checkbox, IconButton, Button, Divider,
-  TextField, Stack, Chip, Tooltip, Alert, LinearProgress, Card, CardContent,
-  Popover
+  Box,
+  Grid,
+  Paper,
+  Typography,
+  Checkbox,
+  IconButton,
+  Button,
+  Divider,
+  TextField,
+  Stack,
+  Chip,
+  Tooltip,
+  Alert,
+  LinearProgress,
+  Card,
+  CardContent,
+  Popover,
 } from "@mui/material";
 import DeleteOutline from "@mui/icons-material/DeleteOutline";
 import Add from "@mui/icons-material/Add";
@@ -20,7 +34,10 @@ import { formatCurrency } from "../../utils/formatCurrency";
 import "../../assets/styles/Cart.css";
 
 /* ===== Variant helpers ===== */
-const norm = (s) => String(s ?? "").trim().toLowerCase();
+const norm = (s) =>
+  String(s ?? "")
+    .trim()
+    .toLowerCase();
 
 function groupVariantOptions(variants) {
   const map = {};
@@ -42,7 +59,8 @@ function findVariantById(variants, id) {
 }
 function findBestVariant(variants, selections) {
   if (!variants?.length) return null;
-  let best = null, bestScore = -1;
+  let best = null,
+    bestScore = -1;
   for (const v of variants) {
     const attrs = v?.attributes || {};
     let score = 0;
@@ -51,7 +69,10 @@ function findBestVariant(variants, selections) {
       if (norm(attrs[k]) === norm(val)) score++;
     }
     if ((v.stock ?? 0) > 0) score += 0.25;
-    if (score > bestScore) { best = v; bestScore = score; }
+    if (score > bestScore) {
+      best = v;
+      bestScore = score;
+    }
   }
   return best;
 }
@@ -60,7 +81,8 @@ function resolveOnPick(variants, current, key, value) {
     (v) => norm(v?.attributes?.[key]) === norm(value)
   );
   if (!list.length) return current;
-  let best = null, bestScore = -1;
+  let best = null,
+    bestScore = -1;
   for (const v of list) {
     const attrs = v.attributes || {};
     let s = 0;
@@ -69,7 +91,10 @@ function resolveOnPick(variants, current, key, value) {
       if (norm(attrs[k2]) === norm(val2)) s++;
     }
     if ((v.stock ?? 0) > 0) s += 0.25;
-    if (s > bestScore) { best = v; bestScore = s; }
+    if (s > bestScore) {
+      best = v;
+      bestScore = s;
+    }
   }
   const next = { ...(current || {}), [key]: value };
   if (best?.attributes) {
@@ -109,8 +134,8 @@ export default function CartCard() {
   const [vEditor, setVEditor] = useState({
     open: false,
     anchorEl: null,
-    item: null,          // full item
-    temp: {}             // temp selections
+    item: null, // full item
+    temp: {}, // temp selections
   });
 
   const fetchCart = async () => {
@@ -134,22 +159,29 @@ export default function CartCard() {
       // mặc định chọn hết
       setChecked(new Set((res.items || []).map((it) => it._id)));
     } catch (e) {
-      setErr(e?.response?.data?.message || e.message || "Không tải được giỏ hàng");
+      setErr(
+        e?.response?.data?.message || e.message || "Không tải được giỏ hàng"
+      );
       if (e?.response?.status === 401 || e?.response?.status === 403) {
         const returnUrl = encodeURIComponent(
           window.location.pathname + window.location.search
         );
         navigate(`/login?returnUrl=${returnUrl}`);
       }
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchCart(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => {
+    fetchCart(); /* eslint-disable-next-line */
+  }, []);
 
   const items = data?.items || [];
-  const currency =  "";
+  const currency = "";
 
-  const toggleAll = (on) => setChecked(new Set(on ? items.map((it) => it._id) : []));
+  const toggleAll = (on) =>
+    setChecked(new Set(on ? items.map((it) => it._id) : []));
   const toggleOne = (id) => {
     setChecked((prev) => {
       const s = new Set(prev);
@@ -163,7 +195,9 @@ export default function CartCard() {
     try {
       const res = await cartService.updateItem(item._id, { qty });
       setData(res);
-    } catch (e) { alert(e?.response?.data?.message || e.message); }
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message);
+    }
   };
 
   // Áp selections vào state + gọi BE nếu đổi variant
@@ -198,13 +232,19 @@ export default function CartCard() {
       open: true,
       anchorEl: evt.currentTarget,
       item,
-      temp: { ...pick.selections }
+      temp: { ...pick.selections },
     });
   };
-  const closeVariantEditor = () => setVEditor({ open: false, anchorEl: null, item: null, temp: {} });
+  const closeVariantEditor = () =>
+    setVEditor({ open: false, anchorEl: null, item: null, temp: {} });
 
   const pickTemp = (key, val) => {
-    const next = resolveOnPick(vEditor.item.available_variants, vEditor.temp, key, val);
+    const next = resolveOnPick(
+      vEditor.item.available_variants,
+      vEditor.temp,
+      key,
+      val
+    );
     setVEditor((p) => ({ ...p, temp: next }));
   };
   const confirmVariant = async () => {
@@ -217,8 +257,14 @@ export default function CartCard() {
     try {
       const res = await cartService.removeItem(item._id);
       setData(res);
-      setChecked((prev) => { const s = new Set(prev); s.delete(item._id); return s; });
-    } catch (e) { alert(e?.response?.data?.message || e.message); }
+      setChecked((prev) => {
+        const s = new Set(prev);
+        s.delete(item._id);
+        return s;
+      });
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message);
+    }
   };
 
   const removeSelected = async () => {
@@ -229,7 +275,9 @@ export default function CartCard() {
       for (const id of checked) res = await cartService.removeItem(id);
       if (res) setData(res);
       setChecked(new Set());
-    } catch (e) { alert(e?.response?.data?.message || e.message); }
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message);
+    }
   };
 
   const clearCart = async () => {
@@ -238,12 +286,15 @@ export default function CartCard() {
       const res = await cartService.clear();
       setData(res);
       setChecked(new Set());
-    } catch (e) { alert(e?.response?.data?.message || e.message); }
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message);
+    }
   };
 
   // tổng theo item đã chọn (và hợp lệ tồn kho)
   const selectedSummary = useMemo(() => {
-    let total = 0; let count = 0;
+    let total = 0;
+    let count = 0;
     for (const it of items) {
       if (!checked.has(it._id)) continue;
       const price = it.price || 0;
@@ -251,10 +302,11 @@ export default function CartCard() {
       const variant =
         findVariantById(
           it.available_variants,
-          (pickState[it._id]?.selectedVarId) || it.variant_id
+          pickState[it._id]?.selectedVarId || it.variant_id
         ) || null;
       if ((variant?.stock ?? 0) > 0 && it.qty <= (variant?.stock ?? 0)) {
-        total += sub; count++;
+        total += sub;
+        count++;
       }
     }
     return { total, count };
@@ -267,7 +319,9 @@ export default function CartCard() {
       <Box className="cart-wrap">
         <Paper elevation={0} className="card-soft">
           <LinearProgress />
-          <Typography variant="body2" mt={2}>Đang tải giỏ hàng…</Typography>
+          <Typography variant="body2" mt={2}>
+            Đang tải giỏ hàng…
+          </Typography>
         </Paper>
       </Box>
     );
@@ -280,7 +334,7 @@ export default function CartCard() {
     );
   }
 
-    return (
+  return (
     <Box className="cart-page">
       <Box className="cart-shell">
         {/* spacing lớn không ảnh hưởng, nhưng để mặc định cho gọn */}
@@ -289,11 +343,21 @@ export default function CartCard() {
             {/* QUAN TRỌNG: thêm class card-soft (đã override overflow trong CSS) */}
             <Card className="card-soft">
               <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                <Grid container spacing={3} alignItems="flex-start" className="cart-grid">
+                <Grid
+                  container
+                  spacing={3}
+                  alignItems="flex-start"
+                  className="cart-grid"
+                >
                   {/* LEFT: Items */}
                   <Grid item xs={12} lg={7}>
                     {/* header */}
-                    <Stack direction="row" alignItems="center" spacing={1} mb={1.5}>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      mb={1.5}
+                    >
                       <Button
                         component={RouterLink}
                         to="/"
@@ -318,7 +382,11 @@ export default function CartCard() {
                       rowGap={1}
                     >
                       <Box>
-                        <Typography variant="subtitle1" fontWeight={600} mb={0.25}>
+                        <Typography
+                          variant="subtitle1"
+                          fontWeight={600}
+                          mb={0.25}
+                        >
                           Giỏ hàng
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
@@ -327,43 +395,63 @@ export default function CartCard() {
                       </Box>
                       <Box>
                         <Checkbox
-                        color="primary"
-                          checked={checked.size === items.length && items.length > 0}
-                          indeterminate={checked.size > 0 && checked.size < items.length}
+                          color="primary"
+                          checked={
+                            checked.size === items.length && items.length > 0
+                          }
+                          indeterminate={
+                            checked.size > 0 && checked.size < items.length
+                          }
                           onChange={(e) => toggleAll(e.target.checked)}
                           sx={{ mr: 0.5 }}
                         />
-                        <Typography variant="body2" display="inline">Chọn tất cả</Typography>
+                        <Typography variant="body2" display="inline">
+                          Chọn tất cả
+                        </Typography>
                       </Box>
                     </Stack>
 
                     {/* items list */}
                     <Stack spacing={1.5}>
                       {items.map((it) => {
-                        const pick = pickState[it._id] || { selections: {}, selectedVarId: it.variant_id };
+                        const pick = pickState[it._id] || {
+                          selections: {},
+                          selectedVarId: it.variant_id,
+                        };
                         const selectedVar =
-                          findVariantById(it.available_variants, pick.selectedVarId) ||
+                          findVariantById(
+                            it.available_variants,
+                            pick.selectedVarId
+                          ) ||
                           findVariantById(it.available_variants, it.variant_id);
-                        const { orderedKeys } = groupVariantOptions(it.available_variants);
-                        const productHref = it.product?.slug ? `/product/${it.product.slug}` : `/product/${it.product_id}`;
+                        const { orderedKeys } = groupVariantOptions(
+                          it.available_variants
+                        );
+                        const productHref = it.product?.slug
+                          ? `/product/${it.product.slug}`
+                          : `/product/${it.product_id}`;
                         const price = it.price || 0;
                         const subTotal = it.total || price * it.qty;
 
                         const outOfStock = (selectedVar?.stock ?? 0) <= 0;
-                        const overStock = !outOfStock && it.qty > (selectedVar?.stock ?? 0);
+                        const overStock =
+                          !outOfStock && it.qty > (selectedVar?.stock ?? 0);
 
-                        const summary =
-                          orderedKeys
-                            .map((k) => pick.selections?.[k])
-                            .filter(Boolean)
-                            .join(", ");
+                        const summary = orderedKeys
+                          .map((k) => pick.selections?.[k])
+                          .filter(Boolean)
+                          .join(", ");
 
                         return (
-                          <Paper key={it._id} className="item-card" variant="outlined">
+                          <Paper
+                            key={it._id}
+                            className="item-card"
+                            variant="outlined"
+                          >
                             <Box className="item-row">
                               <Box className="left">
                                 <Checkbox
-                                color="primary"
+                                  color="primary"
                                   checked={checked.has(it._id)}
                                   onChange={() => toggleOne(it._id)}
                                   sx={{ mr: 1 }}
@@ -387,18 +475,47 @@ export default function CartCard() {
                                     {it.name}
                                   </Typography>
                                   {(outOfStock || overStock) && (
-                                    <Stack direction="row" alignItems="center" spacing={0.5} mt={0.5}>
-                                      <WarningAmber color="warning" fontSize="small" />
-                                      <Typography variant="caption" color="warning.main">
-                                        {outOfStock ? "Biến thể đã hết hàng" : "Vượt quá tồn kho"}
+                                    <Stack
+                                      direction="row"
+                                      alignItems="center"
+                                      spacing={0.5}
+                                      mt={0.5}
+                                    >
+                                      <WarningAmber
+                                        color="warning"
+                                        fontSize="small"
+                                      />
+                                      <Typography
+                                        variant="caption"
+                                        color="warning.main"
+                                      >
+                                        {outOfStock
+                                          ? "Biến thể đã hết hàng"
+                                          : "Vượt quá tồn kho"}
                                       </Typography>
                                     </Stack>
                                   )}
 
                                   {/* Phân loại (thu gọn) */}
-                                  <Stack direction="row" alignItems="center" spacing={1} mt={0.75} flexWrap="wrap">
-                                    <Typography variant="caption" color="text.secondary">Phân loại:</Typography>
-                                    <Typography variant="body2" fontWeight={600}>{summary || "—"}</Typography>
+                                  <Stack
+                                    direction="row"
+                                    alignItems="center"
+                                    spacing={1}
+                                    mt={0.75}
+                                    flexWrap="wrap"
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      Phân loại:
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      fontWeight={600}
+                                    >
+                                      {summary || "—"}
+                                    </Typography>
                                     <Button
                                       size="small"
                                       variant="outlined"
@@ -422,31 +539,78 @@ export default function CartCard() {
                                   justifyContent="flex-end"
                                   className="qty-price"
                                 >
-                                  <Stack direction="row" spacing={0.5} alignItems="center">
-                                    <IconButton size="small" color="primary" onClick={() => handleQty(it, Math.max(1, it.qty - 1))} disabled={it.qty <= 1}>
+                                  <Stack
+                                    direction="row"
+                                    spacing={0.5}
+                                    alignItems="center"
+                                  >
+                                    <IconButton
+                                      size="small"
+                                      color="primary"
+                                      onClick={() =>
+                                        handleQty(it, Math.max(1, it.qty - 1))
+                                      }
+                                      disabled={it.qty <= 1}
+                                    >
                                       <Remove />
                                     </IconButton>
                                     <TextField
                                       size="small"
                                       type="number"
                                       value={it.qty}
-                                      inputProps={{ min: 1, style: { textAlign: "center", width: 64 } }}
-                                      onChange={(e) => handleQty(it, Math.max(1, Number(e.target.value) || 1))}
+                                      inputProps={{
+                                        min: 1,
+                                        style: {
+                                          textAlign: "center",
+                                          width: 64,
+                                        },
+                                      }}
+                                      onChange={(e) =>
+                                        handleQty(
+                                          it,
+                                          Math.max(
+                                            1,
+                                            Number(e.target.value) || 1
+                                          )
+                                        )
+                                      }
                                     />
-                                    <IconButton size="small" color="primary" onClick={() => handleQty(it, it.qty + 1)}>
+                                    <IconButton
+                                      size="small"
+                                      color="primary"
+                                      onClick={() => handleQty(it, it.qty + 1)}
+                                    >
                                       <Add />
                                     </IconButton>
                                   </Stack>
 
                                   <Box textAlign="right" minWidth={160}>
-                                    <Typography variant="body2" color="text.secondary">Đơn giá</Typography>
-                                    <Typography fontWeight={700}>{formatCurrency(price)} {currency}</Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>Tạm tính</Typography>
-                                    <Typography fontWeight={800}>{formatCurrency(subTotal)} {currency}</Typography>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      Đơn giá
+                                    </Typography>
+                                    <Typography fontWeight={700}>
+                                      {formatCurrency(price)} {currency}
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      sx={{ mt: 0.5 }}
+                                    >
+                                      Tạm tính
+                                    </Typography>
+                                    <Typography fontWeight={800}>
+                                      {formatCurrency(subTotal)} {currency}
+                                    </Typography>
                                   </Box>
 
                                   <Tooltip title="Xoá khỏi giỏ">
-                                    <IconButton color="error" onClick={() => removeItem(it)}>
+                                    <IconButton
+                                      color="error"
+                                      onClick={() => removeItem(it)}
+                                    >
                                       <DeleteOutline />
                                     </IconButton>
                                   </Tooltip>
@@ -465,14 +629,24 @@ export default function CartCard() {
                       justifyContent="space-between"
                       mt={2}
                     >
-                      <Button variant="outlined" color="error" startIcon={<DeleteOutline />} onClick={removeSelected} disabled={!checked.size}>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteOutline />}
+                        onClick={removeSelected}
+                        disabled={!checked.size}
+                      >
                         Xoá đã chọn
                       </Button>
                       <Stack direction="row" spacing={1.5}>
                         {/* <Button component={RouterLink} to="/" variant="outlined" color="inherit">
                           ← Tiếp tục mua sắm
                         </Button> */}
-                        <Button variant="text" color="inherit" onClick={clearCart}>
+                        <Button
+                          variant="text"
+                          color="inherit"
+                          onClick={clearCart}
+                        >
                           Xoá toàn bộ
                         </Button>
                       </Stack>
@@ -480,50 +654,90 @@ export default function CartCard() {
                   </Grid>
 
                   {/* RIGHT: Summary */}
-<Grid item xs={12} lg={5}>
+                  <Grid item xs={12} lg={5}>
                     <Box className="summary-sticky">
                       <Paper elevation={0} className="summary-scroll">
                         <Box className="summary-section">
-                          <Typography variant="h6" fontWeight={700} mb={1}>Thông tin đơn hàng</Typography>
+                          <Typography variant="h6" fontWeight={700} mb={1}>
+                            Thông tin đơn hàng
+                          </Typography>
                           <Stack spacing={1.1}>
-                            <Stack direction="row" justifyContent="space-between">
-                              <Typography color="text.secondary">Số sản phẩm đã chọn</Typography>
-                              <Typography fontWeight={600}>{selectedSummary.count}</Typography>
+                            <Stack
+                              direction="row"
+                              justifyContent="space-between"
+                            >
+                              <Typography color="text.secondary">
+                                Số sản phẩm đã chọn
+                              </Typography>
+                              <Typography fontWeight={600}>
+                                {selectedSummary.count}
+                              </Typography>
                             </Stack>
-                            <Stack direction="row" justifyContent="space-between">
-                              <Typography color="text.secondary">Tạm tính</Typography>
+                            <Stack
+                              direction="row"
+                              justifyContent="space-between"
+                            >
+                              <Typography color="text.secondary">
+                                Tạm tính
+                              </Typography>
                               <Typography fontWeight={700}>
-                                {formatCurrency(selectedSummary.total)} {currency}
+                                {formatCurrency(selectedSummary.total)}{" "}
+                                {currency}
                               </Typography>
                             </Stack>
                             <Divider />
                             <Stack direction="row" spacing={1}>
-                              <TextField fullWidth size="small" placeholder="Nhập mã voucher" inputProps={{ maxLength: 32 }} />
-                              <Button variant="contained" color="primary">ÁP DỤNG</Button>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                placeholder="Nhập mã voucher"
+                                inputProps={{ maxLength: 32 }}
+                              />
+                              <Button variant="contained" color="primary">
+                                ÁP DỤNG
+                              </Button>
                             </Stack>
-                            <Stack direction="row" justifyContent="space-between">
-                              <Typography color="text.secondary">Phí vận chuyển</Typography>
+                            <Stack
+                              direction="row"
+                              justifyContent="space-between"
+                            >
+                              <Typography color="text.secondary">
+                                Phí vận chuyển
+                              </Typography>
                               <Typography>0</Typography>
                             </Stack>
                           </Stack>
                         </Box>
 
                         <Box className="summary-section">
-                          <Stack direction="row" justifyContent="space-between" mb={1}>
-                            <Typography fontWeight={700}>Tổng thanh toán</Typography>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            mb={1}
+                          >
+                            <Typography fontWeight={700}>
+                              Tổng thanh toán
+                            </Typography>
                             <Typography fontWeight={900} fontSize={18}>
                               {formatCurrency(selectedSummary.total)} {currency}
                             </Typography>
                           </Stack>
-                          <Typography variant="caption" color="text.secondary">Đã bao gồm VAT (nếu có)</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Đã bao gồm VAT (nếu có)
+                          </Typography>
                           <Button
-                            fullWidth size="large" sx={{ mt: 1.5 }}
-                            variant="contained" color="primary"
+                            fullWidth
+                            size="large"
+                            sx={{ mt: 1.5 }}
+                            variant="contained"
+                            color="primary"
                             startIcon={<ShoppingCartCheckout />}
                             disabled={!canCheckout}
                             onClick={() => {
                               const selectedIds = Array.from(checked);
-                              navigate("/checkout", { state: { selected_item_ids: selectedIds } });
+                              navigate("/checkout", {
+                                state: { selected_item_ids: selectedIds },
+                              });
                             }}
                           >
                             THANH TOÁN ({selectedSummary.count})
@@ -532,7 +746,6 @@ export default function CartCard() {
                       </Paper>
                     </Box>
                   </Grid>
-
                 </Grid>
               </CardContent>
             </Card>
@@ -549,48 +762,81 @@ export default function CartCard() {
         transformOrigin={{ vertical: "top", horizontal: "left" }}
         PaperProps={{ className: "variant-popover" }}
       >
-        {vEditor.item && (() => {
-          const { optionGroups, orderedKeys } = groupVariantOptions(vEditor.item.available_variants);
-          return (
-            <Box p={2} sx={{ minWidth: 320, maxWidth: 420 }}>
-              {orderedKeys.map((key) => {
-                const values = optionGroups[key] || [];
-                const cur = vEditor.temp?.[key] ?? "";
-                const disabledMap = buildDisabledMap(vEditor.item.available_variants, key, values);
-                return (
-                  <Box key={key} mb={1.25}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.75 }}>
-                      {titleize(key)}:
-                    </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                      {values.map((val) => {
-                        const active = norm(val) === norm(cur);
-                        const disabled = disabledMap.get(val) === true;
-                        return (
-                          <Chip
-                            key={val}
-                            size="small"
-                            label={String(val)}
-                            color={active ? "primary" : "default"}
-                            variant={active ? "filled" : "outlined"}
-                            onClick={() => pickTemp(key, val)}
-                            disabled={disabled}
-                            icon={active ? <Check fontSize="small" /> : null}
-                            className="chip-choice"
-                          />
-                        );
-                      })}
-                    </Stack>
-                  </Box>
-                );
-              })}
-              <Stack direction="row" spacing={1.25} justifyContent="space-between" mt={1.5}>
-                <Button variant="outlined" color="primary" onClick={closeVariantEditor}>TRỞ LẠI</Button>
-                <Button variant="contained" color="primary" onClick={confirmVariant}>XÁC NHẬN</Button>
-              </Stack>
-            </Box>
-          );
-        })()}
+        {vEditor.item &&
+          (() => {
+            const { optionGroups, orderedKeys } = groupVariantOptions(
+              vEditor.item.available_variants
+            );
+            return (
+              <Box p={2} sx={{ minWidth: 320, maxWidth: 420 }}>
+                {orderedKeys.map((key) => {
+                  const values = optionGroups[key] || [];
+                  const cur = vEditor.temp?.[key] ?? "";
+                  const disabledMap = buildDisabledMap(
+                    vEditor.item.available_variants,
+                    key,
+                    values
+                  );
+                  return (
+                    <Box key={key} mb={1.25}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 0.75 }}
+                      >
+                        {titleize(key)}:
+                      </Typography>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        flexWrap="wrap"
+                        useFlexGap
+                      >
+                        {values.map((val) => {
+                          const active = norm(val) === norm(cur);
+                          const disabled = disabledMap.get(val) === true;
+                          return (
+                            <Chip
+                              key={val}
+                              size="small"
+                              label={String(val)}
+                              color={active ? "primary" : "default"}
+                              variant={active ? "filled" : "outlined"}
+                              onClick={() => pickTemp(key, val)}
+                              disabled={disabled}
+                              icon={active ? <Check fontSize="small" /> : null}
+                              className="chip-choice"
+                            />
+                          );
+                        })}
+                      </Stack>
+                    </Box>
+                  );
+                })}
+                <Stack
+                  direction="row"
+                  spacing={1.25}
+                  justifyContent="space-between"
+                  mt={1.5}
+                >
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={closeVariantEditor}
+                  >
+                    TRỞ LẠI
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={confirmVariant}
+                  >
+                    XÁC NHẬN
+                  </Button>
+                </Stack>
+              </Box>
+            );
+          })()}
       </Popover>
     </Box>
   );

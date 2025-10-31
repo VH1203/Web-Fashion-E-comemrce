@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { userService } from "../../services/userService";
 import PersonalInfoForm from "../../components/PersonalInfoForm";
-import AddressesManager from "../../components/AddressesManager";
+import AddressDialog from "../../components/AddressDialog";
 import BankAccountsManager from "../../components/BankAccountsManager";
 import ChangePasswordForm from "../../components/ChangePasswordForm";
 import "../../assets/styles/Profile.css";
@@ -76,7 +76,7 @@ export default function ProfilePage() {
 
       <section className="pf-content">
         {activeTab==="personal" && <PersonalInfoForm me={me} onUpdated={setMe} />}
-        {activeTab==="addresses" && <AddressesManager />}
+        {activeTab==="addresses" && <AddressDialog me={me} onUpdated={setMe} />}
         {activeTab==="banks" && <BankAccountsManager />}
         {activeTab==="password" && <ChangePasswordForm />}
       </section>

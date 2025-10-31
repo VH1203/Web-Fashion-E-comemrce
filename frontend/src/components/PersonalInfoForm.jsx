@@ -52,7 +52,7 @@ export default function PersonalInfoForm({ me, onUpdated }) {
     setSaving(true); setMsg(""); setErr("");
     try {
       const payload = { ...form };
-      if (!payload.dob) delete payload.dob; 
+      if (!payload.dob) delete payload.dob; // không gửi dob rỗng
       const { user } = await userService.update(payload);
       onUpdated && onUpdated(user);
       setMsg("Đã lưu thông tin cá nhân");

@@ -6,6 +6,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const compression = require("compression");
+const path = require("path");
 
 const productRoutes = require("./routes/productRoutes");
 const homeRoutes = require('./routes/homeRoutes');
@@ -19,8 +20,9 @@ const cartRoutes = require("./routes/cartRoutes");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const FE_ORIGIN = process.env.FE_ORIGIN || 'http://localhost:5173';
+const orderRoutes = require("./routes/orderRoutes");
+const shippingRoutes = require("./routes/shippingRoutes");
 
-// const orderRoutes = require("./routes/orderRoutes");
 // const walletRoutes = require("./routes/walletRoutes");
 // const refundRoutes = require("./routes/refundRoutes");
 // const reviewRoutes = require("./routes/reviewRoutes");
@@ -62,8 +64,10 @@ app.use("/api/banks", bankRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/shipping/webhooks", shippingRoutes);
+app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoices")));
 
-// app.use("/api/orders", orderRoutes);
 // app.use("/api/wallets", walletRoutes);
 // app.use("/api/refunds", refundRoutes);
 // app.use("/api/reviews", reviewRoutes);

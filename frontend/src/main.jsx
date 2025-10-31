@@ -9,6 +9,16 @@ import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import theme from "./theme";
 import CssBaseline from "@mui/material/CssBaseline";
 
+// const theme = createTheme({
+//   palette: {
+//     primary: {
+//       light: "#a5d8ff",
+//       main:  "#74c0fc",   // xanh da trời nhạt (main)
+//       dark:  "#4dabf7",
+//       contrastText: "#0b2b45"
+//     },
+//   },
+// });
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ToastProvider>

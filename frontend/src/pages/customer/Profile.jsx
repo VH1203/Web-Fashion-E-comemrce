@@ -6,6 +6,13 @@ import BankAccountsManager from "../../components/BankAccountsManager";
 import ChangePasswordForm from "../../components/ChangePasswordForm";
 import "../../assets/styles/Profile.css";
 
+// === Icons
+import LocationOnSharpIcon from '@mui/icons-material/LocationOnSharp';
+import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import PasswordIcon from '@mui/icons-material/Password';
+
+
 export default function ProfilePage() {
   const [me, setMe] = useState();
   const [activeTab, setActiveTab] = useState("personal");
@@ -33,21 +40,41 @@ export default function ProfilePage() {
       <aside className="pf-sidebar">
         <div className="pf-sidebar-title">Tài khoản của tôi</div>
         <ul className="pf-menu1">
-          <li className={activeTab==="personal" ? "active" : ""} onClick={()=>setActiveTab("personal")}>Thông tin cá nhân</li>
-          <li className={activeTab==="addresses" ? "active" : ""} onClick={()=>setActiveTab("addresses")}>Địa chỉ nhận hàng</li>
-          <li className={activeTab==="banks" ? "active" : ""} onClick={()=>setActiveTab("banks")}>Tài khoản ngân hàng</li>
-          <li className={activeTab==="password" ? "active" : ""} onClick={()=>setActiveTab("password")}>Đổi mật khẩu</li>
+          <li
+            className={activeTab==="personal" ? "active" : ""}
+            onClick={()=>setActiveTab("personal")}
+          >
+            <AccountBoxIcon className="pf-menu-icon" />
+            Thông tin cá nhân
+          </li>
+
+          <li
+            className={activeTab==="addresses" ? "active" : ""}
+            onClick={()=>setActiveTab("addresses")}
+          >
+            <LocationOnSharpIcon className="pf-menu-icon" />
+            Địa chỉ nhận hàng
+          </li>
+
+          <li
+            className={activeTab==="banks" ? "active" : ""}
+            onClick={()=>setActiveTab("banks")}
+          >
+            <AccountBalanceWalletRoundedIcon className="pf-menu-icon" />
+            Tài khoản ngân hàng
+          </li>
+
+          <li
+            className={activeTab==="password" ? "active" : ""}
+            onClick={()=>setActiveTab("password")}
+          >
+            <PasswordIcon className="pf-menu-icon" />
+            Đổi mật khẩu
+          </li>
         </ul>
       </aside>
 
       <section className="pf-content">
-        <div className="pf-tabs pf-menu2">
-          <button className={activeTab==="personal" ? "active" : ""} onClick={()=>setActiveTab("personal")}>Thông tin cá nhân</button>
-          <button className={activeTab==="addresses" ? "active" : ""} onClick={()=>setActiveTab("addresses")}>Địa chỉ</button>
-          <button className={activeTab==="banks" ? "active" : ""} onClick={()=>setActiveTab("banks")}>Ngân hàng</button>
-          <button className={activeTab==="password" ? "active" : ""} onClick={()=>setActiveTab("password")}>Mật khẩu</button>
-        </div>
-
         {activeTab==="personal" && <PersonalInfoForm me={me} onUpdated={setMe} />}
         {activeTab==="addresses" && <AddressesManager />}
         {activeTab==="banks" && <BankAccountsManager />}

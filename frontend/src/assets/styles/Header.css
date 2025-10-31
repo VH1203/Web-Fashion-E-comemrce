@@ -1,349 +1,91 @@
-.header {
-  position: sticky;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: linear-gradient(90deg, #a5d8ff, #74c0fc);
-  z-index: 100;
-  border-bottom: 1px solid #eee;
-  padding: 10px 30px;  /* giảm padding để không chiếm full viewport */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+/* ===== Darker Blue Palette ===== */
+:root{
+  /* Light(er) Blue */
+  --primary-50:  #eff6ff;
+  --primary-100: #e7f2ff;   /* nhẹ hơn bản cũ một chút */
+  --primary-200: #d4e7ff;
+  --primary-300: #93c5fd;   /* bắt đầu gradient */
+  --primary-400: #60a5fa;   /* main (NHẠT HƠN) */
+  --primary-500: #3b82f6;   /* hover/nhấn */
+  --primary-600: #2563eb;   /* đậm hơn khi cần */
+  --primary-700: #1d4ed8;
+  --header-height: 72px;
 }
 
-.header-auth-page {
-  padding: 12px 400px;  /* nhỏ hơn */
-}
-.header-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
-/* Logo */
-.header-logo {
-  display: flex;
-  margin-left: 180px;
-  align-items: center;
-  gap: 10px;
-}
-.logo-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: inline-block;
-}
-.logo-img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  transform: scale(2);
-  transform-origin: center;
-}
-.logo-text {
-  font-size: 28px;
-  font-weight: bold;
-  color: #0d6efd;
-}
-
-.main-nav {
-  display: flex;
-  gap: 30px;
-  font-weight: 500;
-  font-size: 22px;
-}
-.nav-link {
-  position: relative;
-  color: #333;
-  text-decoration: none;
-  padding: 4px 0;
-  transition: color 0.3s;
-  font-weight: 600;
-}
-.nav-link::after {
-  content: "";
-  position: absolute;
-  width: 0;
-  height: 2px;
-  bottom: -4px;
-  left: 0;
-  background-color: #0d6efd;
-  transition: width 0.3s ease;
-}
-.nav-link:hover {
-  color: #0d6efd;
-}
-.nav-link:hover::after,
-.nav-link.active::after {
-  width: 100%;
-}
-.nav-link.active {
-  color: #0d6efd;
-}
-
-/* Icons + User */
-.header-icons {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-right: 180px;
-}
-.user-top {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.user-icons {
-  display: flex;
-  gap: 20px;
-}
-.icon-link {
-  color: #ffffff;
-  font-size: 24px;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-.icon-link:hover {
-  color: #0d6efd;
-}
-
-/* User buttons (Hồ sơ / Đăng nhập / Đăng xuất) */
-.user-name,
-.logout-btn,
-.login-btn {
-  border: 1px solid #0d6efd;
-  color: #0d6efd;
-  background: #fff;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-}
-.user-name:hover,
-.logout-btn:hover,
-.login-btn:hover {
-  background: #0d6efd;
-  color: #fff !important;
-}
-.user-name.active {
-  background-color: #0d6efd;
+/* AppBar / Toolbar */
+.dfs-header{
+  background: linear-gradient(90deg, var(--primary-500), var(--primary-700));
   color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.dfs-toolbar{
+  min-height: var(--header-height) !important;
+  padding-block: 0 !important;
 }
 
-.header-auth {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.auth-buttons {
-  display: flex;
-  gap: 8px;
-}
-.auth-btn {
-  min-width: 100px;
-  background: #fff;
-  color: #0d6efd;
-  border: 1px solid #0d6efd;
-  padding: 8px 16px;
-  border-radius: 20px;
-  text-align: center;
-  transition: all 0.3s;
-  text-decoration: none;
-}
-.auth-btn:hover,
-.auth-btn.active {
-  background: #0d6efd;
-  color: #fff !important;
+/* Brand title override để chắc chắn chữ trắng nổi */
+.brand-title .MuiTypography-root{
+  color:#fff;
 }
 
-/* Switch ngôn ngữ */
-.lang-switch {
-  width: 70px;
-  height: 32px;
-  border-radius: 32px;
-  background: #e5e7eb;
-  cursor: pointer;
-  position: relative;
-  padding: 4px;
-  transition: 0.3s;
-  display: flex;
-  align-items: center;
-}
-.lang-thumb {
-  position: absolute;
-  top: 4px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
+/* ===== Search pill: nền trắng + viền xanh toả khi focus ===== */
+.header-search .MuiOutlinedInput-root{
+  border-radius: 999px;
   background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: left 0.3s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transition: box-shadow .2s ease, border-color .2s ease;
 }
-.lang-flag {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  object-fit: cover;
+.header-search .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline{
+  border-color: rgba(0,0,0,.12);
 }
+.header-search .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline{
+  border-color: var(--primary-400);
+}
+.header-search .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-400) 40%, transparent);
+}
+.header-search input { color:#0b1630; }
+.header-search .MuiInputAdornment-root svg{ color:#64748b; }
 
-/* Thanh search */
-.header-search {
-  display: flex;
-  align-items: center;
-  background: #f3f4f6;
-  border-radius: 50px;
-  padding: 5px 10px;
-  width: 500px;
-  transition: all 0.3s ease;
-  border: solid 1px #e5e7eb;
-}
-.header-search:focus-within {
-  background: #fff;
-  border: 1px solid #2563eb;
-  box-shadow: 0 0 5px rgba(37, 99, 235, 0.4);
-}
-.header-search input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  padding: 6px 8px;
-  font-size: 14px;
-}
-.header-search button {
-  background: #2563eb;
-  border: none;
+/* ===== Buttons theo xanh đậm ===== */
+.dfs-header .MuiButton-contained{
+  background: var(--primary-500);
   color: #fff;
-  padding: 6px 12px;
-  border-radius: 50px;
-  cursor: pointer;
-  transition: background 0.3s ease;
+  transition: transform .12s ease, box-shadow .12s ease, background .15s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,.15);
 }
-.header-search button:hover {
-  background: #ffffff;
-  color: #2563eb;
-}
-.header-search i {
-  font-size: 14px;
+.dfs-header .MuiButton-contained:hover{
+  background: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.2);
 }
 
-@media (max-width: 1024px) {
-  .header {
-    padding: 15px 40px;
-  }
-
-  .header-logo {
-    margin-left: 40px; 
-  }
-
-  .header-icons {
-    margin-right: 40px;
-  }
-
-  .header-search {
-    width: 350px;
-  }
-
-  .main-nav {
-    gap: 20px;
-    font-size: 18px;
-  }
+.dfs-header .MuiButton-outlined{
+  border-color: rgba(255,255,255,.9);
+  color: #fff;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .15s ease;
+}
+.dfs-header .MuiButton-outlined:hover{
+  border-color: var(--primary-100);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,.18);
 }
 
-@media (max-width: 768px) {
-  .header {
-    padding: 12px 20px;
-    flex-direction: column;
-  }
-
-  .header-inner {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .header-logo {
-    margin-left: 0;
-    justify-content: center;
-  }
-
-  .logo-wrapper {
-    width: 60px;
-    height: 60px;
-  }
-  .logo-img {
-    width: 60px;
-    height: 60px;
-  }
-  .logo-text {
-    font-size: 20px;
-  }
-
-  .main-nav {
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: center;
-    font-size: 16px;
-  }
-
-  .header-search {
-    width: 100%; 
-    max-width: 100%;
-  }
-
-  .header-icons {
-    margin-right: 0;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .user-top {
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .user-icons {
-    gap: 12px;
-    justify-content: center;
-  }
-
-  .icon-link {
-    font-size: 20px;
-  }
+/* ===== IconButton: hover đổi màu + animation ===== */
+.nav-icon{
+  transition: color .12s ease, transform .12s ease, text-shadow .12s ease;
+}
+.nav-icon:hover{
+  color: var(--primary-100);
+  transform: translateY(-1px) scale(1.06);
+  text-shadow: 0 0 6px rgba(255,255,255,.55);
 }
 
-@media (max-width: 480px) {
-  .main-nav {
-    font-size: 14px;
-    gap: 8px;
-  }
+/* Logo wrap (thêm keyframe nhẹ nếu muốn) */
+/* Already controlled via sx in JSX for precise effects */
 
-  .auth-btn,
-  .login-btn,
-  .logout-btn,
-  .user-name {
-    font-size: 14px;
-    padding: 4px 8px;
-    border-radius: 14px;
-  }
-
-  .header-search input {
-    font-size: 13px;
-  }
-
-  .header-search button {
-    padding: 4px 10px;
-    font-size: 13px;
-  }
+/* Responsive */
+@media (max-width: 768px){
+  :root{ --header-height: 64px; }
 }

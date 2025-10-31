@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Box, Card, CardContent, Stack, Typography, Button, Divider,
-  RadioGroup, FormControlLabel, Radio, Chip, Paper, TextField
+  RadioGroup, FormControlLabel, Radio, Chip, Paper, TextField,MenuItem 
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import ArrowBack from "@mui/icons-material/ArrowBack";
@@ -19,7 +19,7 @@ import { formatCurrency } from "../../utils/formatCurrency";
 import { useToast } from "../../components/common/ToastProvider";
 
 import AddressDialog from "../../components/AddressDialog";
-import AddressPickerDialog from "../../components/AddressDialogPicker";
+import AddressDialogPicker from "../../components/AddressDialogPicker";
 
 /* ===== PaymentMethodPanel Component ===== */
 function PaymentMethodPanel({ value, onChange, disabled }) {
@@ -372,26 +372,35 @@ export default function Checkout() {
         }}
       />
 
-      <AddressPickerDialog
-        open={openPicker}
-        onClose={() => setOpenPicker(false)}
-        addresses={addresses}
-        selectedId={addressId}
-        onSelect={(id) => {
-          setAddressId(id);
-          toast.success("Đã chọn địa chỉ");
-        }}
-        onAddNew={() => {
-          setOpenPicker(false);
-          setEditAddr(null);
-          setOpenAddrForm(true);
-        }}
-        onEdit={(a) => {
-          setOpenPicker(false);
-          setEditAddr(a);
-          setOpenAddrForm(true);
-        }}
-      />
+      <AddressDialogPicker
+  open={openPicker}
+  onClose={() => setOpenPicker(false)}
+  addresses={addresses}
+  selectedId={addressId}
+  onSelect={(id) => {
+    setAddressId(id);
+    toast.success("Đã chọn địa chỉ");
+    // tự update preview luôn cho mượt
+    // (có thể để useEffect lo cũng được)
+  }}
+  onAddNew={() => {
+    setOpenPicker(false);
+    setEditAddr(null);
+    setOpenAddrForm(true);
+  }}
+  onEdit={(a) => {
+    setOpenPicker(false);
+    setEditAddr(a);
+    setOpenAddrForm(true);
+  }}
+  onSetDefault={async (id) => {
+    await addressService.setDefault(id);
+    await loadAddresses();
+    setAddressId(id);
+    toast.success("Đã đặt làm mặc định");
+  }}
+  onRefresh={async () => { await loadAddresses(); }}
+/>
     </Box>
   );
 }

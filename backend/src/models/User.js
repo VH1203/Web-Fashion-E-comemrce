@@ -34,8 +34,8 @@ const UserSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false, collection: "users" }
 );
-UserSchema.index({ email: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
-UserSchema.index({ username: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
+// UserSchema.index({ email: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
+// UserSchema.index({ username: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
 
 
 module.exports = mongoose.model("User", UserSchema);

@@ -66,9 +66,9 @@ exports.preview = async ({ userId, selected_item_ids, address, address_id, ship_
   };
 };
 
-// Helper: kiểm tra ENV VNPay
+// VNPay env guard
 function ensureVNPayEnv() {
-  const ok = !!(process.env.VNPAY_TMN_CODE && process.env.VNPAY_HASH_SECRET && process.env.VNPAY_URL);
+  const ok = !!(process.env.VNPAY_TMN_CODE && process.env.VNPAY_HASH_SECRET && (process.env.VNPAY_URL || process.env.VNPAY_PAY_URL));
   if (!ok) {
     const err = new Error("Thiếu cấu hình VNPay (VNPAY_TMN_CODE, VNPAY_HASH_SECRET, VNPAY_URL).");
     err.status = 400;
@@ -99,9 +99,7 @@ exports.confirm = async ({
     voucher_code,
   });
 
-  const orderCode = `ORD${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${uuidv4()
-    .slice(0, 6)
-    .toUpperCase()}`;
+  const orderCode = `ORD${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${uuidv4().slice(0, 6).toUpperCase()}`;
 
   const order = await Order.create({
     order_code: orderCode,
@@ -126,42 +124,45 @@ exports.confirm = async ({
     },
   });
 
-  // === COD: trả về ngay, không tạo Payment
+  // COD → trả về ngay
   if (!payment_method || payment_method === "COD") {
     return { order_id: order._id, order_code: order.order_code, pay_url: null };
   }
 
-  // === ONLINE: build URL trước, OK rồi mới tạo Payment
+  // ONLINE: build URL trước, OK rồi mới tạo Payment
   try {
     let redirectUrl = null;
 
     if (payment_method === "VNPAY") {
       ensureVNPayEnv();
-      const bankCode =
-        String(payment_extra?.vnpay_mode || "").toUpperCase() === "CARD" ? "VNBANK" : undefined; // QR mặc định
+      const feNext = return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`;
+      const returnUrl = `${process.env.API_URL}/api/payment/vnpay/return?next=${encodeURIComponent(feNext)}`;
+      const bankCode = String(payment_extra?.vnpay_mode || "").toUpperCase() === "CARD" ? "VNBANK" : undefined; // QR mặc định
       redirectUrl = paymentGw.buildVNPayUrl({
         amount: pv.total,
-        orderId: order.order_code, // dùng order_code cho vnp_TxnRef
+        orderId: order.order_code, // vnp_TxnRef
         orderInfo: `DFS ${order.order_code}`,
-        returnUrl: return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`,
+        returnUrl,
         bankCode,
       });
     } else if (payment_method === "CARD" || payment_method === "BANK") {
-      // Thẻ qua VNPay nội địa
       ensureVNPayEnv();
+      const feNext = return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`;
+      const returnUrl = `${process.env.API_URL}/api/payment/vnpay/return?next=${encodeURIComponent(feNext)}`;
       redirectUrl = paymentGw.buildVNPayUrl({
         amount: pv.total,
         orderId: order.order_code,
         orderInfo: `DFS ${order.order_code}`,
-        returnUrl: return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`,
+        returnUrl,
         bankCode: "VNBANK",
       });
     } else if (payment_method === "MOMO") {
+      const feNext = return_urls?.momo || `${process.env.FRONTEND_URL}/payment/return?momo=1`;
       const momo = await paymentGw.createMoMoPayment({
         amount: pv.total,
         orderId: order.order_code,
         orderInfo: `DFS ${order.order_code}`,
-        returnUrl: return_urls?.momo || `${process.env.FRONTEND_URL}/payment/return?momo=1`,
+        returnUrl: feNext, // MoMo return trực tiếp FE
         notifyUrl: `${process.env.API_URL}/api/payment/momo/webhook`,
       });
       redirectUrl = momo.payUrl;
@@ -175,7 +176,6 @@ exports.confirm = async ({
       throw err;
     }
 
-    // Nếu tới đây mà chưa có URL thì coi là lỗi cấu hình
     if (!redirectUrl) {
       const err = new Error("Không tạo được link thanh toán (redirectUrl trống).");
       err.status = 502;
@@ -186,20 +186,15 @@ exports.confirm = async ({
       order_id: order._id,
       user_id: userId,
       shop_id: order.shop_id,
-      gateway:
-        payment_method === "MOMO"
-          ? "MOMO"
-          : payment_method === "VNPAY" || payment_method === "CARD"
-          ? "VNPAY"
-          : "BANK",
+      gateway: payment_method === "MOMO" ? "MOMO" : (payment_method === "VNPAY" || payment_method === "CARD") ? "VNPAY" : "BANK",
       method: payment_method === "WALLET" ? "wallet" : "bank_transfer",
       amount: pv.total,
       currency: "VND",
       status: "pending",
-      return_url: return_urls?.success,
+      return_url: return_urls?.success || null,
       idempotency_key: uuidv4(),
       expires_at: new Date(Date.now() + 15 * 60 * 1000),
-      txn_ref: order.order_code,
+      txn_ref: order.order_code, // dùng để đối soát
       gateway_txn_id: null,
     });
 
@@ -207,9 +202,6 @@ exports.confirm = async ({
   } catch (err) {
     console.error("PAYMENT_CREATE_OR_URL_ERROR:", err);
     const status = Number.isInteger(err.status) ? err.status : 500;
-    throw Object.assign(
-      new Error(err.message || "Không tạo được link thanh toán. Vui lòng thử lại hoặc chọn COD."),
-      { status }
-    );
+    throw Object.assign(new Error(err.message || "Không tạo được link thanh toán. Vui lòng thử lại hoặc chọn COD."), { status });
   }
 };

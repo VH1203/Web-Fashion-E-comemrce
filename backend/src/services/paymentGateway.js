@@ -1,7 +1,6 @@
 const crypto = require("crypto");
 const qs = require("qs");
 
-// Dùng fetch tích hợp Node >=18; nếu Node <18 thì `npm i node-fetch` và `const fetch = require('node-fetch')`
 const fetch = global.fetch || ((...args) => import('node-fetch').then(({default: f}) => f(...args)));
 
 function sortObject(obj) {
@@ -14,7 +13,6 @@ function sortObject(obj) {
   return sorted;
 }
 
-/* ===== VNPay ===== */
 exports.buildVNPayUrl = ({ amount, orderId, orderInfo, returnUrl, bankCode, ipAddr = "127.0.0.1" }) => {
   const tmnCode   = process.env.VNPAY_TMN_CODE;
   const secretKey = process.env.VNPAY_HASH_SECRET;
@@ -45,7 +43,7 @@ exports.buildVNPayUrl = ({ amount, orderId, orderInfo, returnUrl, bankCode, ipAd
     vnp_IpAddr: ipAddr,
     vnp_CreateDate,
   };
-  if (bankCode) vnpParams.vnp_BankCode = bankCode; // ✅ SỬA Ở ĐÂY
+  if (bankCode) vnpParams.vnp_BankCode = bankCode;
 
   const sorted = sortObject(vnpParams);
   const signData = qs.stringify(sorted, { encode: false });
@@ -58,18 +56,32 @@ exports.buildVNPayUrl = ({ amount, orderId, orderInfo, returnUrl, bankCode, ipAd
 
 exports.verifyVNPay = (queryObj = {}) => {
   const secretKey = process.env.VNPAY_HASH_SECRET;
-  const input = { ...queryObj };
+
+  const input = {};
+  for (const k in queryObj) {
+    if (k.startsWith("vnp_")) input[k] = queryObj[k];
+  }
+
   const secureHash = input.vnp_SecureHash || input.vnp_secureHash || "";
   delete input.vnp_SecureHash;
   delete input.vnp_SecureHashType;
 
-  const sorted = sortObject(input);
-  const signData = qs.stringify(sorted, { encode: false });
-  const hmac = crypto.createHmac("sha512", secretKey);
+  const sorted = (function sortObject(obj) {
+    const sorted = {};
+    const keys = Object.keys(obj).map(encodeURIComponent).sort();
+    for (const k of keys) {
+      const decK = decodeURIComponent(k);
+      sorted[k] = encodeURIComponent(obj[decK]).replace(/%20/g, "+");
+    }
+    return sorted;
+  })(input);
+
+  const signData = require("qs").stringify(sorted, { encode: false });
+  const hmac = require("crypto").createHmac("sha512", secretKey);
   const signed = hmac.update(Buffer.from(signData, "utf-8")).digest("hex");
 
   return {
-    valid: secureHash?.toLowerCase() === signed.toLowerCase(),
+    valid: String(secureHash).toLowerCase() === signed.toLowerCase(),
     orderRef: input.vnp_TxnRef,
     amount: Number(input.vnp_Amount || 0) / 100,
     code: input.vnp_ResponseCode,
@@ -78,7 +90,6 @@ exports.verifyVNPay = (queryObj = {}) => {
   };
 };
 
-/* ===== MoMo (bản tối thiểu chạy sandbox) ===== */
 exports.createMoMoPayment = async ({ amount, orderId, orderInfo, returnUrl, notifyUrl }) => {
   const partnerCode = process.env.MOMO_PARTNER_CODE;
   const accessKey   = process.env.MOMO_ACCESS_KEY;

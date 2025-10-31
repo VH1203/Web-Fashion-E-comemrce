@@ -21,7 +21,9 @@ import NotFound from "../pages/errors/NotFound";
 import Cart from "../pages/customer/Cart";
 import Checkout from "../pages/customer/Checkout";
 import PaymentReturn from "../pages/customer/PaymentReturn";
-/** Đợi authReady để tránh redirect sớm */
+import OrderDetail from "../pages/customer/OrderDetail";
+import Orders from "../pages/customer/Orders";
+
 function ProtectedRoute({ children }) {
   const { isAuthenticated, authReady } = useAuth();
   if (!authReady) return null;               // hoặc spinner
@@ -85,6 +87,14 @@ export default function AppRouter() {
       <Route
         path="/payment/return"
         element={<ProtectedRoute><PaymentReturn /></ProtectedRoute>}
+      />
+      <Route
+        path="/orders"
+        element={<ProtectedRoute><Orders /></ProtectedRoute>}
+      />
+      <Route
+        path="/orders/:id"
+        element={<ProtectedRoute><OrderDetail /></ProtectedRoute>}
       />
 
       {/* Shop: cho shop_owner/sales hoặc ai có shop:access */}

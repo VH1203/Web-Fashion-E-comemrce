@@ -147,7 +147,7 @@ export default function CartCard() {
   useEffect(() => { fetchCart(); /* eslint-disable-next-line */ }, []);
 
   const items = data?.items || [];
-  const currency = data?.currency || "VND";
+  const currency =  "";
 
   const toggleAll = (on) => setChecked(new Set(on ? items.map((it) => it._id) : []));
   const toggleOne = (id) => {
@@ -280,14 +280,16 @@ export default function CartCard() {
     );
   }
 
-  return (
+    return (
     <Box className="cart-page">
       <Box className="cart-shell">
-        <Grid container spacing={24} justifyContent="center">
+        {/* spacing lớn không ảnh hưởng, nhưng để mặc định cho gọn */}
+        <Grid container spacing={3} justifyContent="center">
           <Grid item xs={12} lg={11} xl={10}>
+            {/* QUAN TRỌNG: thêm class card-soft (đã override overflow trong CSS) */}
             <Card className="card-soft">
               <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                <Grid container spacing={3}>
+                <Grid container spacing={3} alignItems="flex-start" className="cart-grid">
                   {/* LEFT: Items */}
                   <Grid item xs={12} lg={7}>
                     {/* header */}
@@ -325,6 +327,7 @@ export default function CartCard() {
                       </Box>
                       <Box>
                         <Checkbox
+                        color="primary"
                           checked={checked.size === items.length && items.length > 0}
                           indeterminate={checked.size > 0 && checked.size < items.length}
                           onChange={(e) => toggleAll(e.target.checked)}
@@ -360,6 +363,7 @@ export default function CartCard() {
                             <Box className="item-row">
                               <Box className="left">
                                 <Checkbox
+                                color="primary"
                                   checked={checked.has(it._id)}
                                   onChange={() => toggleOne(it._id)}
                                   sx={{ mr: 1 }}
@@ -398,6 +402,7 @@ export default function CartCard() {
                                     <Button
                                       size="small"
                                       variant="outlined"
+                                      color="primary"
                                       endIcon={<ExpandMore />}
                                       className="btn-soft"
                                       onClick={(e) => openVariantEditor(e, it)}
@@ -418,7 +423,7 @@ export default function CartCard() {
                                   className="qty-price"
                                 >
                                   <Stack direction="row" spacing={0.5} alignItems="center">
-                                    <IconButton size="small" onClick={() => handleQty(it, Math.max(1, it.qty - 1))} disabled={it.qty <= 1}>
+                                    <IconButton size="small" color="primary" onClick={() => handleQty(it, Math.max(1, it.qty - 1))} disabled={it.qty <= 1}>
                                       <Remove />
                                     </IconButton>
                                     <TextField
@@ -428,7 +433,7 @@ export default function CartCard() {
                                       inputProps={{ min: 1, style: { textAlign: "center", width: 64 } }}
                                       onChange={(e) => handleQty(it, Math.max(1, Number(e.target.value) || 1))}
                                     />
-                                    <IconButton size="small" onClick={() => handleQty(it, it.qty + 1)}>
+                                    <IconButton size="small" color="primary" onClick={() => handleQty(it, it.qty + 1)}>
                                       <Add />
                                     </IconButton>
                                   </Stack>
@@ -475,53 +480,59 @@ export default function CartCard() {
                   </Grid>
 
                   {/* RIGHT: Summary */}
-                  <Grid item xs={12} lg={5}>
-                    <Card
-                      className="summary-card"
-                      sx={{
-                        position: { lg: "sticky" },
-                        top: { lg: 16 },
-                        backgroundColor: "primary.main",
-                        color: "primary.contrastText",
-                        borderRadius: 3
-                      }}
-                    >
-                      <CardContent>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-                          <Typography variant="h6" fontWeight={700}>Tóm tắt đơn hàng</Typography>
-                        </Stack>
-
-                        <Stack spacing={1.2} mb={1.5}>
-                          <Stack direction="row" justifyContent="space-between">
-                            <Typography>Đã chọn</Typography>
-                            <Typography>{selectedSummary.count} sp</Typography>
+<Grid item xs={12} lg={5}>
+                    <Box className="summary-sticky">
+                      <Paper elevation={0} className="summary-scroll">
+                        <Box className="summary-section">
+                          <Typography variant="h6" fontWeight={700} mb={1}>Thông tin đơn hàng</Typography>
+                          <Stack spacing={1.1}>
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography color="text.secondary">Số sản phẩm đã chọn</Typography>
+                              <Typography fontWeight={600}>{selectedSummary.count}</Typography>
+                            </Stack>
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography color="text.secondary">Tạm tính</Typography>
+                              <Typography fontWeight={700}>
+                                {formatCurrency(selectedSummary.total)} {currency}
+                              </Typography>
+                            </Stack>
+                            <Divider />
+                            <Stack direction="row" spacing={1}>
+                              <TextField fullWidth size="small" placeholder="Nhập mã voucher" inputProps={{ maxLength: 32 }} />
+                              <Button variant="contained" color="primary">ÁP DỤNG</Button>
+                            </Stack>
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography color="text.secondary">Phí vận chuyển</Typography>
+                              <Typography>0</Typography>
+                            </Stack>
                           </Stack>
-                          <Stack direction="row" justifyContent="space-between">
-                            <Typography>Tạm tính</Typography>
-                            <Typography fontWeight={700}>{formatCurrency(selectedSummary.total)} {currency}</Typography>
+                        </Box>
+
+                        <Box className="summary-section">
+                          <Stack direction="row" justifyContent="space-between" mb={1}>
+                            <Typography fontWeight={700}>Tổng thanh toán</Typography>
+                            <Typography fontWeight={900} fontSize={18}>
+                              {formatCurrency(selectedSummary.total)} {currency}
+                            </Typography>
                           </Stack>
-                        </Stack>
-
-                        <Divider sx={{ borderColor: "rgba(255,255,255,.25)", mb: 1.5 }} />
-
-                        <Stack direction="row" justifyContent="space-between" mb={2}>
-                          <Typography fontWeight={700}>Tổng thanh toán</Typography>
-                          <Typography fontWeight={900}>{formatCurrency(selectedSummary.total)} {currency}</Typography>
-                        </Stack>
-
-                        <Button
-                          fullWidth size="large" variant="contained" color="info"
-                          startIcon={<ShoppingCartCheckout />} disabled={!canCheckout}
-                          onClick={() => {
-                            const selectedIds = Array.from(checked);
-                            navigate("/checkout", { state: { selected_item_ids: selectedIds } });
-                          }} sx={{ color: "#fff" }}
-                        >
-                          Đặt hàng
-                        </Button>
-                      </CardContent>
-                    </Card>
+                          <Typography variant="caption" color="text.secondary">Đã bao gồm VAT (nếu có)</Typography>
+                          <Button
+                            fullWidth size="large" sx={{ mt: 1.5 }}
+                            variant="contained" color="primary"
+                            startIcon={<ShoppingCartCheckout />}
+                            disabled={!canCheckout}
+                            onClick={() => {
+                              const selectedIds = Array.from(checked);
+                              navigate("/checkout", { state: { selected_item_ids: selectedIds } });
+                            }}
+                          >
+                            THANH TOÁN ({selectedSummary.count})
+                          </Button>
+                        </Box>
+                      </Paper>
+                    </Box>
                   </Grid>
+
                 </Grid>
               </CardContent>
             </Card>
@@ -574,8 +585,8 @@ export default function CartCard() {
                 );
               })}
               <Stack direction="row" spacing={1.25} justifyContent="space-between" mt={1.5}>
-                <Button variant="outlined" onClick={closeVariantEditor}>TRỞ LẠI</Button>
-                <Button variant="contained" onClick={confirmVariant}>XÁC NHẬN</Button>
+                <Button variant="outlined" color="primary" onClick={closeVariantEditor}>TRỞ LẠI</Button>
+                <Button variant="contained" color="primary" onClick={confirmVariant}>XÁC NHẬN</Button>
               </Stack>
             </Box>
           );

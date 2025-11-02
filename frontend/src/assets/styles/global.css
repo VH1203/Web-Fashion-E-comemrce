@@ -1,4 +1,7 @@
 /* global css */ 
+body {
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
 :root{
   --radius-xl: 18px;
   --radius-2xl: 22px;

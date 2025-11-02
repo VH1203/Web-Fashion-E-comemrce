@@ -17,12 +17,7 @@ function toArray(x) {
   return Array.isArray(x) ? x : [x];
 }
 
-/* ============ Core: attach req.acl ============ */
-/**
- * withACL: đảm bảo req.acl = { role_id, role_name, permissions }
- * - Dùng khi verifyToken hiện tại chỉ set req.user là User Doc.
- * - Cache trên req để tránh query nhiều lần.
- */
+
 async function buildACL(userDoc) {
   const roleId = normalizeRoleId(userDoc?.role_id);
   let roleName = null;

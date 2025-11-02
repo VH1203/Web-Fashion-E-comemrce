@@ -1,0 +1,110 @@
+/* ===== Layout tổng thể ===== */
+.admin-layout {
+  display: flex;
+  height: 100vh;      
+  overflow: hidden;    
+  background-color: var(--bg-color);
+}
+
+/* ===== Sidebar ===== */
+.admin-sidebar {
+  width: 250px;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
+  flex-shrink: 0;
+  position: fixed;
+  top: 70px; 
+  left: 0;
+  bottom: 0;
+  height: calc(100vh - 70px);
+  z-index: 100;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #ffffff;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.08);
+  height: 100%;
+}
+
+.sidebar-header {
+  margin-bottom: 2rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li a {
+  display: flex;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  text-decoration: none;
+  color: var(--text-secondary);
+  border-radius: 8px;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar-nav li a:hover {
+  background-color: var(--bg-color);
+  color: var(--primary-color);
+}
+
+.sidebar-nav li.active a {
+  background-color: var(--primary-color);
+  color: rgb(0, 63, 235);
+}
+
+.sidebar-nav .icon {
+  margin-right: 1rem;
+  font-size: 1.2rem;
+}
+
+/* ===== Phần nội dung chính ===== */
+.admin-main {
+  flex: 1;
+  margin-left: 250px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh; 
+  overflow: hidden; 
+}
+
+/* ===== Header cố định trên cùng ===== */
+.HeaderShop {
+  position: fixed;
+  top: 0;
+  left: 250px; 
+  right: 0;
+  height: 70px;
+  background-color: #fff;
+  border-bottom: 1px solid var(--border-color);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ===== Nội dung dưới header ===== */
+.admin-content {
+  flex: 1;
+  padding: 2rem;
+  height: calc(100vh - 70px);
+  overflow: hidden; 
+  box-sizing: border-box;
+}

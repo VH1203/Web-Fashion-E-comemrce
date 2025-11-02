@@ -1,3 +1,4 @@
+// src/pages/auth/Login.jsx
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import dfsLogo from "../../assets/icons/DFS-NonBG1.png";
@@ -21,8 +22,20 @@ import Link from "@mui/material/Link";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Google from "@mui/icons-material/Google";
+
 import { authService } from "../../services/authService";
 import { useAuth } from "../../context/AuthContext";
+
+const clearAuthStorage = () => {
+  try {
+    localStorage.removeItem("DFS_TOKEN");
+    localStorage.removeItem("dfs_token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("accessToken");
+    // giữ user nếu muốn auto-fill, hoặc xoá nếu muốn sạch
+    // localStorage.removeItem("dfs_user");
+  } catch {}
+};
 
 export default function Login() {
   const [form, setForm] = useState({ identifier: "", password: "" });
@@ -36,23 +49,38 @@ export default function Login() {
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
   const toggleShowPassword = () => setIsPasswordShown((s) => !s);
+
+  // Auto-hide alert sau 4s
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(""), 4000);
+    return () => clearTimeout(t);
+  }, [message]);
 
   // --- Submit: Đăng nhập thường ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
     setLoading(true);
+
+    // DỌN token cũ để không bị interceptor gắn Authorization vào request /auth/login
+    clearAuthStorage();
+
     try {
+      // Nếu authService hỗ trợ options, dùng: authService.login(form, { skipAuth: true })
       const res = await authService.login(form);
       const { accessToken, user } = res.data.data || {};
-      // Lưu "remember me" tùy ý
+
+      // Lưu "remember me" nếu cần
       if (remember) {
         localStorage.setItem("dfs_remember", "1");
       } else {
         localStorage.removeItem("dfs_remember");
       }
-      login(user, accessToken);
+
+      login(user, accessToken); // đảm bảo useAuth chỉ lưu 1 key: DFS_TOKEN
       setSeverity("success");
       setMessage("Đăng nhập thành công!");
     } catch (err) {
@@ -71,18 +99,36 @@ export default function Login() {
       window.google.accounts.id.initialize({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: handleGoogleCallback,
-        ux_mode: "popup", // mở popup chọn tài khoản
+        ux_mode: "popup", // popup chọn tài khoản
       });
+      // Render nút chính thức của GIS
+      try {
+        window.google.accounts.id.renderButton(
+          document.getElementById("googleLoginDiv"),
+          {
+            theme: "outline",
+            size: "large",
+            text: "continue_with",
+            shape: "pill",
+            width: 320,
+          }
+        );
+      } catch {}
     }
   }, []);
 
   const handleGoogleCallback = async (response) => {
     try {
       setLoading(true);
+      // DỌN token cũ trước khi gọi /auth/google-login
+      clearAuthStorage();
+
       const token = response.credential;
+      // Nếu service hỗ trợ options, dùng: authService.googleLogin({ token }, { skipAuth: true })
       const res = await authService.googleLogin({ token });
       const { accessToken, user } = res.data.data || {};
       login(user, accessToken);
+
       setSeverity("success");
       setMessage("Đăng nhập Google thành công!");
     } catch (err) {
@@ -95,6 +141,7 @@ export default function Login() {
     }
   };
 
+  // Fallback: nếu GIS script chưa sẵn sàng
   const promptGoogle = () => {
     if (window.google?.accounts?.id) {
       window.google.accounts.id.prompt();
@@ -103,6 +150,9 @@ export default function Login() {
       setMessage("Google chưa sẵn sàng.");
     }
   };
+
+  const disabled =
+    loading || !form.identifier?.trim() || !form.password?.trim();
 
   return (
     <Box
@@ -113,15 +163,11 @@ export default function Login() {
         justifyContent: "center",
         p: 3,
         position: "relative",
-        // nền nhẹ nhàng
         background:
           "radial-gradient(1000px 500px at 10% -10%, rgba(99,102,241,.08), transparent), radial-gradient(800px 400px at 100% 0, rgba(16,185,129,.08), transparent)",
       }}
     >
-      <Card
-        elevation={8}
-        sx={{ width: "100%", maxWidth: 480, borderRadius: 3 }}
-      >
+      <Card elevation={8} sx={{ width: "100%", maxWidth: 480, borderRadius: 3 }}>
         <CardContent sx={{ p: { xs: 4, sm: 6 } }}>
           {/* Header auth: logo + tiêu đề nằm ngang */}
           <Box
@@ -131,17 +177,12 @@ export default function Login() {
               alignItems: "center",
               justifyContent: "center",
               gap: 2.5,
-              flexDirection: { xs: "column", sm: "row" }, 
+              flexDirection: { xs: "column", sm: "row" },
               textAlign: { xs: "center", sm: "left" },
             }}
           >
             {/* Logo crop tròn */}
-            <Link
-              component={RouterLink}
-              to="/"
-              underline="none"
-              sx={{ lineHeight: 0 }}
-            >
+            <Link component={RouterLink} to="/" underline="none" sx={{ lineHeight: 0 }}>
               <Box
                 sx={{
                   width: 100,
@@ -215,9 +256,7 @@ export default function Login() {
                       edge="end"
                       onClick={toggleShowPassword}
                       onMouseDown={(e) => e.preventDefault()}
-                      aria-label={
-                        isPasswordShown ? "Ẩn mật khẩu" : "Hiện mật khẩu"
-                      }
+                      aria-label={isPasswordShown ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                       size="small"
                     >
                       {isPasswordShown ? <VisibilityOff /> : <Visibility />}
@@ -259,7 +298,7 @@ export default function Login() {
               fullWidth
               variant="contained"
               type="submit"
-              disabled={loading}
+              disabled={disabled}
               sx={{ py: 1.25, borderRadius: 2 }}
             >
               {loading ? <CircularProgress size={22} /> : "Đăng nhập"}
@@ -275,35 +314,25 @@ export default function Login() {
               }}
             >
               <Typography>Bạn mới dùng nền tảng?</Typography>
-              <Link
-                component={RouterLink}
-                to="/register"
-                color="primary"
-                underline="hover"
-              >
+              <Link component={RouterLink} to="/register" color="primary" underline="hover">
                 Tạo tài khoản
               </Link>
             </Box>
 
             <Divider>hoặc đăng nhập bằng</Divider>
 
-            {/* Dãy social (demo UI) */}
+            {/* Nút Google chính thức từ GIS */}
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+              <div id="googleLoginDiv" />
+            </Box>
+
+            {/* Fallback: nút Google thủ công (prompt) */}
             <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
-              {/* <IconButton size="small" aria-label="Login with Facebook">
-                <FacebookOutlined />
-              </IconButton>
-              <IconButton size="small" aria-label="Login with Twitter/X">
-                <Twitter />
-              </IconButton>
-              <IconButton size="small" aria-label="Login with GitHub">
-                <GitHub />
-              </IconButton> */}
-              {/* Nút Google phụ (nếu GIS script chưa render kịp) */}
               <Button
                 onClick={promptGoogle}
                 variant="outlined"
                 startIcon={<Google />}
-                fullWidth={false} // đổi thành true nếu muốn kéo full hàng
+                fullWidth={false}
                 sx={{
                   px: 2.5,
                   color: "#DB4437",
@@ -323,11 +352,6 @@ export default function Login() {
           </Box>
         </CardContent>
       </Card>
-
-      {/* (Optional) Hình minh họa nền — bạn có thể thay ảnh riêng */}
-      {/* <Box sx={{ position: "absolute", right: 0, bottom: 0, opacity: .25 }}>
-        <img src="/images/pages/auth-v1-mask-light.png" alt="Decor" style={{ maxWidth: 420 }} />
-      </Box> */}
     </Box>
   );
 }

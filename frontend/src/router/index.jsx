@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+
 // ===== Auth Pages =====
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
@@ -16,6 +17,11 @@ import Tickets from "../pages/support/Tickets";
 import ProductDetail from "../pages/customer/ProductDetail";
 import ProfilePage from "../pages/customer/Profile";
 import NotFound from "../pages/errors/NotFound";
+import Cart from "../pages/customer/Cart";
+import Checkout from "../pages/customer/Checkout";
+import PaymentReturn from "../pages/customer/PaymentReturn";
+import OrderDetail from "../pages/customer/OrderDetail";
+import Orders from "../pages/customer/Orders";
 
 // ==== Shop ======
 import ShopLayout from "../components/layout/ShopLayout";
@@ -75,6 +81,26 @@ export default function AppRouter() {
             <ProfilePage />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/cart"
+        element={<ProtectedRoute><Cart /></ProtectedRoute>}
+      />
+      <Route
+        path="/checkout"
+        element={<ProtectedRoute><Checkout /></ProtectedRoute>}
+      />
+      <Route
+        path="/payment/return"
+        element={<ProtectedRoute><PaymentReturn /></ProtectedRoute>}
+      />
+      <Route
+        path="/orders"
+        element={<ProtectedRoute><Orders /></ProtectedRoute>}
+      />
+      <Route
+        path="/orders/:id"
+        element={<ProtectedRoute><OrderDetail /></ProtectedRoute>}
       />
 
       {/* Shop: cho shop_owner/sales hoặc ai có shop:access */}

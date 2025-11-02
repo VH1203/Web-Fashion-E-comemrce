@@ -26,7 +26,6 @@ const orderRoutes = require("./routes/orderRoutes");
 const shippingRoutes = require("./routes/shippingRoutes");
 
 
- const orderRoutes = require("./routes/orderRoutes");
 // const walletRoutes = require("./routes/walletRoutes");
 // const refundRoutes = require("./routes/refundRoutes");
 // const reviewRoutes = require("./routes/reviewRoutes");

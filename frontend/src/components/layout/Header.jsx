@@ -267,6 +267,22 @@ export default function Header({
                       />
                     </MenuItem>
                     <Divider />
+                    <MenuItem
+                      onClick={() => {
+                        closeMenu();
+                        navigate("/shop");
+                      }}
+                    >
+                      Cửa hàng của tôi
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        closeMenu();
+                        navigate("/profile");
+                      }}
+                    >
+                      Hồ sơ
+                    </MenuItem>
                     <MenuItem onClick={() => { closeMenu(); navigate("/profile"); }}>
                       <ListItemIcon><PersonOutlineIcon fontSize="small" /></ListItemIcon>
                       <ListItemText primary="Hồ sơ" />

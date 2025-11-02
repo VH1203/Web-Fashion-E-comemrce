@@ -8,6 +8,7 @@ import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ChangePassword from "../pages/auth/ChangePassword";
+import TermsAndPolicy from "../pages/support/TermsAndPolicy";
 
 // ===== Role Pages =====
 import HomePage from "../pages/customer/HomePage";
@@ -24,10 +25,7 @@ import OrderDetail from "../pages/customer/OrderDetail";
 import Orders from "../pages/customer/Orders";
 
 // ==== Shop ======
-import ShopLayout from "../components/layout/ShopLayout";
-import Dashboard from "../pages/shop/Dashboard";
-import ManageVoucher from "../pages/shop/ManageVoucher";
-import ManageBanner from "../pages/shop/ManageBanner";
+import ShopOwner from "../pages/shop/ShopOwner";
 
 /** Đợi authReady để tránh redirect sớm */
 function ProtectedRoute({ children }) {
@@ -60,7 +58,7 @@ export default function AppRouter() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      
+      <Route path="/legal/privacy" element={<TermsAndPolicy />} />
 
       {/* Đổi mật khẩu: cần đăng nhập */}
       <Route
@@ -109,14 +107,12 @@ export default function AppRouter() {
         path="/shop"
         element={
           <RoleRoute roles={["shop_owner", "sales"]} permAny={["shop:access"]}>
-            <ShopLayout />
+            <ShopOwner />
           </RoleRoute>
         }
       >
         <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="voucher" element={<ManageVoucher />} />
-        <Route path="banner" element={<ManageBanner />} />
+        <Route path="shop-owner" element={<ShopOwner />} />
       </Route>
 
 

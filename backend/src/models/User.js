@@ -5,9 +5,10 @@ const UserSchema = new mongoose.Schema(
   {
     _id: { type: String, default: () => `user-${uuidv4()}` },
     name: { type: String, required: true },
-    username: { type: String, required: true, unique: true },
-    email: { type: String, required: true, unique: true },
+    username: { type: String, required: true, trim: true, lowercase: true },
+    email: { type: String, required: true, trim: true, lowercase: true },
     phone: { type: String, unique: true, sparse: true },
+
     gender: { type: String, enum: ["male", "female", "other"] },
     dob: Date,
     role_id: {
@@ -34,8 +35,14 @@ const UserSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false, collection: "users" }
 );
-UserSchema.index({ email: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
-UserSchema.index({ username: 1 }, { unique: true, collation: { locale: "en", strength: 2 } });
 
+UserSchema.index(
+  { email: 1 },
+  { unique: true, collation: { locale: "en", strength: 2 } }
+);
+UserSchema.index(
+  { username: 1 },
+  { unique: true, collation: { locale: "en", strength: 2 } }
+);
 
 module.exports = mongoose.model("User", UserSchema);

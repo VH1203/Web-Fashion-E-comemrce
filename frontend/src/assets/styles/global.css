@@ -1,1 +1,89 @@
 /* global css */ 
+body {
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+:root{
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+  --shadow-soft: 0 6px 18px rgba(15, 23, 42, .06);
+  --shadow-hover: 0 10px 26px rgba(15, 23, 42, .10);
+  --card-bg: #fff;
+}
+
+.soft-wrap{
+  animation: fadeUp .5s ease both;
+}
+
+.soft-card{
+  background: var(--card-bg);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+}
+.soft-card:hover{
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+.soft-item{
+  border-radius: var(--radius-xl);
+  transition: background-color .25s ease, box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+}
+.soft-item:hover{
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+.soft-divider{
+  opacity: .75;
+}
+
+.soft-input .MuiOutlinedInput-root{
+  border-radius: var(--radius-xl);
+}
+
+/* chips & radios nhẹ hơn */
+.soft-chip .MuiChip-root{
+  border-radius: 12px;
+}
+.soft-radio .MuiRadio-root{
+  padding: 6px;
+}
+
+/* stagger cho list */
+.stagger > *{
+  opacity: 0;
+  transform: translateY(6px);
+  animation: fadeUp .45s ease forwards;
+}
+.stagger > *:nth-child(1){ animation-delay: .03s }
+.stagger > *:nth-child(2){ animation-delay: .06s }
+.stagger > *:nth-child(3){ animation-delay: .09s }
+.stagger > *:nth-child(4){ animation-delay: .12s }
+.stagger > *:nth-child(5){ animation-delay: .15s }
+
+/* Animations */
+@keyframes fadeUp{
+  from{ opacity:0; transform: translateY(8px) }
+  to{ opacity:1; transform: translateY(0) }
+}
+@keyframes fadeScale{
+  from{ opacity:0; transform: translateY(10px) scale(.98) }
+  to{ opacity:1; transform: translateY(0) scale(1) }
+}
+
+/* Dialog paper bo tròn */
+.MuiDialog-paper{
+  border-radius: 20px !important;
+}
+
+/* Input focus ring nhẹ */
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
+  box-shadow: 0 0 0 4px rgba(29, 78, 216, .10);
+  border-color: rgba(29, 78, 216, .5);
+}
+
+/* Button radius */
+.MuiButton-root{
+  border-radius: 12px;
+}

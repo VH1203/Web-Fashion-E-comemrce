@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Sidebar from "../../components/common/SideBar";
+import Sidebar from "../../components/common/Sidebar";
 import AnalyticsPage from "./AnalyticsPage";
 import ChartPage from "./ChartPage";
 import ForecastPage from "./ForecastPage";

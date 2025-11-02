@@ -1,4 +1,5 @@
 const Banner = require("../models/Banner");
+const Flashsale = require("../models/FlashSale");
 const cloudinary = require("../config/cloudinary");
 
 /**
@@ -6,17 +7,14 @@ const cloudinary = require("../config/cloudinary");
  */
 exports.getById = async (id) => {
   const b = await Banner.findById(id).lean();
-  if (!b) return null;
-  return b;
+  return b || null;
 };
 
 /**
  * Lấy danh sách banner với phân trang và filter
- * filters có thể chứa: title, position, is_active
  */
 exports.getAll = async ({ page = 1, limit = 10, filters = {} }) => {
   const query = {};
-
   if (filters.title) query.title = { $regex: filters.title, $options: "i" };
   if (filters.position) query.position = filters.position;
   if (filters.is_active !== undefined) query.is_active = filters.is_active;
@@ -32,7 +30,7 @@ exports.getAll = async ({ page = 1, limit = 10, filters = {} }) => {
 };
 
 /**
- * Cập nhật banner theo ID
+ * Cập nhật banner theo ID (không ảnh)
  */
 exports.updateById = async (id, payload) => {
   const allow = ["title", "position", "is_active", "link", "description"];
@@ -40,12 +38,19 @@ exports.updateById = async (id, payload) => {
   for (const k of allow) {
     if (payload[k] !== undefined) $set[k] = payload[k];
   }
-  const b = await Banner.findByIdAndUpdate(id, { $set }, { new: true, runValidators: true }).lean();
+
+  const b = await Banner.findByIdAndUpdate(
+    id,
+    { $set },
+    { new: true, runValidators: true }
+  ).lean();
+
   return b;
 };
 
 /**
  * Upload banner image từ buffer
+ * Khi upload thành công, đồng thời cập nhật ảnh trong các Flashsale liên kết
  */
 exports.uploadImageFromBuffer = (id, buf) =>
   new Promise((resolve, reject) => {
@@ -54,23 +59,40 @@ exports.uploadImageFromBuffer = (id, buf) =>
       async (err, result) => {
         if (err) return reject(err);
 
-        // Cập nhật banner với URL mới và public_id
-        const banner = await Banner.findByIdAndUpdate(
-          id,
-          { $set: { image_url: result.secure_url, image_public_id: result.public_id } },
-          { new: true }
-        ).lean();
+        try {
+          // 1️⃣ Cập nhật banner với URL mới
+          const banner = await Banner.findByIdAndUpdate(
+            id,
+            {
+              $set: {
+                image_url: result.secure_url,
+                image_public_id: result.public_id,
+              },
+            },
+            { new: true }
+          ).lean();
 
-        if (!banner) return resolve(null);
+          if (!banner) return resolve(null);
 
-        resolve({
-          banner,
-          upload: { url: result.secure_url, public_id: result.public_id },
-        });
+          // 2️⃣ Đồng bộ ảnh mới trong tất cả Flashsale có banner_id tương ứng
+          await Flashsale.updateMany(
+            { banner_id: id },
+            { $set: { banner_image: result.secure_url } }
+          );
+
+          resolve({
+            banner,
+            upload: {
+              url: result.secure_url,
+              public_id: result.public_id,
+            },
+          });
+        } catch (err2) {
+          reject(err2);
+        }
       }
     );
 
-    // Gửi buffer trực tiếp
     stream.end(buf);
   });
 
@@ -85,8 +107,17 @@ exports.create = async (data) => {
 
 /**
  * Xóa banner
+ * Đồng thời xoá hoặc reset banner trong các flash sale
  */
 exports.deleteById = async (id) => {
   const b = await Banner.findByIdAndDelete(id).lean();
+
+  if (b) {
+    await Flashsale.updateMany(
+      { banner_id: id },
+      { $unset: { banner_image: "", banner_id: "" } }
+    );
+  }
+
   return b;
 };

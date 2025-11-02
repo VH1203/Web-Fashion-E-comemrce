@@ -24,8 +24,8 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const FE_ORIGIN = process.env.FE_ORIGIN || 'http://localhost:5173';
 const orderRoutes = require("./routes/orderRoutes");
 const shippingRoutes = require("./routes/shippingRoutes");
-
-
+const flashSaleRoutes = require("./routes/flashSaleRoutes");
+const productVariant = require("./routes/productVariantRoutes");
 // const walletRoutes = require("./routes/walletRoutes");
 // const refundRoutes = require("./routes/refundRoutes");
 // const reviewRoutes = require("./routes/reviewRoutes");
@@ -71,6 +71,8 @@ app.use("/api/checkout", checkoutRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/shipping/webhooks", shippingRoutes);
+app.use("/api/flashsales", flashSaleRoutes);
+app.use("/api/product-variant", productVariant);
 app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoices")));
 
  app.use("/api/orders", orderRoutes);

@@ -1,11 +1,14 @@
 import React, { useState } from "react";
-import Sidebar from "../../components/common/SideBar";
+import Sidebar from "../../components/common/Sidebar";
 import AnalyticsPage from "./AnalyticsPage";
 import ChartPage from "./ChartPage";
 import ForecastPage from "./ForecastPage";
 import RevenuePage from "./RevenuePage";
 import ManageProducts from "./ManageProducts";
-const Dashboard = () => {
+import ManageVoucher from "./ManageVoucher";
+import ManageBanner from "./ManageBanner";
+
+const ShopOwner = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeMenu, setActiveMenu] = useState("analytics");
 
@@ -19,8 +22,12 @@ const Dashboard = () => {
         return <ForecastPage />;
       case "revenue":
         return <RevenuePage />;
-         case "manage_products":
-           return<ManageProducts/>;
+      case "manage_products":
+        return<ManageProducts/>;
+      case "manage_vouchers":
+        return<ManageVoucher/>;
+      case "manage_banners":
+        return<ManageBanner/>;
       default:
         return <AnalyticsPage />;
     }
@@ -44,4 +51,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default ShopOwner;

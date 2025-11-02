@@ -1,4 +1,5 @@
 const Banner = require("../models/Banner");
+const Flashsale = require("../models/FlashSale");
 const { v4: uuidv4 } = require("uuid");
 const cloudinary = require("../config/cloudinary");
 const multer = require("multer");
@@ -111,57 +112,75 @@ exports.createBanner = async (req, res, next) => {
 // Cập nhật banner
 // ----------------------
   exports.updateBanner = async (req, res, next) => {
-    try {
-      const banner = await Banner.findById(req.params.id);
-      if (!banner) return res.status(404).json({ message: "Không tìm thấy banner" });
+  try {
+    const banner = await Banner.findById(req.params.id);
+    if (!banner) return res.status(404).json({ message: "Không tìm thấy banner" });
 
-      if (banner.created_by.toString() !== req.user._id.toString())
-        return res.status(403).json({ message: "Bạn không có quyền sửa banner này" });
+    if (banner.created_by.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Bạn không có quyền sửa banner này" });
 
-      const { 
-        title, 
-        link, 
-        position, 
-        is_active, 
-        start_date, 
-        end_date, 
-        image_url, 
-        image_public_id 
-      } = req.body;
-      if (req.file) {
-        // Nếu có file upload → xóa ảnh cũ, upload mới
-        if (banner.image_public_id) {
-          await cloudinary.uploader.destroy(banner.image_public_id);
-        }
-        const uploadRes = await uploadBufferToCloudinary(req.file.buffer);
-        banner.image_url = uploadRes.url;
-        banner.image_public_id = uploadRes.public_id;
-      } 
-      else if (image_url && image_url !== banner.image_url) {
-        // Nếu FE đã upload trước và gửi URL mới
-        if (banner.image_public_id) {
-          await cloudinary.uploader.destroy(banner.image_public_id);
-        }
-        banner.image_url = image_url;
-        banner.image_public_id = image_public_id || null;
+    const {
+      title,
+      link,
+      position,
+      is_active,
+      start_date,
+      end_date,
+      image_url,
+      image_public_id,
+    } = req.body;
+
+    let newImageUrl = banner.image_url;
+    let imageChanged = false; // ✅ flag kiểm tra có đổi ảnh không
+
+    // Nếu có file upload → xóa ảnh cũ, upload mới
+    if (req.file) {
+      if (banner.image_public_id) {
+        await cloudinary.uploader.destroy(banner.image_public_id);
       }
-      if (title) banner.title = title;
-      if (link) banner.link = link;
-      if (position) banner.position = position;
-      if (typeof is_active !== "undefined") banner.is_active = is_active;
-      if (start_date) banner.start_date = new Date(start_date);
-      if (end_date) banner.end_date = new Date(end_date);
-
-      if (banner.end_date && banner.end_date <= banner.start_date)
-        return res.status(400).json({ message: "Ngày kết thúc phải sau ngày bắt đầu" });
-
-      await banner.save();
-
-      res.json({ message: "Cập nhật banner thành công", banner });
-    } catch (err) {
-      next(err);
+      const uploadRes = await exports.uploadBufferToCloudinary(req.file.buffer);
+      banner.image_url = uploadRes.url;
+      banner.image_public_id = uploadRes.public_id;
+      newImageUrl = uploadRes.url;
+      imageChanged = true;
+    } 
+    // Nếu FE upload sẵn rồi gửi link mới
+    else if (image_url && image_url !== banner.image_url) {
+      if (banner.image_public_id) {
+        await cloudinary.uploader.destroy(banner.image_public_id);
+      }
+      banner.image_url = image_url;
+      banner.image_public_id = image_public_id || null;
+      newImageUrl = image_url;
+      imageChanged = true;
     }
-  };
+
+    if (title) banner.title = title;
+    if (link) banner.link = link;
+    if (position) banner.position = position;
+    if (typeof is_active !== "undefined") banner.is_active = is_active;
+    if (start_date) banner.start_date = new Date(start_date);
+    if (end_date) banner.end_date = new Date(end_date);
+
+    if (banner.end_date && banner.end_date <= banner.start_date)
+      return res.status(400).json({ message: "Ngày kết thúc phải sau ngày bắt đầu" });
+
+    // ✅ Cập nhật flashsale NGAY TẠI ĐÂY
+    if (imageChanged && newImageUrl) {
+      const updateRes = await Flashsale.updateMany(
+        { banner_id: banner._id },
+        { $set: { banner_image: newImageUrl } }
+      );
+      console.log("✅ Flashsale updated:", updateRes.modifiedCount);
+    }
+
+    await banner.save();
+
+    res.json({ message: "Cập nhật banner thành công", banner });
+  } catch (err) {
+    next(err);
+  }
+};
 
 // ----------------------
 // Xóa banner

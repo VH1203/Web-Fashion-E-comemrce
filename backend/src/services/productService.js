@@ -146,9 +146,91 @@ async function getRelated(idOrSlug, limit = 12) {
   return related;
 }
 
+async function getAllproductsofShop() {
+  try {
+    const products = await Product.find().sort({ createdAt: -1 }).lean();
+    console.log(`✅ Found ${products.length} products of Shop`);
+    return products;
+  } catch (err) {
+    console.error("🔥 Lỗi Mongo khi find Product:", err);
+    return [];
+  }
+}
+
+async function searchProductsByName(keyword) {
+  try {
+    if (!keyword || typeof keyword !== 'string') {
+      return await Product.find().sort({ createdAt: -1 }).lean();
+    }
+
+    // Ưu tiên $text search
+    let products = await Product.find(
+      { $text: { $search: keyword } },
+      { score: { $meta: "textScore" } }
+    ).sort({ score: { $meta: "textScore" } }).lean();
+
+    // Nếu không có kết quả, fallback sang regex
+    if (products.length === 0) {
+      products = await Product.find({
+        name: { $regex: keyword, $options: "i" }
+      }).lean();
+    }
+
+    console.log(` Found ${products.length} products matching "${keyword}"`);
+    return products;
+  } catch (err) {
+    console.error("🔥 Lỗi Mongo khi tìm kiếm Product:", err);
+    return [];
+  }
+}
+ async function updateProduct(id, data){
+ try {
+    const product = await Product.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          name: data.name,
+          description: data.description,
+          base_price: data.base_price,
+          stock_total: data.stock_total,
+          status: data.status,  
+        },
+      },
+      { new: true } // trả về document sau khi update
+    );
+
+    if (!product) {
+      throw new Error("Không tìm thấy sản phẩm");
+    }
+
+    return product;
+  } catch (error) {
+    console.error("Lỗi khi cập nhật sản phẩm:", error);
+    throw error;
+  }
+ }
+
+ async function deleteProductById(id){
+  try {
+     const product = await Product.findById(id);
+     if (!product) {
+       throw new Error("Không tìm thấy sản phẩm");
+     }
+      await Product.findByIdAndDelete(id);
+     return {success: true, message: "Xóa sản phẩm thành công"}; 
+       } catch (error) {
+     console.error("Lỗi khi xóa sản phẩm:", error);
+     throw error;
+   }
+ }
+
 module.exports = {
   getProductDetail,
   getProductReviews,
   getRatingsSummary,
   getRelated,
+  getAllproductsofShop,
+  searchProductsByName,
+  updateProduct,
+  deleteProductById,
 };

@@ -1,5 +1,9 @@
 // orderRoutes.js 
 const express = require("express");
+const orderController = require("../controllers/orderController");
+
+const router = express.Router();
+router.get("/revenue-by-category", orderController.getRevenueByCategoryController);
 const router = express.Router();
 const ctrl = require("../controllers/orderController");
 const { verifyToken } = require("../middlewares/authMiddleware");

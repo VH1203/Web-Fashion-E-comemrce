@@ -23,4 +23,21 @@ export const productService = {
     const res = await apiClient.get(`/products/${idOrSlug}/related`, { params: { limit } });
     return res.data.data;
   },
+
+ async getAllProducts () {
+    const res = await apiClient.get("/products/all-products");
+    return res.data.data;
+  },
+  async searchProducts(query) {
+    const res = await apiClient.get(`/products/search`, { params: { q: query } });
+    return res.data.data;
+  },
+  async updateProduct(id, updateData) {
+    const res = await apiClient.patch(`/products/${id}`, updateData);
+    return res.data.data;
+  },
+  async deleteProduct(id) {
+    const res = await apiClient.delete(`/products/${id}`);
+    return res.data.data;
+  }
 };

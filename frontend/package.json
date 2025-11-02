@@ -8,8 +8,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@cloudinary/react": "^1.14.3",
-    "@cloudinary/url-gen": "^1.22.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fortawesome/fontawesome-free": "^7.1.0",
@@ -19,6 +17,7 @@
     "@react-oauth/google": "^0.12.2",
     "axios": "^1.12.2",
     "bootstrap": "^5.3.8",
+    "lucide-react": "^0.545.0",
     "mdb-react-ui-kit": "^9.0.0",
     "primeicons": "^7.0.0",
     "primereact": "^10.9.7",
@@ -26,6 +25,7 @@
     "react-bootstrap": "^2.10.10",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.9.3",
+    "recharts": "^3.2.1",
     "swiper": "^12.0.3"
   },
   "devDependencies": {

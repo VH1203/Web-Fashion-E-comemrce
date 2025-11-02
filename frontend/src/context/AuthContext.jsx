@@ -1,97 +1,153 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 
-const TOKEN_KEY = "dfs_token";   // ✅ thêm
-const USER_KEY  = "dfs_user";    // ✅ thêm
+// ✅ Dùng 1 key duy nhất, thống nhất với apiClient
+export const TOKEN_KEY = "DFS_TOKEN";
+export const USER_KEY  = "dfs_user";
 
-function decodeJwt(t) {
+function decodeJwt(token) {
   try {
-    const [, payload] = t.split(".");
-    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/"); // base64url -> base64
+    const [, payload] = token.split(".");
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
     const json = decodeURIComponent(
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
         .join("")
     );
-    return JSON.parse(json);
+    return JSON.parse(json || "{}");
   } catch {
     return {};
   }
 }
 
+function getUidFromPayload(p) {
+  return p._id || p.id || p.user_id || p.sub || null;
+}
+
+function isExpired(token) {
+  const p = decodeJwt(token);
+  // exp là seconds
+  if (!p?.exp) return false;
+  const now = Math.floor(Date.now() / 1000);
+  return p.exp <= now;
+}
+
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(() =>
-    JSON.parse(localStorage.getItem(USER_KEY) || "null")
-  );
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
-  const [authReady, setAuthReady] = useState(false); // ✅ tránh nháy UI
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || null);
+  const [user, setUser]   = useState(() => {
+    try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); } catch { return null; }
+  });
+  const [authReady, setAuthReady] = useState(false);
 
-  // Khởi tạo từ localStorage + payload
+  // Khởi tạo từ localStorage
   useEffect(() => {
     if (!token) {
+      setUser(null);
       setAuthReady(true);
       return;
     }
+    // Nếu token đã hết hạn => dọn dẹp
+    if (isExpired(token)) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      setToken(null);
+      setUser(null);
+      setAuthReady(true);
+      return;
+    }
+    // Cập nhật user tối thiểu từ payload (không merge rác cũ)
     const p = decodeJwt(token);
-    setUser((u) => {
-      const merged = {
-        ...(u || {}),
-        _id: u?._id ?? p?._id,
-        role_name: u?.role_name ?? p?.role_name,
-        permissions: u?.permissions ?? p?.permissions ?? [],
-      };
-      localStorage.setItem(USER_KEY, JSON.stringify(merged));
-      return merged;
-    });
+    const uid = getUidFromPayload(p);
+    const nextUser = user ? { ...user } : {};
+    if (uid && !nextUser._id) nextUser._id = uid;
+    // (tùy dự án có role_name / permissions trong payload hay không)
+    if (p.role_name && !nextUser.role_name) nextUser.role_name = p.role_name;
+    if (Array.isArray(p.permissions) && !nextUser.permissions) nextUser.permissions = p.permissions;
+
+    if (Object.keys(nextUser).length) {
+      setUser(nextUser);
+      localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    }
     setAuthReady(true);
   }, [token]);
 
+  // Tự động đăng xuất khi hết hạn (poll nhẹ mỗi 30s)
+  useEffect(() => {
+    if (!token) return;
+    const id = setInterval(() => {
+      if (isExpired(token)) {
+        logout();
+      }
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [token]);
+
+  // Đồng bộ đa tab
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === TOKEN_KEY) {
+        setToken(e.newValue);
+      }
+      if (e.key === USER_KEY) {
+        try { setUser(JSON.parse(e.newValue || "null")); } catch { setUser(null); }
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const login = (userData, accessToken) => {
+    // Dọn các key legacy trước
+    localStorage.removeItem("dfs_token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("accessToken");
+
+    // Validate sơ bộ
     const p = decodeJwt(accessToken);
-    const merged = {
-      ...userData,
-      _id: userData?._id ?? p?._id,
+    const uid = getUidFromPayload(p) || userData?._id || null;
+
+    const normalizedUser = {
+      ...(userData || {}),
+      _id: uid || undefined,
       role_name: userData?.role_name ?? p?.role_name ?? null,
       permissions: userData?.permissions ?? p?.permissions ?? [],
     };
 
     setToken(accessToken);
-    setUser(merged);
+    setUser(normalizedUser);
     localStorage.setItem(TOKEN_KEY, accessToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(merged));
+    localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser));
 
-    // Điều hướng theo role_name / permissions
-    const role = merged.role_name;
-    const perms = merged.permissions || [];
-
-    if (role === "system_admin")
-      return navigate("/admin/system-config", { replace: true });
-    if (role === "sales") return navigate("/sales/orders", { replace: true });
-    if (role === "support")
-      return navigate("/support/tickets", { replace: true });
-    if (role === "shop_owner" || perms.includes("shop:access")) {
+    // Điều hướng theo vai trò
+    const role = normalizedUser.role_name;
+    const perms = normalizedUser.permissions || [];
+    if (role === "system_admin") return navigate("/admin/system-config", { replace: true });
+    if (role === "sales")        return navigate("/sales/orders", { replace: true });
+    if (role === "support")      return navigate("/support/tickets", { replace: true });
+    if (role === "shop_owner" || perms.includes("shop:access"))
       return navigate("/shop/dashboard", { replace: true });
-    }
     return navigate("/", { replace: true });
   };
 
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    localStorage.removeItem("access_token"); // legacy cleanup
-    localStorage.removeItem("accessToken");  // legacy cleanup
+    // cleanup legacy
+    localStorage.removeItem("dfs_token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("accessToken");
     setUser(null);
     setToken(null);
     navigate("/login", { replace: true });
   };
 
-  const isAuthenticated = !!token;
+  const isAuthenticated = useMemo(() => Boolean(token) && !isExpired(token), [token]);
 
   return (
     <AuthContext.Provider value={{ user, token, isAuthenticated, authReady, login, logout }}>

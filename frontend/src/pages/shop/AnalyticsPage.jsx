@@ -79,7 +79,7 @@ const AnalyticsPage = () => {
       {/* Charts */}  
       <div className="row g-4">
         {/* Line Chart */}
-        <div className="col-12 col-lg-8">¬
+        <div className="col-12 col-lg-8">
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <div className="mb-4">

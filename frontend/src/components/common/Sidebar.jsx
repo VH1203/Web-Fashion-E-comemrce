@@ -19,9 +19,6 @@ const Sidebar = ({
 }) => {
   const menuItems = [
     { id: "analytics", name: "Analytics", icon: BarChart2 },
-    { id: "chart", name: "Chart", icon: Activity },
-    { id: "forecast", name: "Forecast", icon: TrendingDown },
-    { id: "revenue", name: "Revenue", icon: DollarSign },
     { id: "manage_products", name: "Manage Products", icon: ShoppingCart },
     { id: "manage_vouchers", name: "Manage Voucher", icon: LocalOfferIcon },
     { id: "manage_banners", name: "Manage Banner", icon: ImageIcon },  

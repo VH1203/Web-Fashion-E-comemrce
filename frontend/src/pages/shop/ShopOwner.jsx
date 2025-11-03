@@ -1,9 +1,6 @@
 import React, { useState } from "react";
 import Sidebar from "../../components/common/Sidebar";
 import AnalyticsPage from "./AnalyticsPage";
-import ChartPage from "./ChartPage";
-import ForecastPage from "./ForecastPage";
-import RevenuePage from "./RevenuePage";
 import ManageProducts from "./ManageProducts";
 import ManageVoucher from "./ManageVoucher";
 import ManageBanner from "./ManageBanner";
@@ -16,12 +13,6 @@ const ShopOwner = () => {
     switch (activeMenu) {
       case "analytics":
         return <AnalyticsPage />;
-      case "chart":
-        return <ChartPage />;
-      case "forecast":
-        return <ForecastPage />;
-      case "revenue":
-        return <RevenuePage />;
       case "manage_products":
         return<ManageProducts/>;
       case "manage_vouchers":

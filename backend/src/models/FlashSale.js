@@ -40,6 +40,7 @@ const flashSaleSchema = new mongoose.Schema(
     total_limit: { type: Number, default: 0 },
     products: [flashSaleProductSchema],
     banner_image: { type: String },
+    banner_id: { type: String, ref: "Banner" },
     created_by: { type: String, ref: "User" },
     approved_by: { type: String, ref: "User" },
   },

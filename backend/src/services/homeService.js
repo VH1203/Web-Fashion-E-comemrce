@@ -86,7 +86,7 @@ async function getCategoryTree() {
     return parents.map((p) => ({ ...p, children: childMap[p._id] || [] }));
 }
 
-async function getProductsByRootSlug(rootSlug, limit = 12) {
+async function getProductsByRootSlug(rootSlug, limit = 50) {
     const root = await Category.findOne({ slug: rootSlug, is_active: true }).lean();
     if (!root) return [];
     // find all descendant category ids using path array (contains ancestor ids)
@@ -107,9 +107,9 @@ async function getHomepageData() {
         getActiveBanners(),
         getActiveFlashSale(20),
         getCategoryTree(),
-        getProductsByRootSlug('men', 12),
-        getProductsByRootSlug('women', 12),
-        getBrands(12),
+        getProductsByRootSlug('men', 50),
+        getProductsByRootSlug('women', 50),
+        getBrands(50),
     ]);
     return { banners, flashSale, categories, men, women, brands };
 }

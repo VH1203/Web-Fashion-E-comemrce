@@ -1,78 +1,95 @@
-/* ===== Darker Blue Palette ===== */
+/* ===== Blue Palette (giữ nguyên, tinh chỉnh thêm) ===== */
 :root{
-  /* Light(er) Blue */
   --primary-50:  #eff6ff;
-  --primary-100: #e7f2ff;   /* nhẹ hơn bản cũ một chút */
+  --primary-100: #e7f2ff;
   --primary-200: #d4e7ff;
-  --primary-300: #93c5fd;   /* bắt đầu gradient */
-  --primary-400: #60a5fa;   /* main (NHẠT HƠN) */
-  --primary-500: #3b82f6;   /* hover/nhấn */
-  --primary-600: #2563eb;   /* đậm hơn khi cần */
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
   --primary-700: #1d4ed8;
-  --header-height: 72px;
-}
 
+  --header-height: 80px; /* cao hơn nhẹ cho cảm giác sang */
+}
 
 /* AppBar / Toolbar */
 .dfs-header{
-  background: linear-gradient(90deg, var(--primary-500), var(--primary-700));
   color: #fff;
-  border-bottom: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
 }
+
+/* Glass fallback (nếu không hỗ trợ backdrop-filter) */
+.glass-appbar{
+  background: linear-gradient(90deg, rgba(29,78,216,0.42), rgba(37,99,235,0.42));
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass-appbar{
+    -webkit-backdrop-filter: saturate(120%) blur(14px);
+    backdrop-filter: saturate(120%) blur(14px);
+  }
+}
+
 .dfs-toolbar{
   min-height: var(--header-height) !important;
   padding-block: 0 !important;
 }
 
-/* Brand title override để chắc chắn chữ trắng nổi */
+/* Brand title — luôn trắng, bóng nhẹ cho dễ đọc */
 .brand-title .MuiTypography-root{
   color:#fff;
+  text-shadow: 0 1px 1px rgba(0,0,0,.25);
 }
 
-/* ===== Search pill: nền trắng + viền xanh toả khi focus ===== */
+/* ===== Search pill: trắng trong suốt + glow tập trung ===== */
 .header-search .MuiOutlinedInput-root{
   border-radius: 999px;
-  background: #fff;
-  transition: box-shadow .2s ease, border-color .2s ease;
+  background: rgba(255,255,255,0.85);
+  transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
+  box-shadow: 0 4px 14px rgba(2, 6, 23, 0.08);
 }
 .header-search .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline{
-  border-color: rgba(0,0,0,.12);
+  border-color: rgba(255,255,255,.6);
 }
 .header-search .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline{
-  border-color: var(--primary-400);
+  border-color: var(--primary-300);
+}
+.header-search .MuiOutlinedInput-root.Mui-focused{
+  background: rgba(255,255,255,0.95);
 }
 .header-search .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline{
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-400) 40%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-400) 38%, transparent);
 }
 .header-search input { color:#0b1630; }
 .header-search .MuiInputAdornment-root svg{ color:#64748b; }
 
-/* ===== Buttons theo xanh đậm ===== */
+/* ===== Buttons theo xanh đậm (dịu hơn, bóng cao cấp) ===== */
 .dfs-header .MuiButton-contained{
-  background: var(--primary-500);
+  background: linear-gradient(180deg, var(--primary-500), var(--primary-600));
   color: #fff;
   transition: transform .12s ease, box-shadow .12s ease, background .15s ease;
-  box-shadow: 0 4px 10px rgba(0,0,0,.15);
+  box-shadow: 0 8px 18px rgba(0,0,0,.20);
 }
 .dfs-header .MuiButton-contained:hover{
-  background: var(--primary-600);
+  background: linear-gradient(180deg, var(--primary-600), #1e40af);
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(0,0,0,.2);
+  box-shadow: 0 12px 26px rgba(0,0,0,.28);
 }
 
 .dfs-header .MuiButton-outlined{
-  border-color: rgba(255,255,255,.9);
+  border-color: rgba(255,255,255,.85);
   color: #fff;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .15s ease;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .15s ease, background .15s ease;
+  background: rgba(255,255,255,0.02);
 }
 .dfs-header .MuiButton-outlined:hover{
   border-color: var(--primary-100);
   transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(0,0,0,.18);
+  box-shadow: 0 6px 16px rgba(0,0,0,.18);
+  background: rgba(255,255,255,0.06);
 }
 
-/* ===== IconButton: hover đổi màu + animation ===== */
+/* ===== IconButton: hover sáng + scale nhẹ ===== */
 .nav-icon{
   transition: color .12s ease, transform .12s ease, text-shadow .12s ease;
 }
@@ -82,10 +99,9 @@
   text-shadow: 0 0 6px rgba(255,255,255,.55);
 }
 
-/* Logo wrap (thêm keyframe nhẹ nếu muốn) */
-/* Already controlled via sx in JSX for precise effects */
+/* Logo wrap (đã tinh chỉnh bằng sx trong JSX) */
 
 /* Responsive */
 @media (max-width: 768px){
-  :root{ --header-height: 64px; }
+  :root{ --header-height: 68px; }
 }

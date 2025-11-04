@@ -7,6 +7,7 @@ import RevenuePage from "./RevenuePage";
 import ManageProducts from "./ManageProducts";
 import ManageVoucher from "./ManageVoucher";
 import ManageBanner from "./ManageBanner";
+import ManageFlashsale from "./ManageFlashsale.jsx";
 
 const ShopOwner = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -28,6 +29,8 @@ const ShopOwner = () => {
         return<ManageVoucher/>;
       case "manage_banners":
         return<ManageBanner/>;
+      case "manage_flashsale":
+        return<ManageFlashsale/>;
       default:
         return <AnalyticsPage />;
     }

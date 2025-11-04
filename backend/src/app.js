@@ -50,6 +50,15 @@ app.use(
 
 // Cho phép ảnh cross-origin nếu cần hiển thị từ CDN
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
+const flashSaleRoutes = require("./routes/flashSaleRoutes");
+const productVariant = require("./routes/productVariantRoutes");
+// const walletRoutes = require("./routes/walletRoutes");
+// const refundRoutes = require("./routes/refundRoutes");
+// const reviewRoutes = require("./routes/reviewRoutes");
+// const ticketRoutes = require("./routes/ticketRoutes");
+ const shopRoutes = require("./routes/shopRoutes");
+// const adminRoutes = require("./routes/adminRoutes");
+const transactionRoutes = require("./routes/transactionRoutes");
 
 app.use(
   cors({
@@ -99,6 +108,15 @@ app.use("/api/checkout", checkoutRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/orders", orderRoutes); // <- tránh khai báo trùng 2 lần
 app.use("/api/shipping/webhooks", shippingRoutes);
+app.use("/api/flashsales", flashSaleRoutes);
+app.use("/api/product-variant", productVariant);
+app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoices")));
+
+ app.use("/api/orders", orderRoutes);
+// app.use("/api/wallets", walletRoutes);
+// app.use("/api/refunds", refundRoutes);
+// app.use("/api/reviews", reviewRoutes);
+// app.use("/api/tickets", ticketRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/transactions", transactionRoutes);
 

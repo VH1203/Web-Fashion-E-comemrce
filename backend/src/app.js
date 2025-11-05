@@ -23,6 +23,8 @@ const orderRoutes = require("./routes/orderRoutes");
 const shippingRoutes = require("./routes/shippingRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const productAdminRoutes = require("./routes/productAdminRoutes");
 
 const FE_ORIGIN = process.env.FE_ORIGIN || "http://localhost:5173";
 
@@ -101,6 +103,8 @@ app.use("/api/orders", orderRoutes); // <- tránh khai báo trùng 2 lần
 app.use("/api/shipping/webhooks", shippingRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/shop/dashboard", dashboardRoutes);
+app.use("/api/shop/admin", productAdminRoutes);
 
 app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoices")));
 

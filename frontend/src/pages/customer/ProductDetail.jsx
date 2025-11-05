@@ -16,7 +16,11 @@ const rawVal = (x) => {
   if (typeof x === "object") return x.value ?? x.label ?? x.name ?? x.code ?? "";
   return String(x);
 };
-
+const formatSold = (n) => {
+    if (!n) return "0";
+    if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
+    return `${n}`;
+  };
 function Stars({ value = 0, size = 16 }) {
   const v = Number(value || 0);
   const full = Math.floor(v);
@@ -413,7 +417,7 @@ export default function ProductDetail() {
                   <span className="avg">{ratingValue.toFixed ? ratingValue.toFixed(1) : ratingValue}</span>
                   <span className="count">({ratingCount} đánh giá)</span>
                 </span>
-                <span className="sold">Đã bán: <b>{sold}</b></span>
+                <span className="sold">Đã bán: <b>{formatSold(sold)}</b></span>
                 {brand?.name && <span>Thương hiệu: <b>{brand.name}</b></span>}
                 {category?.name && <span>Danh mục: <b>{category.name}</b></span>}
                 {pObj.sku && <span>SKU: <b>{pObj.sku}</b></span>}

@@ -1,3 +1,6 @@
+body{
+  font-family: 'Bungee Inline', cursive, sans-serif;
+}
 :root{
   --dfs-blue-50:#e7f1ff; --dfs-blue-100:#d8e7ff; --dfs-blue-200:#b9d2ff;
   --dfs-blue-300:#8fb5ff; --dfs-blue-400:#5c8fff; --dfs-blue-500:#2563eb;

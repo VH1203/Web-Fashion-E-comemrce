@@ -23,6 +23,8 @@ const orderRoutes = require("./routes/orderRoutes");
 const shippingRoutes = require("./routes/shippingRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const productAdminRoutes = require("./routes/productAdminRoutes");
 
 const FE_ORIGIN = process.env.FE_ORIGIN || "http://localhost:5173";
 
@@ -57,7 +59,6 @@ const productVariant = require("./routes/productVariantRoutes");
 // const reviewRoutes = require("./routes/reviewRoutes");
 // const ticketRoutes = require("./routes/ticketRoutes");
 // const adminRoutes = require("./routes/adminRoutes");
-
 
 app.use(
   cors({
@@ -118,6 +119,8 @@ app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoi
 // app.use("/api/tickets", ticketRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/shop/dashboard", dashboardRoutes);
+app.use("/api/shop/admin", productAdminRoutes);
 
 app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoices")));
 

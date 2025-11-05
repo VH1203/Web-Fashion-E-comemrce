@@ -27,7 +27,7 @@ export default function HomePage() {
   if (error) return <div className="hp-container error">{error}</div>;
   if (!data)   return <div className="hp-container error">Không có dữ liệu.</div>;
 
-  const { banners, brands, categories, men, women, flashSale } = data;
+  const { banners, brands, categories, men, women, flashSale, unisex } = data;
 
   return (
     <div className="hp-container">
@@ -119,11 +119,20 @@ export default function HomePage() {
           gap={12}
         />
       )}
+      {!!unisex?.length && (
+  <SectionCarousel
+    title="Unisex"
+    viewAllHref="/category/unisex"
+    items={unisex}
+    renderItem={(p) => <ProductCard item={{ product: p }} />}
+    itemWidth={220}
+    gap={12}
+  />
+)} 
     </div>
   );
 }
-
-/* ===================== NORMALIZE ===================== */
+ 
 
 function normalizeHomepage(raw) {
   const banners = {
@@ -141,6 +150,7 @@ function normalizeHomepage(raw) {
     categories: raw?.categories || [],
     men: raw?.men || [],
     women: raw?.women || [],
+    unisex: raw?.unisex || [],
     flashSale: raw?.flashSale || raw?.flash_sale || null,
   };
 }

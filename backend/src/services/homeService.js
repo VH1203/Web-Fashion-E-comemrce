@@ -3,6 +3,7 @@ const FlashSale = require('../models/FlashSale');
 const Category = require('../models/Category');
 const Product = require('../models/Product');
 const Brand = require('../models/Brand');
+const { get } = require('../models/OrderItemSchema');
 
 async function getActiveBanners() {
     const now = new Date();
@@ -86,33 +87,59 @@ async function getCategoryTree() {
     return parents.map((p) => ({ ...p, children: childMap[p._id] || [] }));
 }
 
-async function getProductsByRootSlug(rootSlug, limit = 12) {
-    const root = await Category.findOne({ slug: rootSlug, is_active: true }).lean();
-    if (!root) return [];
-    // find all descendant category ids using path array (contains ancestor ids)
-    const descendants = await Category.find({ $or: [{ _id: root._id }, { path: root._id }] })
-        .select('_id')
-        .lean();
-    const catIds = descendants.map((c) => c._id);
-    const products = await Product.find({ category_id: { $in: catIds }, status: 'active' })
-        .sort({ is_featured: -1, sold_count: -1, createdAt: -1 })
-        .limit(limit)
-        .select('_id name images base_price currency rating_avg sold_count category_id brand_id')
-        .lean();
-    return products;
+// services/homeService.js
+
+async function getProductsByRootSlug(rootSlug, limit = 50) {
+  // map alias để không phụ thuộc tiếng Anh
+  const alias = {
+    men: "thoi-trang-nam",
+    women: "thoi-trang-nu",
+    unisex: "unisex",
+  };
+  const resolved = alias[rootSlug] || rootSlug;
+
+  const root = await Category.findOne({ slug: resolved, is_active: true }).lean();
+  if (!root) return [];
+
+  const descendants = await Category.find({
+    $or: [
+      { _id: root._id },
+      { ancestors: root._id },
+      { path: resolved },
+    ],
+    is_active: true,
+  })
+    .select("_id")
+    .lean();
+
+  const catIds = descendants.map((c) => c._id);
+
+  const products = await Product.find({
+    category_id: { $in: catIds },
+    status: "active",
+  })
+    .sort({ is_featured: -1, sold_count: -1, createdAt: -1 })
+    .limit(limit)
+    .select("_id name slug images base_price currency rating_avg sold_count category_id brand_id")
+    .lean();
+
+  return products;
 }
 
+
 async function getHomepageData() {
-    const [banners, flashSale, categories, men, women, brands] = await Promise.all([
-        getActiveBanners(),
-        getActiveFlashSale(20),
-        getCategoryTree(),
-        getProductsByRootSlug('men', 12),
-        getProductsByRootSlug('women', 12),
-        getBrands(12),
-    ]);
-    return { banners, flashSale, categories, men, women, brands };
+  const [banners, flashSale, categories, men, women, brands, unisex] = await Promise.all([
+    getActiveBanners(),
+    getActiveFlashSale(20),
+    getCategoryTree(),
+    getProductsByRootSlug("thoi-trang-nam", 50),
+    getProductsByRootSlug("thoi-trang-nu", 50),
+    getBrands(50),
+    getProductsByRootSlug("unisex", 50),
+  ]);
+  return { banners, flashSale, categories, men, women, brands, unisex };
 }
+
 
 module.exports = {
     getActiveBanners,

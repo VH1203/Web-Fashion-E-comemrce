@@ -6,10 +6,10 @@ import {
   DollarSign,
   Menu,
   X,
-  ShoppingCart
+  ShoppingCart,
 } from "lucide-react";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
-import ImageIcon from "@mui/icons-material/Image"; 
+import ImageIcon from "@mui/icons-material/Image";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 
@@ -19,18 +19,23 @@ const Sidebar = ({
   sidebarOpen,
   setSidebarOpen,
 }) => {
-  const {user} = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
 
   const menuItems = [
     { id: "analytics", name: "Analytics", icon: BarChart2 },
     { id: "manage_products", name: "Manage Products", icon: ShoppingCart },
     { id: "manage_vouchers", name: "Manage Voucher", icon: LocalOfferIcon },
     { id: "manage_banners", name: "Manage Banner", icon: ImageIcon },
-    {id: "manage_orders", name: "Manage Orders", icon: Activity},
+    { id: "manage_orders", name: "Manage Orders", icon: Activity },
+    { id: "manage_flashsale", name: "Manage Flashsale", icon: ImageIcon },
   ];
 
   const userName = user?.name || user?.email || "User";
-  const avatarUrl = user?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random`;
+  const avatarUrl =
+    user?.avatar_url ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      userName
+    )}&background=random`;
   return (
     <div
       className={`d-flex flex-column bg-white shadow ${
@@ -86,9 +91,11 @@ const Sidebar = ({
           {sidebarOpen && (
             <div className="ms-2">
               <p className="mb-0 fw-semibold text-dark small">{userName}</p>
-              <p className="mb-0 text-muted small">{
-                user?.role === "shop_owner" ? "Chu cua hang" : "Hi, welcome back" 
-                }</p>
+              <p className="mb-0 text-muted small">
+                {user?.role === "shop_owner"
+                  ? "Chu cua hang"
+                  : "Hi, welcome back"}
+              </p>
             </div>
           )}
         </div>

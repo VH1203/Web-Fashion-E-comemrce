@@ -4,6 +4,7 @@ import AnalyticsPage from "./AnalyticsPage";
 import ManageProducts from "./ManageProducts";
 import ManageVoucher from "./ManageVoucher";
 import ManageBanner from "./ManageBanner";
+import ManageFlashsale from "./ManageFlashsale.jsx";
 import ManageOrders from "./ManageOrders";
 
 const ShopOwner = () => {
@@ -15,13 +16,15 @@ const ShopOwner = () => {
       case "analytics":
         return <AnalyticsPage />;
       case "manage_products":
-        return<ManageProducts/>;
-        case "manage_orders":
-          return <ManageOrders/>
+        return <ManageProducts />;
+      case "manage_orders":
+        return <ManageOrders />;
       case "manage_vouchers":
-        return<ManageVoucher/>;
+        return <ManageVoucher />;
       case "manage_banners":
-        return<ManageBanner/>;
+        return <ManageBanner />;
+      case "manage_flashsale":
+        return <ManageFlashsale />;
       default:
         return <AnalyticsPage />;
     }

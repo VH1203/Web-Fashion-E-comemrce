@@ -73,7 +73,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/shipping/webhooks", shippingRoutes);
 app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoices")));
 
- app.use("/api/orders", orderRoutes);
+
 // app.use("/api/wallets", walletRoutes);
 // app.use("/api/refunds", refundRoutes);
 // app.use("/api/reviews", reviewRoutes);

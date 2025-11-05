@@ -4,6 +4,7 @@ import AnalyticsPage from "./AnalyticsPage";
 import ManageProducts from "./ManageProducts";
 import ManageVoucher from "./ManageVoucher";
 import ManageBanner from "./ManageBanner";
+import ManageOrders from "./ManageOrders";
 
 const ShopOwner = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -15,6 +16,8 @@ const ShopOwner = () => {
         return <AnalyticsPage />;
       case "manage_products":
         return<ManageProducts/>;
+        case "manage_orders":
+          return <ManageOrders/>
       case "manage_vouchers":
         return<ManageVoucher/>;
       case "manage_banners":

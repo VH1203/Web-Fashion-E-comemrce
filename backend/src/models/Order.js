@@ -8,7 +8,7 @@ const OrderItemSchema = require("./OrderItemSchema");
  * - Đơn hàng của khách hàng (thuộc 1 shop)
  * - Liên kết với User, Address, Voucher, Payment, Shipper
  */
-const OrderSchema = new mongoose.Schema(
+const OrderSchema = new mongoose.Schema(     
   {
     _id: { type: String, default: () => `ord-${uuidv4()}` },
     order_code: { type: String, required: true, unique: true },

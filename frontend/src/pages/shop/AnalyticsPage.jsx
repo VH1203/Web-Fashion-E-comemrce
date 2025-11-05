@@ -12,12 +12,21 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, Users, ShoppingCart, AlertCircle,Star, CreditCard } from "lucide-react";
+import {
+  TrendingUp,
+  Users,
+  ShoppingCart,
+  AlertCircle,
+  Star,
+  CreditCard,
+} from "lucide-react";
 import StatCardsGrid from "../../components/common/StarCard";
 import { getAnalytics } from "../../services/shopService";
 import { useEffect, useState } from "react";
-import { getRevenueByMonth, getRevenueByCategory } from "../../services/shopService";
-
+import {
+  getRevenueByMonth,
+  getRevenueByCategory,
+} from "../../services/shopService";
 
 const AnalyticsPage = () => {
   const [stats, setStats] = useState({
@@ -44,7 +53,7 @@ const AnalyticsPage = () => {
     fetchData();
   }, []);
 
- useEffect (() => {
+  useEffect(() => {
     const fetchChartData = async () => {
       try {
         const [monthlyData, categoryData] = await Promise.all([
@@ -61,7 +70,7 @@ const AnalyticsPage = () => {
       }
     };
     fetchChartData();
- }, []);
+  }, []);
 
   if (loading) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
@@ -72,19 +81,21 @@ const AnalyticsPage = () => {
         <h1 className="h3 fw-bold text-dark mb-2">Hi, Welcome back 👋</h1>
       </div>
 
-       
       <StatCardsGrid stats={stats} />
 
-
-      {/* Charts */}  
+      {/* Charts */}
       <div className="row g-4">
         {/* Line Chart */}
         <div className="col-12 col-lg-8">
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <div className="mb-4">
-                <h2 className="h5 fw-bold text-dark mb-1">Biểu đồ doanh thu theo tháng</h2>
-                <p className="text-muted small">Tổng quan doanh thu 12 tháng gần nhất</p>
+                <h2 className="h5 fw-bold text-dark mb-1">
+                  Biểu đồ doanh thu theo tháng
+                </h2>
+                <p className="text-muted small">
+                  Tổng quan doanh thu 12 tháng gần nhất
+                </p>
               </div>
               <div style={{ width: "100%", height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -116,11 +127,14 @@ const AnalyticsPage = () => {
         </div>
 
         {/* Pie Chart */}
-      <div className="col-12 col-lg-4">
+        <div className="col-12 col-lg-4">
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <div className="mb-4">
-                <h2 className="h5 fw-bold text-dark"> Biểu đồ doanh thu theo danh mục</h2>
+                <h2 className="h5 fw-bold text-dark">
+                  {" "}
+                  Biểu đồ doanh thu theo danh mục
+                </h2>
               </div>
               <div style={{ width: "100%", height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -130,13 +144,18 @@ const AnalyticsPage = () => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
                       {revenueByCategory.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip />

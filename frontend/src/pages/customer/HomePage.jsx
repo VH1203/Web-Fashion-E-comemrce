@@ -267,11 +267,33 @@ function BannerCarousel({ banners }) {
   const rows = [banners.homepage_top, banners.homepage_mid, banners.homepage_bottom].filter(r => r?.length);
   if (!rows.length) return null;
 
-  // gộp thành 1 list để carousel theo chiều ngang
   const list = rows.flat();
-  const itemWidth = 920; // rộng hero ~ desktop (sẽ co trên mobile)
   const gap = 12;
-  const { viewportRef, canPrev, canNext, scrollPrev, scrollNext } = useCarousel({ itemWidth, gap });
+
+  // đo đúng bề rộng của viewport (trong .hp-container)
+  const { viewportRef, canPrev, canNext, scrollPrev, scrollNext } = useCarousel({
+    itemWidth: 0, // sẽ set sau khi đo
+    gap,
+    perClick: 1,
+  });
+
+  const [vw, setVw] = React.useState(0);
+  React.useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const update = () => setVw(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [viewportRef]);
+
+  // NOTE: hack nhẹ: khi chưa đo xong, tạm dùng 1px để tránh nhảy layout
+  const itemW = vw || 1;
 
   return (
     <section className="hp-section">
@@ -297,7 +319,7 @@ function BannerCarousel({ banners }) {
                   key={b._id || b.id || `${src}-${i}`}
                   className="banner-hero"
                   href={href}
-                  style={{ width: itemWidth, minWidth: itemWidth }}
+                  style={{ width: itemW, minWidth: itemW }}  // <<< rộng bằng viewport của container
                 >
                   <img src={src} alt={b.title || "Banner"} loading="lazy" />
                 </a>

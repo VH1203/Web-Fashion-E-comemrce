@@ -8,7 +8,7 @@ const OrderItemSchema = require("./OrderItemSchema");
  * - Đơn hàng của khách hàng (thuộc 1 shop)
  * - Liên kết với User, Address, Voucher, Payment, Shipper
  */
-const OrderSchema = new mongoose.Schema(     
+const OrderSchema = new mongoose.Schema(
   {
     _id: { type: String, default: () => `ord-${uuidv4()}` },
     order_code: { type: String, required: true, unique: true },
@@ -31,7 +31,11 @@ const OrderSchema = new mongoose.Schema(
       default: "pending",
     },
 
-    shipping_provider: { type: String, enum: ["GHN", "GHTK", "NONE"], default: "NONE" },
+    shipping_provider: {
+      type: String,
+      enum: ["GHN", "GHTK", "NONE"],
+      default: "NONE",
+    },
     shipping_fee: { type: Number, default: 0 },
     tracking_code: { type: String },
     expected_delivery: { type: Date },
@@ -41,7 +45,17 @@ const OrderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["processing","pending", "confirmed", "shipping", "delivered", "canceled_by_customer", "canceled_by_shop", "refund_pending", "refund_completed"],
+      enum: [
+        "processing",
+        "pending",
+        "confirmed",
+        "shipping",
+        "delivered",
+        "canceled_by_customer",
+        "canceled_by_shop",
+        "refund_pending",
+        "refund_completed",
+      ],
       default: "pending",
     },
 
@@ -54,56 +68,86 @@ const OrderSchema = new mongoose.Schema(
 // Tự động tính tổng tiền trước khi save
 OrderSchema.pre("save", function (next) {
   if (this.items && this.items.length > 0) {
-    const subtotal = this.items.reduce((sum, it) => sum + (it.total || (it.price - it.discount) * it.qty), 0);
+    const subtotal = this.items.reduce(
+      (sum, it) => sum + (it.total || (it.price - it.discount) * it.qty),
+      0
+    );
     this.total_price = subtotal + (this.shipping_fee || 0);
   }
   next();
 });
 
-
-
 // doanh thu theo danh muc san pham
+// src/models/Order.js (chỉ cần thay hàm này)
 OrderSchema.statics.getRevenueByCategory = async function () {
-  return this.aggregate([
-    { $unwind: "$items" },
-    {
-      $lookup: {
-        from: "products",
-        localField: "items.product_id",
-        foreignField: "_id",
-        as: "productInfo",
-      },
-    },
-    { $unwind: "$productInfo" },
-    {
-      $lookup: {
-        from: "categories",
-        localField: "productInfo.category_id",
-        foreignField: "_id",
-        as: "categoryInfo",
-      },
-    },
-    { $unwind: "$categoryInfo" },
-    {
-      $group: {
-        _id: "$categoryInfo.name",
-        totalRevenue: {
-          $sum: {
-            $add: [
-              { $ifNull: ["$items.total", { $multiply: ["$items.price", "$items.qty"] }] },
-            ],
-          },
+  try {
+    const result = await this.aggregate([
+      // Nếu có đơn delivered thì bật match này lên
+      // { $match: { status: "delivered" } },
+
+      // Bung từng sản phẩm trong đơn
+      { $unwind: "$items" },
+
+      // ✅ Join sang bảng products (match theo chuỗi, không dùng $expr phức tạp)
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.product_id",
+          foreignField: "_id",
+          as: "productInfo",
         },
       },
-    },
-    {
-      $project: {
-        _id: 0,
-        name: "$_id",
-        value: "$totalRevenue",
+      { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: false } },
+
+      // ✅ Join sang bảng categories
+      {
+        $lookup: {
+          from: "categories",
+          localField: "productInfo.category_id",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
       },
-    },
-  ]);
+      { $unwind: { path: "$categoryInfo", preserveNullAndEmptyArrays: false } },
+
+      // ✅ Gom doanh thu theo tên danh mục
+      {
+        $group: {
+          _id: "$categoryInfo.name",
+          totalRevenue: {
+            $sum: {
+              $ifNull: [
+                "$items.total",
+                { $multiply: ["$items.price", "$items.qty"] },
+              ],
+            },
+          },
+          totalOrders: { $addToSet: "$_id" },
+          totalProducts: { $addToSet: "$items.product_id" },
+        },
+      },
+
+      // ✅ Định dạng lại output
+      {
+        $project: {
+          _id: 0,
+          category: "$_id",
+          totalRevenue: 1,
+          totalOrders: { $size: "$totalOrders" },
+          totalProducts: { $size: "$totalProducts" },
+        },
+      },
+
+      // Sắp xếp giảm dần theo doanh thu
+      { $sort: { totalRevenue: -1 } },
+    ]);
+
+    console.log("DEBUG revenue result:", result);
+    return result;
+  } catch (err) {
+    console.error("getRevenueByCategory error:", err);
+    throw err;
+  }
 };
 
 module.exports = mongoose.model("Order", OrderSchema);

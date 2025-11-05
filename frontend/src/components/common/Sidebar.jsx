@@ -26,7 +26,7 @@ const Sidebar = ({
     { id: "manage_products", name: "Manage Products", icon: ShoppingCart },
     { id: "manage_vouchers", name: "Manage Voucher", icon: LocalOfferIcon },
     { id: "manage_banners", name: "Manage Banner", icon: ImageIcon },
-    { id: "manage_orders", name: "Manage Orders", icon: Activity },
+    // { id: "manage_orders", name: "Manage Orders", icon: Activity },
     { id: "manage_flashsale", name: "Manage Flashsale", icon: ImageIcon },
   ];
 

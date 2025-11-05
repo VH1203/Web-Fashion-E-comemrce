@@ -56,9 +56,8 @@ const productVariant = require("./routes/productVariantRoutes");
 // const refundRoutes = require("./routes/refundRoutes");
 // const reviewRoutes = require("./routes/reviewRoutes");
 // const ticketRoutes = require("./routes/ticketRoutes");
- const shopRoutes = require("./routes/shopRoutes");
 // const adminRoutes = require("./routes/adminRoutes");
-const transactionRoutes = require("./routes/transactionRoutes");
+
 
 app.use(
   cors({

@@ -8,9 +8,11 @@ const Brand = require("../backend/src/models/Brand");
 const Product = require("../backend/src/models/Product");
 const ProductVariant = require("../backend/src/models/ProductVariant");
 let User;
-try { User = require("../backend/src/models/User"); } catch (_) {}
+try {
+  User = require("../backend/src/models/User");
+} catch (_) {}
 
-const MONGO_URI = "mongodb+srv://dfs_dev:vietanh2003@cluster1.tr8dadn.mongodb.net/WDP?retryWrites=true&w=majority";
+const MONGO_URI = `${process.env.MONGO_URI}/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`;
 const SEED_SHOP_ID = "user-acd80ed5-dfda-4e0d-9387-ba077d6a1d78";
 const SEED_TAG = "seed-50-v2"; // dùng để clean
 
@@ -20,24 +22,44 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const uniq = (arr) => Array.from(new Set(arr));
 
 function slugifyVi(s = "") {
-  return String(s).trim().toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+  return String(s)
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
 }
 
 // SKU unique: bám theo productId + 3 ký tự màu + size + random
 function skuFor(prodId, color, size, idx = 0) {
   const pid = String(prodId).slice(-6).toUpperCase();
   const c3 = slugifyVi(color).slice(0, 3).toUpperCase() || "CLR";
-  const s = String(size).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const s = String(size)
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
   const rand = Math.random().toString(36).slice(-3).toUpperCase();
   return `SKU-${pid}-${c3}-${s}-${idx}${rand}`;
 }
 
 const COLORS = [
-  "Black", "White", "Grey", "Navy", "Blue", "Light Blue",
-  "Red", "Maroon", "Green", "Olive", "Brown", "Beige",
-  "Pink", "Purple", "Yellow", "Orange"
+  "Black",
+  "White",
+  "Grey",
+  "Navy",
+  "Blue",
+  "Light Blue",
+  "Red",
+  "Maroon",
+  "Green",
+  "Olive",
+  "Brown",
+  "Beige",
+  "Pink",
+  "Purple",
+  "Yellow",
+  "Orange",
 ];
 
 const SIZES_TOP = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -45,8 +67,21 @@ const SIZES_UNISEX = ["S", "M", "L", "XL", "XXL"];
 const SIZES_BOTTOM = ["28", "29", "30", "31", "32", "33", "34", "36"];
 const SIZES_DRESS = ["S", "M", "L", "XL"];
 
-const NAME_TOPS = ["Áo thun", "Áo sơ mi", "Áo polo", "Áo nỉ", "Áo khoác", "Áo len"];
-const NAME_BOTTOMS = ["Quần jeans", "Quần tây", "Quần kaki", "Quần jogger", "Quần short"];
+const NAME_TOPS = [
+  "Áo thun",
+  "Áo sơ mi",
+  "Áo polo",
+  "Áo nỉ",
+  "Áo khoác",
+  "Áo len",
+];
+const NAME_BOTTOMS = [
+  "Quần jeans",
+  "Quần tây",
+  "Quần kaki",
+  "Quần jogger",
+  "Quần short",
+];
 const NAME_DRESS = ["Váy chữ A", "Váy xòe", "Đầm suông", "Đầm body"];
 const NAME_SLEEP = ["Đồ ngủ cotton", "Pyjama", "Áo choàng ngủ"];
 const NAME_UNDER = ["Áo lót", "Quần lót", "Bralette"];
@@ -79,13 +114,27 @@ function sizesByCategorySlugPath(path = []) {
 }
 
 async function ensureBrands() {
-  const names = ["DFS Basics", "BluePeak", "UrbanFit", "EcoWear", "ClassicLine"];
+  const names = [
+    "DFS Basics",
+    "BluePeak",
+    "UrbanFit",
+    "EcoWear",
+    "ClassicLine",
+  ];
   const out = [];
   for (const n of names) {
     const slug = slugifyVi(n);
     const doc = await Brand.findOneAndUpdate(
       { slug },
-      { $setOnInsert: { name: n, slug, country: "VN", gender_focus: "mixed", is_active: true } },
+      {
+        $setOnInsert: {
+          name: n,
+          slug,
+          country: "VN",
+          gender_focus: "mixed",
+          is_active: true,
+        },
+      },
       { new: true, upsert: true }
     );
     out.push(doc);
@@ -110,14 +159,21 @@ async function guessShopId() {
 
 async function getLeafCategories() {
   // lá: children_count === 0; nếu thiếu trường này thì lấy level >= 2
-  let leaves = await Category.find({ is_active: true, children_count: { $in: [0, undefined, null] } }).lean();
-  if (!leaves?.length) leaves = await Category.find({ is_active: true, level: { $gte: 2 } }).lean();
+  let leaves = await Category.find({
+    is_active: true,
+    children_count: { $in: [0, undefined, null] },
+  }).lean();
+  if (!leaves?.length)
+    leaves = await Category.find({
+      is_active: true,
+      level: { $gte: 2 },
+    }).lean();
   return leaves;
 }
 
 /* ===== MAIN ===== */
 (async () => {
-  await mongoose.connect(MONGO_URI, { });
+  await mongoose.connect(MONGO_URI, {});
   console.log("✓ Mongo connected");
 
   const [brands, leaves, shopId] = await Promise.all([
@@ -125,9 +181,16 @@ async function getLeafCategories() {
     getLeafCategories(),
     guessShopId(),
   ]);
-  if (!leaves.length) throw new Error("Không tìm thấy category lá. Hãy import categories 3 cấp trước.");
+  if (!leaves.length)
+    throw new Error(
+      "Không tìm thấy category lá. Hãy import categories 3 cấp trước."
+    );
 
-  console.log(`• Leaves: ${leaves.length} | Brands: ${brands.length} | Shop: ${shopId || "(none)"}`);
+  console.log(
+    `• Leaves: ${leaves.length} | Brands: ${brands.length} | Shop: ${
+      shopId || "(none)"
+    }`
+  );
 
   const createdProducts = [];
   const createdVariants = [];
@@ -140,7 +203,13 @@ async function getLeafCategories() {
     const sizesLib = sizesByCategorySlugPath(pathSlugs);
 
     const baseName = pick(nameLib);
-    const flavor = pick(["Basic", "Premium", "Classic", "Regular", "Essential"]);
+    const flavor = pick([
+      "Basic",
+      "Premium",
+      "Classic",
+      "Regular",
+      "Essential",
+    ]);
     const name = `${baseName} ${flavor} #${rint(100, 999)}`;
 
     const slug = `${slugifyVi(name)}-${uuidv4().slice(0, 6)}`;
@@ -155,15 +224,28 @@ async function getLeafCategories() {
       description: `${baseName} phong cách ${flavor}.`,
       detail_info: {
         origin_country: "VN",
-        materials: pick([["cotton"], ["cotton", "polyester"], ["spandex", "polyester"]]),
-        seasons: pick([["all-season"], ["summer"], ["winter"], ["spring","autumn"]]),
+        materials: pick([
+          ["cotton"],
+          ["cotton", "polyester"],
+          ["spandex", "polyester"],
+        ]),
+        seasons: pick([
+          ["all-season"],
+          ["summer"],
+          ["winter"],
+          ["spring", "autumn"],
+        ]),
         care_instructions: "Giặt máy nhẹ, không tẩy.",
       },
       tags: ["dfs", "seed", SEED_TAG],
       images: PLACEHOLDER_IMAGES,
       videos: [],
       stock_total: 0,
-      seo: { title: name, description: `${name} – DFS`, keywords: [baseName, "thời trang"] },
+      seo: {
+        title: name,
+        description: `${name} – DFS`,
+        keywords: [baseName, "thời trang"],
+      },
       is_featured: Math.random() < 0.15,
       status: "active",
       base_price,
@@ -217,18 +299,22 @@ async function getLeafCategories() {
 
   // recompute stock_total
   const sums = await ProductVariant.aggregate([
-    { $match: { product_id: { $in: createdProducts.map(p => p._id) } } },
+    { $match: { product_id: { $in: createdProducts.map((p) => p._id) } } },
     { $group: { _id: "$product_id", st: { $sum: "$stock" } } },
   ]);
   for (const s of sums) {
     await Product.updateOne({ _id: s._id }, { $set: { stock_total: s.st } });
   }
 
-  console.log(`✓ Seeded products: ${createdProducts.length}, variants: ${createdVariants.length}`);
+  console.log(
+    `✓ Seeded products: ${createdProducts.length}, variants: ${createdVariants.length}`
+  );
   await mongoose.disconnect();
   process.exit(0);
 })().catch(async (e) => {
   console.error(e);
-  try { await mongoose.disconnect(); } catch (_) {}
+  try {
+    await mongoose.disconnect();
+  } catch (_) {}
   process.exit(1);
 });

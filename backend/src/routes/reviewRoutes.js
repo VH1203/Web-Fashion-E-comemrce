@@ -8,4 +8,14 @@ router.post(
   verifyToken,
   reviewController.createReviewController
 );
+router.get(
+  "/product/:product_id",
+  reviewController.getReviewsByProductController
+);
+router.get("/my-reviews", verifyToken, reviewController.getMyReviewsController);
+router.get(
+  "/pending-reviews",
+  verifyToken,
+  reviewController.getPendingReviewsController
+);
 module.exports = router;

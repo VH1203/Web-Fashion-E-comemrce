@@ -18,6 +18,10 @@ import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import theme from "./theme";
 import CssBaseline from "@mui/material/CssBaseline";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
 // const theme = createTheme({
 //   palette: {
 //     primary: {
@@ -35,9 +39,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <BrowserRouter>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </QueryClientProvider>
           </BrowserRouter>
         </ThemeProvider>
       </StyledEngineProvider>

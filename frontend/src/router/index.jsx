@@ -25,11 +25,8 @@ import Orders from "../pages/customer/Orders";
 import Dashboard from "../pages/shop/Dashboard";
 import ManageProducts from "../pages/shop/ManageProducts1";
 import AddProduct from "../pages/shop/AddProduct";
-
-
-// ==== Shop ======
 import ShopOwner from "../pages/shop/ShopOwner";
-
+import ReviewPages from "../pages/customer/ReviewsPage/ReviewsPage";
 /** Đợi authReady để tránh redirect sớm */
 function ProtectedRoute({ children }) {
   const { isAuthenticated, authReady } = useAuth();
@@ -126,6 +123,14 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/reviews"
+        element={
+          <ProtectedRoute>
+            <ReviewPages />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Shop: cho shop_owner/sales hoặc ai có shop:access */}
       <Route
@@ -150,7 +155,7 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       />
-<Route
+      <Route
         path="/shop/admin/products"
         element={
           <ProtectedRoute>
@@ -172,8 +177,14 @@ export default function AppRouter() {
       />
 
       {/* Alias/Redirect nếu trước đó từng dùng /shop/products */}
-      <Route path="/shop/products" element={<Navigate to="/shop/admin/products" replace />} />
-      <Route path="/shop/products/new" element={<Navigate to="/shop/admin/products/new" replace />} />
+      <Route
+        path="/shop/products"
+        element={<Navigate to="/shop/admin/products" replace />}
+      />
+      <Route
+        path="/shop/products/new"
+        element={<Navigate to="/shop/admin/products/new" replace />}
+      />
 
       {/* Sales */}
       <Route

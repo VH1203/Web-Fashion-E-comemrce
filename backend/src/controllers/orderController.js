@@ -1,4 +1,3 @@
-const { getRevenueByCategory } = require("../services/orderService");
 
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
@@ -338,19 +337,3 @@ exports.sendReviewReminder = async (req, res, next) => {
   }
 };
 
-exports.getRevenueByCategoryController = async (req, res) => {
-  try {
-    const data = await getRevenueByCategory();
-    res.status(200).json({
-      success: true,
-      message: "Lấy doanh thu theo danh mục thành công",
-      data,
-    });
-  } catch (error) {
-    console.error("Error in getRevenueByCategoryController:", error);
-    res.status(500).json({
-      success: false,
-      message: "Không thể lấy doanh thu theo danh mục",
-    });
-  }
-};

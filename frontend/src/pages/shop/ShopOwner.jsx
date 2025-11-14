@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import Sidebar from "../../components/common/Sidebar";
 import AnalyticsPage from "./AnalyticsPage";
-import ChartPage from "./ChartPage";
-import ForecastPage from "./ForecastPage";
-import RevenuePage from "./RevenuePage";
 import ManageProducts from "./ManageProducts";
 import ManageVoucher from "./ManageVoucher";
 import ManageBanner from "./ManageBanner";
 import ManageFlashsale from "./ManageFlashsale.jsx";
+//import ManageOrders from "./ManageOrders";
 
 const ShopOwner = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -17,20 +15,16 @@ const ShopOwner = () => {
     switch (activeMenu) {
       case "analytics":
         return <AnalyticsPage />;
-      case "chart":
-        return <ChartPage />;
-      case "forecast":
-        return <ForecastPage />;
-      case "revenue":
-        return <RevenuePage />;
       case "manage_products":
-        return<ManageProducts/>;
+        return <ManageProducts />;
+      // case "manage_orders":
+      //   return <ManageOrders />;
       case "manage_vouchers":
-        return<ManageVoucher/>;
+        return <ManageVoucher />;
       case "manage_banners":
-        return<ManageBanner/>;
+        return <ManageBanner />;
       case "manage_flashsale":
-        return<ManageFlashsale/>;
+        return <ManageFlashsale />;
       default:
         return <AnalyticsPage />;
     }

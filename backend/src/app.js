@@ -23,6 +23,8 @@ const orderRoutes = require("./routes/orderRoutes");
 const shippingRoutes = require("./routes/shippingRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const productAdminRoutes = require("./routes/productAdminRoutes");
 
 const FE_ORIGIN = process.env.FE_ORIGIN || "http://localhost:5173";
 
@@ -54,11 +56,9 @@ const flashSaleRoutes = require("./routes/flashSaleRoutes");
 const productVariant = require("./routes/productVariantRoutes");
 // const walletRoutes = require("./routes/walletRoutes");
 // const refundRoutes = require("./routes/refundRoutes");
-// const reviewRoutes = require("./routes/reviewRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 // const ticketRoutes = require("./routes/ticketRoutes");
- const shopRoutes = require("./routes/shopRoutes");
 // const adminRoutes = require("./routes/adminRoutes");
-const transactionRoutes = require("./routes/transactionRoutes");
 
 app.use(
   cors({
@@ -75,7 +75,10 @@ app.set("etag", false);
 
 // Với mọi response dưới /api → no-store để trình duyệt luôn xin dữ liệu mới
 app.use("/api", (req, res, next) => {
-  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
   res.set("Pragma", "no-cache");
   res.set("Expires", "0");
   next();
@@ -110,17 +113,24 @@ app.use("/api/orders", orderRoutes); // <- tránh khai báo trùng 2 lần
 app.use("/api/shipping/webhooks", shippingRoutes);
 app.use("/api/flashsales", flashSaleRoutes);
 app.use("/api/product-variant", productVariant);
-app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoices")));
+app.use(
+  "/static/invoices",
+  express.static(path.join(__dirname, "../public/invoices"))
+);
 
- app.use("/api/orders", orderRoutes);
 // app.use("/api/wallets", walletRoutes);
 // app.use("/api/refunds", refundRoutes);
-// app.use("/api/reviews", reviewRoutes);
+app.use("/api/reviews", reviewRoutes);
 // app.use("/api/tickets", ticketRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/shop/dashboard", dashboardRoutes);
+app.use("/api/shop/admin", productAdminRoutes);
 
-app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoices")));
+app.use(
+  "/static/invoices",
+  express.static(path.join(__dirname, "../public/invoices"))
+);
 
 /* ==== Health ==== */
 app.get("/", (req, res) => {

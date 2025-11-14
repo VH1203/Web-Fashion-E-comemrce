@@ -1,4 +1,4 @@
-// orderService.js 
+// orderService.js
 const Order = require("../models/Order");
 const getRevenueByCategory = async () => {
   try {

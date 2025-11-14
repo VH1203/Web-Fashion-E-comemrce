@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./assets/styles/global.css";
 
-
 // import "mdb-react-ui-kit/dist/css/mdb.min.css";
 // import "@fortawesome/fontawesome-free/css/all.min.css";
 // import "primereact/resources/themes/lara-light-blue/theme.css";
@@ -11,14 +10,17 @@ import "./assets/styles/global.css";
 // import "primeicons/primeicons.css";
 // import "bootstrap/dist/css/bootstrap.min.css";
 
-
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import {ToastProvider} from "./components/common/ToastProvider";
+import { ToastProvider } from "./components/common/ToastProvider";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider, StyledEngineProvider } from "@mui/material/styles";
 import theme from "./theme";
 import CssBaseline from "@mui/material/CssBaseline";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 // const theme = createTheme({
 //   palette: {
@@ -37,9 +39,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <BrowserRouter>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </QueryClientProvider>
           </BrowserRouter>
         </ThemeProvider>
       </StyledEngineProvider>

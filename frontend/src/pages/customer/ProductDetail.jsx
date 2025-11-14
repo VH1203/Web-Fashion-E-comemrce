@@ -17,6 +17,17 @@ const rawVal = (x) => {
   return String(x);
 };
 
+// Link nhảy xuống khu vực size
+const scrollToSize = () => {
+  const el = document.getElementById("size-section");
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+const formatSold = (n) => {
+    if (!n) return "0";
+    if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k`;
+    return `${n}`;
+  };
 function Stars({ value = 0, size = 16 }) {
   const v = Number(value || 0);
   const full = Math.floor(v);
@@ -270,6 +281,12 @@ export default function ProductDetail() {
   const va = getVarAttrs(selectedVar);
   Object.entries(va).forEach(([k, v]) => specEntries.push([prettyKey(k), String(rawVal(v))]));
 
+  // headers cho bảng size (nếu có)
+  const sizeHeaders = useMemo(() => {
+    const rows = Array.isArray(sizeChart?.rows) ? sizeChart.rows : [];
+    return Array.from(new Set(rows.flatMap(r => Object.keys(r.measurements || {}))));
+  }, [sizeChart]);
+
   const onPick = (k, v) => setSelectedAttrs((prev) => resolveOnPick(variantsMemo, prev, k, v));
 
   const canSuggest = Number(height) > 0 && Number(weight) > 0 && Array.isArray(sizeChart?.rows) && sizeChart.rows.length > 0;
@@ -376,6 +393,7 @@ export default function ProductDetail() {
       {!loading && !pObj._id && !error && <div>Không tìm thấy sản phẩm</div>}
       {pObj._id && (
         <>
+          {/* GRID: Gallery (trái) + Info (phải) */}
           <div className="pd-grid">
             <div className="pd-gallery">
               <div className="pd-mainimg">
@@ -386,6 +404,7 @@ export default function ProductDetail() {
                 )}
                 {(hasDiscount || flashBadge) && <span className="badge">{flashBadge || "SALE"}</span>}
               </div>
+
               {!!images.length && (
                 <div className="pd-thumbs">
                   {images.map((img, idx) => (
@@ -405,15 +424,17 @@ export default function ProductDetail() {
               )}
             </div>
 
+            {/* Cột phải */}
             <div className="pd-info">
               <h1 className="pd-name">{pObj.name}</h1>
+
               <div className="pd-meta">
                 <span className="rating">
                   <Stars value={ratingValue} />
                   <span className="avg">{ratingValue.toFixed ? ratingValue.toFixed(1) : ratingValue}</span>
                   <span className="count">({ratingCount} đánh giá)</span>
                 </span>
-                <span className="sold">Đã bán: <b>{sold}</b></span>
+                <span className="sold">Đã bán: <b>{formatSold(sold)}</b></span>
                 {brand?.name && <span>Thương hiệu: <b>{brand.name}</b></span>}
                 {category?.name && <span>Danh mục: <b>{category.name}</b></span>}
                 {pObj.sku && <span>SKU: <b>{pObj.sku}</b></span>}
@@ -465,14 +486,11 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              <div className="pd-size-advisor">
-                <div className="sa-card">
-                  <div className="sa-left">
-                    <span className="sa-title">Hướng dẫn chọn size</span>
-                    <span className="sa-sub">{sizeSuggest ? <>Size đề xuất: <b>{sizeSuggest}</b></> : "Chưa có size đề xuất"}</span>
-                  </div>
-                  <button type="button" className="sa-link" onClick={() => setSizeOpen(true)}>Nhập size ▸</button>
-                </div>
+              {/* Link nhảy xuống size */}
+              <div className="jump-size-row">
+                <button type="button" className="jump-size" onClick={scrollToSize}>
+                  Hướng dẫn chọn size ▸
+                </button>
               </div>
 
               <div className="pd-actions">
@@ -515,39 +533,86 @@ export default function ProductDetail() {
                   Mua Ngay
                 </button>
               </div>
-
-              {!!specEntries.length && (
-                <div className="pd-specs">
-                  <h3>Chi tiết sản phẩm</h3>
-                  <table>
-                    <tbody>
-                      {specEntries.map(([k, v], i) => (
-                        <tr key={i}>
-                          <td>{k}</td>
-                          <td>{String(v)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {pObj.description && (
-                <div className="pd-desc">
-                  <h3>Mô tả sản phẩm</h3>
-                  <div className="desc" dangerouslySetInnerHTML={{ __html: pObj.description }} />
-                </div>
-              )}
             </div>
           </div>
 
+          {/* ====== FULL-WIDTH DƯỚI GRID ====== */}
+          <section id="size-section" className="pd-section">
+            <div className="pd-size-advisor">
+              <div className="sa-card">
+                <div className="sa-left">
+                  <span className="sa-title">Hướng dẫn chọn size</span>
+                  <span className="sa-sub">
+                    {sizeSuggest ? <>Size đề xuất: <b>{sizeSuggest}</b></> : "Chưa có size đề xuất"}
+                  </span>
+                </div>
+                <button type="button" className="sa-link" onClick={() => setSizeOpen(true)}>Nhập size ▸</button>
+              </div>
+            </div>
+
+            {Array.isArray(sizeChart?.rows) && sizeChart.rows.length > 0 && (
+              <div className="pd-size-table" style={{ marginTop: 12 }}>
+                <h3>Bảng size</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Size</th>
+                      {sizeHeaders.map((k) => <th key={k}>{prettyKey(k)}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sizeChart.rows.map((r, i) => (
+                      <tr key={i}>
+                        <td><b>{r.label}</b></td>
+                        {sizeHeaders.map((k) => (
+                          <td key={k}>{r.measurements?.[k] ?? "-"}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          {!!specEntries.length && (
+            <section className="pd-section">
+              <div className="pd-specs">
+                <h3>Chi tiết sản phẩm</h3>
+                <table>
+                  <tbody>
+                    {specEntries.map(([k, v], i) => (
+                      <tr key={i}>
+                        <td>{k}</td>
+                        <td>{String(v)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {pObj.description && (
+            <section className="pd-section">
+              <div className="pd-desc">
+                <h3>Mô tả sản phẩm</h3>
+                <div className="desc" dangerouslySetInnerHTML={{ __html: pObj.description }} />
+              </div>
+            </section>
+          )}
+
+          {/* ĐÁNH GIÁ */}
           <section className="pd-section">
             <h2>ĐÁNH GIÁ SẢN PHẨM</h2>
             <div className="rating-sum card-muted">
               <div className="avgbox">
-                <div className="big">{ratingValue?.toFixed ? ratingValue.toFixed(1) : ratingValue}</div>
-                <Stars value={ratingValue} size={22} />
+                <Stars value={ratingValue} size={20} />
+                <div className="score-large">
+                  {ratingValue?.toFixed ? ratingValue.toFixed(1) : ratingValue}
+                </div>
               </div>
+
               <div className="filters">
                 {["all", 5, 4, 3, 2, 1].map((f) => (
                   <button
@@ -590,6 +655,7 @@ export default function ProductDetail() {
             )}
           </section>
 
+          {/* LIÊN QUAN */}
           <section className="pd-section">
             <h2>Sản phẩm liên quan</h2>
             {related?.length ? (
@@ -607,7 +673,7 @@ export default function ProductDetail() {
                         <div className="rel-price-row"><span className="price-cur">{formatCurrency(price)}</span></div>
                         <div className="rel-meta">
                           <span className="rel-rating">
-                            <span className="stars-mini">{"★".repeat(Math.round(rating)).padEnd(5, "☆")}</span>
+                            <Stars value={rating} size={14} />
                             <span className="score">{rating?.toFixed ? rating.toFixed(1) : rating}</span>
                           </span>
                           <span className="rel-sold">Đã bán {sold}</span>

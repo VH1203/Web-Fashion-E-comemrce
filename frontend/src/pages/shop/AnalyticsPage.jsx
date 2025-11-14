@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -12,12 +12,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { TrendingUp, Users, ShoppingCart, AlertCircle,Star, CreditCard } from "lucide-react";
 import StatCardsGrid from "../../components/common/StarCard";
-import { getAnalytics } from "../../services/shopService";
-import { useEffect, useState } from "react";
-import { getRevenueByMonth, getRevenueByCategory } from "../../services/shopService";
-
+import {
+  getAnalytics,
+  getRevenueByMonth,
+  getRevenueByCategory,
+} from "../../services/shopService";
 
 const AnalyticsPage = () => {
   const [stats, setStats] = useState({
@@ -30,6 +30,7 @@ const AnalyticsPage = () => {
   const [revenueByMonth, setRevenueByMonth] = useState([]);
   const [revenueByCategory, setRevenueByCategory] = useState([]);
   const COLORS = ["#5B93FF", "#FFC107", "#48BB78", "#FF5C93", "#7B61FF"];
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -44,50 +45,55 @@ const AnalyticsPage = () => {
     fetchData();
   }, []);
 
- useEffect (() => {
+  useEffect(() => {
     const fetchChartData = async () => {
       try {
         const [monthlyData, categoryData] = await Promise.all([
           getRevenueByMonth(),
           getRevenueByCategory(),
         ]);
-
         setRevenueByMonth(monthlyData || []);
         setRevenueByCategory(categoryData || []);
       } catch (error) {
-        console.error("Lỗi khi tải analytics:", error);
-      } finally {
-        setLoading(false);
+        console.error("Lỗi khi tải dữ liệu biểu đồ:", error);
       }
     };
     fetchChartData();
- }, []);
+  }, []);
 
   if (loading) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
 
   return (
-    <div className="container py-4">
+    <div className="container-fluid py-3">
       {/* Header */}
-      <div className="mb-4">
-        <h1 className="h3 fw-bold text-dark mb-2">Hi, Welcome back 👋</h1>
+      <div className="mb-4 ps-1">
+        <h1 className="h4 fw-bold text-dark mb-1">
+          👋 Chào mừng bạn quay lại!
+        </h1>
+        <p className="text-muted small">Tổng quan hiệu suất kinh doanh</p>
       </div>
 
-       
-      <StatCardsGrid stats={stats} />
+      {/* Thống kê */}
+      <div className="mb-4">
+        <StatCardsGrid stats={stats} />
+      </div>
 
-
-      {/* Charts */}  
+      {/* Biểu đồ */}
       <div className="row g-4">
-        {/* Line Chart */}
-        <div className="col-12 col-lg-8">¬
-          <div className="card shadow-sm border-0">
+        {/* Biểu đồ đường */}
+        <div className="col-12 col-lg-8">
+          <div className="card shadow-sm border-0 h-100">
             <div className="card-body">
-              <div className="mb-4">
-                <h2 className="h5 fw-bold text-dark mb-1">Biểu đồ doanh thu theo tháng</h2>
-                <p className="text-muted small">Tổng quan doanh thu 12 tháng gần nhất</p>
+              <div className="mb-3">
+                <h2 className="h6 fw-bold text-dark mb-1">
+                  Biểu đồ doanh thu theo tháng
+                </h2>
+                <p className="text-muted small">
+                  Tổng quan doanh thu 12 tháng gần nhất
+                </p>
               </div>
-              <div style={{ width: "100%", height: 300 }}>
-                <ResponsiveContainer width="100%" height="100%">
+              <div style={{ width: "100%", height: 320 }}>
+                <ResponsiveContainer>
                   <LineChart data={revenueByMonth}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis dataKey="month" />
@@ -115,28 +121,35 @@ const AnalyticsPage = () => {
           </div>
         </div>
 
-        {/* Pie Chart */}
-      <div className="col-12 col-lg-4">
-          <div className="card shadow-sm border-0">
+        {/* Biểu đồ tròn */}
+        <div className="col-12 col-lg-4">
+          <div className="card shadow-sm border-0 h-100">
             <div className="card-body">
-              <div className="mb-4">
-                <h2 className="h5 fw-bold text-dark"> Biểu đồ doanh thu theo danh mục</h2>
+              <div className="mb-3">
+                <h2 className="h6 fw-bold text-dark">
+                  Biểu đồ doanh thu theo danh mục
+                </h2>
               </div>
               <div style={{ width: "100%", height: 300 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer>
                   <PieChart>
                     <Pie
                       data={revenueByCategory}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
                     >
                       {revenueByCategory.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -162,7 +175,7 @@ const AnalyticsPage = () => {
                       <span className="text-muted">{item.name}</span>
                     </div>
                     <span className="fw-semibold text-dark">
-                      {item.value.toLocaleString("vi-VN")}₫
+                      {(item.value ?? 0).toLocaleString("vi-VN")}₫
                     </span>
                   </div>
                 ))}

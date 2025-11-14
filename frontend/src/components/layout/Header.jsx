@@ -36,19 +36,14 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 
-const AUTH_PATHS = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/change-password",
-];
+const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/change-password"];
 
 export default function Header({
   cartCount = 0,
   notifyCount = 0,
-  user = null, // { name, email } | null
-  onSearch, // (keyword) => void
-  onLogout, // () => void
+  user = null,         // { name, email } | null
+  onSearch,            // (keyword) => void
+  onLogout,            // () => void
 }) {
   const theme = useTheme();
   const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
@@ -106,12 +101,7 @@ export default function Header({
           }}
         >
           {/* Logo tròn bên trái */}
-          <Link
-            component={RouterLink}
-            to="/"
-            underline="none"
-            sx={{ lineHeight: 0 }}
-          >
+          <Link component={RouterLink} to="/" underline="none" sx={{ lineHeight: 0 }}>
             <Box
               className="brand-logo-wrap"
               sx={{
@@ -154,23 +144,19 @@ export default function Header({
           {/* Brand + tagline ngắn giúp dễ đọc hơn */}
           <Box
             className="brand-title"
-            sx={{
-              display: isAuthPage ? "none" : "flex",
-              flexDirection: "column",
-              gap: 0.25,
-            }}
+            sx={{ display: isAuthPage ? "none" : "flex", flexDirection: "column", gap: 0.25 }}
           >
             <Typography
               variant={isMdUp ? "h4" : "h5"}
               fontWeight={900}
-              sx={{
-                letterSpacing: 0.2,
-                textShadow: "0 1px 1px rgba(0,0,0,.25)",
-              }}
+              sx={{ letterSpacing: 0.2, textShadow: "0 1px 1px rgba(0,0,0,.25)" }}
             >
               Daily Fit
             </Typography>
-            <Typography variant="caption" sx={{ opacity: 0.9, ml: 0.5 }}>
+            <Typography
+              variant="caption"
+              sx={{ opacity: 0.9, ml: 0.5 }}
+            >
               Smart Fashion Commerce
             </Typography>
           </Box>
@@ -230,11 +216,7 @@ export default function Header({
                     size="small"
                     startIcon={<PersonAddAltIcon />}
                     className="btn-outline-hero"
-                    sx={{
-                      textTransform: "none",
-                      borderRadius: "999px",
-                      px: 1.75,
-                    }}
+                    sx={{ textTransform: "none", borderRadius: "999px", px: 1.75 }}
                   >
                     Đăng ký
                   </Button>
@@ -245,11 +227,7 @@ export default function Header({
                     size="small"
                     startIcon={<LoginIcon />}
                     className="btn-solid-hero"
-                    sx={{
-                      textTransform: "none",
-                      borderRadius: "999px",
-                      px: 1.75,
-                    }}
+                    sx={{ textTransform: "none", borderRadius: "999px", px: 1.75 }}
                   >
                     Đăng nhập
                   </Button>
@@ -360,17 +338,6 @@ export default function Header({
                         <ReceiptLongIcon fontSize="small" />
                       </ListItemIcon>
                       <ListItemText primary="Đơn hàng" />
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => {
-                        closeMenu();
-                        navigate("/reviews");
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: "inherit", minWidth: 34 }}>
-                        <ReceiptLongIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Đánh giá đơn hàng" />
                     </MenuItem>
 
                     {/* <MenuItem

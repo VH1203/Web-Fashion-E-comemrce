@@ -245,7 +245,7 @@ const ManageFlashsale = () => {
     );
 
   return (
-    <Box sx={{ p: 4, bgcolor: "#f4f7fa", minHeight: "100vh" }}>
+    <Box>
       <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
         <Box
           display="flex"

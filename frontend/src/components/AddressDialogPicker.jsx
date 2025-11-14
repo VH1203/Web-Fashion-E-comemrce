@@ -14,7 +14,7 @@ import {
   FormControlLabel,
   DialogContentText,
   ButtonBase,
-  MenuItem 
+  MenuItem,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import PersonOutline from "@mui/icons-material/PersonOutline";
@@ -62,17 +62,35 @@ export default function AddressDialogPicker({
 
   const doDelete = async () => {
     if (!confirmId) return;
+
+    const addressToDelete = addresses.find((a) => a._id === confirmId);
+
     try {
       await (addressService.remove
         ? addressService.remove(confirmId)
         : addressService.delete(confirmId));
       toast.success("Đã xoá địa chỉ");
+      const remainingAddresses = await onRefresh?.();
       setConfirmId("");
-      await onRefresh?.();
-      // nếu xoá trúng địa chỉ đang chọn → chọn cái khác (nếu có)
-      if (localSel === confirmId) {
-        const first = (addresses || []).find((x) => x._id !== confirmId);
-        setLocalSel(first ? first._id : "");
+
+      if (remainingAddresses && remainingAddresses.length > 0) {
+        const firstAddress = remainingAddresses[0];
+        let newDefaultApplied = false;
+
+        // If the deleted address was the default, set the first one as the new default.
+        if (addressToDelete?.is_default) {
+          await onSetDefault?.(firstAddress._id);
+          newDefaultApplied = true;
+        }
+
+        // If the deleted address was the selected one, or if a new default was just set,
+        // select the first address.
+        if (localSel === confirmId || newDefaultApplied) {
+          setLocalSel(firstAddress._id);
+        }
+      } else {
+        // No addresses left
+        setLocalSel("");
       }
     } catch (e) {
       toast.error(
@@ -206,14 +224,16 @@ export default function AddressDialogPicker({
                                   Đặt mặc định
                                 </Button>
                               )}
-                              <Button
-                                color="error"
-                                size="small"
-                                startIcon={<DeleteOutline />}
-                                onClick={() => setConfirmId(a._id)}
-                              >
-                                Xoá
-                              </Button>
+                              {addresses.length > 1 && (
+                                <Button
+                                  color="error"
+                                  size="small"
+                                  startIcon={<DeleteOutline />}
+                                  onClick={() => setConfirmId(a._id)}
+                                >
+                                  Xoá
+                                </Button>
+                              )}
                             </Stack>
                           </Stack>
 

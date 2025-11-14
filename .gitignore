@@ -76,3 +76,5 @@ coverage/
 *.tgz
 *.zip
 *.tar.gz
+
+backend/src/public/invoices/*

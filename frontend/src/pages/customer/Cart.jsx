@@ -1,37 +1,44 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
-  Box,
-  Grid,
-  Paper,
-  Typography,
-  Checkbox,
-  IconButton,
-  Button,
-  Divider,
-  TextField,
-  Stack,
-  Chip,
-  Tooltip,
+  Add,
+  ArrowBack,
+  DeleteOutline,
+  ExpandMore,
+  ImageNotSupported,
+  Remove,
+  ShoppingCartCheckout,
+  WarningAmber,
+} from "@mui/icons-material";
+import {
   Alert,
-  LinearProgress,
+  Box,
+  Button,
   Card,
   CardContent,
+  Checkbox,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Divider,
+  Grid,
+  IconButton,
+  LinearProgress,
   Popover,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+  useTheme,
 } from "@mui/material";
-import DeleteOutline from "@mui/icons-material/DeleteOutline";
-import Add from "@mui/icons-material/Add";
-import Remove from "@mui/icons-material/Remove";
-import ShoppingCartCheckout from "@mui/icons-material/ShoppingCartCheckout";
-import ArrowBack from "@mui/icons-material/ArrowBack";
-import WarningAmber from "@mui/icons-material/WarningAmber";
-import ImageNotSupported from "@mui/icons-material/ImageNotSupported";
-import Check from "@mui/icons-material/Check";
-import ExpandMore from "@mui/icons-material/ExpandMore";
-
+import Paper from "@mui/material/Paper";
+import { useEffect, useMemo, useState } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { cartService } from "../../services/cartService";
 import { formatCurrency } from "../../utils/formatCurrency";
-import "../../assets/styles/Cart.css";
+import { useCart } from "../../context/CartContext";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 /* ===== Variant helpers ===== */
 const norm = (s) =>
@@ -44,9 +51,8 @@ function groupVariantOptions(variants) {
   for (const v of variants || []) {
     const attrs = v?.attributes || {};
     for (const [k, val] of Object.entries(attrs)) {
-      if (val == null || val === "") continue;
       if (!map[k]) map[k] = new Set();
-      map[k].add(String(val));
+      map[k].add(val);
     }
   }
   const keys = Object.keys(map).sort((a, b) => a.localeCompare(b));
@@ -65,13 +71,12 @@ function findBestVariant(variants, selections) {
     const attrs = v?.attributes || {};
     let score = 0;
     for (const [k, val] of Object.entries(selections || {})) {
-      if (!val) continue;
       if (norm(attrs[k]) === norm(val)) score++;
     }
-    if ((v.stock ?? 0) > 0) score += 0.25;
+    if ((v.stock ?? 0) > 0) score += 0.5;
     if (score > bestScore) {
-      best = v;
       bestScore = score;
+      best = v;
     }
   }
   return best;
@@ -87,13 +92,12 @@ function resolveOnPick(variants, current, key, value) {
     const attrs = v.attributes || {};
     let s = 0;
     for (const [k2, val2] of Object.entries(current || {})) {
-      if (k2 === key || !val2) continue;
-      if (norm(attrs[k2]) === norm(val2)) s++;
+      if (k2 !== key && norm(attrs[k2]) === norm(val2)) s++;
     }
-    if ((v.stock ?? 0) > 0) s += 0.25;
+    if ((v.stock ?? 0) > 0) s += 0.5;
     if (s > bestScore) {
-      best = v;
       bestScore = s;
+      best = v;
     }
   }
   const next = { ...(current || {}), [key]: value };
@@ -120,9 +124,17 @@ const titleize = (s) =>
 /* ===== Card-style Cart ===== */
 export default function CartCard() {
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
+  const theme = useTheme();
+  const { cart: data, loading, error: err, fetchCart } = useCart();
+  const queryClient = useQueryClient();
+
+  const updateItemMutation = useMutation({
+    mutationFn: ({ itemId, payload }) =>
+      cartService.updateItem(itemId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["cart"]);
+    },
+  });
 
   // chọn/bỏ chọn item để thanh toán
   const [checked, setChecked] = useState(new Set());
@@ -138,44 +150,33 @@ export default function CartCard() {
     temp: {}, // temp selections
   });
 
-  const fetchCart = async () => {
-    setLoading(true);
-    setErr("");
-    try {
-      const res = await cartService.get();
-      setData(res);
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: "",
+    content: "",
+    onConfirm: null,
+  });
 
-      // init pickState theo variant hiện tại
-      const next = {};
-      for (const it of res.items || []) {
-        const v = findVariantById(it.available_variants, it.variant_id);
-        next[it._id] = {
-          selections: v?.attributes ? { ...v.attributes } : {},
-          selectedVarId: v?._id || it.variant_id || null,
-        };
-      }
-      setPickState(next);
-
-      // mặc định chọn hết
-      setChecked(new Set((res.items || []).map((it) => it._id)));
-    } catch (e) {
-      setErr(
-        e?.response?.data?.message || e.message || "Không tải được giỏ hàng"
-      );
-      if (e?.response?.status === 401 || e?.response?.status === 403) {
-        const returnUrl = encodeURIComponent(
-          window.location.pathname + window.location.search
-        );
-        navigate(`/login?returnUrl=${returnUrl}`);
-      }
-    } finally {
-      setLoading(false);
-    }
+  const closeConfirmDialog = () => {
+    setConfirmDialog((prev) => ({ ...prev, open: false }));
   };
 
   useEffect(() => {
-    fetchCart(); /* eslint-disable-next-line */
-  }, []);
+    if (data?.items) {
+      const initialPickState = {};
+      for (const item of data.items) {
+        const bestVariant = findVariantById(
+          item.available_variants,
+          item.variant_id
+        );
+        initialPickState[item._id] = {
+          selections: bestVariant?.attributes || {},
+          selectedVarId: bestVariant?._id || null,
+        };
+      }
+      setPickState(initialPickState);
+    }
+  }, [data]);
 
   const items = data?.items || [];
   const currency = "";
@@ -184,20 +185,16 @@ export default function CartCard() {
     setChecked(new Set(on ? items.map((it) => it._id) : []));
   const toggleOne = (id) => {
     setChecked((prev) => {
-      const s = new Set(prev);
-      s.has(id) ? s.delete(id) : s.add(id);
-      return s;
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
 
   const handleQty = async (item, nextQty) => {
     const qty = Math.max(1, Number(nextQty) || 1);
-    try {
-      const res = await cartService.updateItem(item._id, { qty });
-      setData(res);
-    } catch (e) {
-      alert(e?.response?.data?.message || e.message);
-    }
+    updateItemMutation.mutate({ itemId: item._id, payload: { quantity: qty } });
   };
 
   // Áp selections vào state + gọi BE nếu đổi variant
@@ -213,15 +210,10 @@ export default function CartCard() {
     }));
     // BE
     if (bestVariant?._id && bestVariant._id !== item.variant_id) {
-      try {
-        const res = await cartService.updateItem(item._id, {
-          variant_id: bestVariant._id,
-        });
-        setData(res);
-      } catch (e) {
-        alert(e?.response?.data?.message || e.message);
-        fetchCart(); // rollback đơn giản
-      }
+      updateItemMutation.mutate({
+        itemId: item._id,
+        payload: { variant_id: bestVariant._id },
+      });
     }
   };
 
@@ -253,42 +245,59 @@ export default function CartCard() {
   };
 
   const removeItem = async (item) => {
-    if (!confirm("Xoá sản phẩm này khỏi giỏ?")) return;
-    try {
-      const res = await cartService.removeItem(item._id);
-      setData(res);
-      setChecked((prev) => {
-        const s = new Set(prev);
-        s.delete(item._id);
-        return s;
-      });
-    } catch (e) {
-      alert(e?.response?.data?.message || e.message);
-    }
+    setConfirmDialog({
+      open: true,
+      title: "Xác nhận xoá",
+      content: "Xoá sản phẩm này khỏi giỏ?",
+      onConfirm: async () => {
+        try {
+          await cartService.removeItem(item._id);
+          fetchCart();
+          closeConfirmDialog();
+        } catch (e) {
+          console.error("Lỗi xoá item:", e);
+          closeConfirmDialog();
+        }
+      },
+    });
   };
 
   const removeSelected = async () => {
     if (!checked.size) return;
-    if (!confirm(`Xoá ${checked.size} sản phẩm đã chọn?`)) return;
-    try {
-      let res = null;
-      for (const id of checked) res = await cartService.removeItem(id);
-      if (res) setData(res);
-      setChecked(new Set());
-    } catch (e) {
-      alert(e?.response?.data?.message || e.message);
-    }
+    setConfirmDialog({
+      open: true,
+      title: "Xác nhận xoá",
+      content: `Xoá ${checked.size} sản phẩm đã chọn khỏi giỏ?`,
+      onConfirm: async () => {
+        try {
+          await cartService.removeItems(Array.from(checked));
+          fetchCart();
+          setChecked(new Set());
+          closeConfirmDialog();
+        } catch (e) {
+          console.error("Lỗi xoá items:", e);
+          closeConfirmDialog();
+        }
+      },
+    });
   };
 
   const clearCart = async () => {
-    if (!confirm("Xoá toàn bộ giỏ hàng?")) return;
-    try {
-      const res = await cartService.clear();
-      setData(res);
-      setChecked(new Set());
-    } catch (e) {
-      alert(e?.response?.data?.message || e.message);
-    }
+    setConfirmDialog({
+      open: true,
+      title: "Xoá tất cả?",
+      content: "Xoá toàn bộ sản phẩm trong giỏ?",
+      onConfirm: async () => {
+        try {
+          await cartService.clear();
+          fetchCart();
+          closeConfirmDialog();
+        } catch (e) {
+          console.error("Lỗi xoá giỏ hàng:", e);
+          closeConfirmDialog();
+        }
+      },
+    });
   };
 
   // tổng theo item đã chọn (và hợp lệ tồn kho)
@@ -297,17 +306,14 @@ export default function CartCard() {
     let count = 0;
     for (const it of items) {
       if (!checked.has(it._id)) continue;
-      const price = it.price || 0;
-      const sub = it.total || price * it.qty;
-      const variant =
-        findVariantById(
-          it.available_variants,
-          pickState[it._id]?.selectedVarId || it.variant_id
-        ) || null;
-      if ((variant?.stock ?? 0) > 0 && it.qty <= (variant?.stock ?? 0)) {
-        total += sub;
-        count++;
-      }
+      const pick = pickState[it._id] || {};
+      const v =
+        findVariantById(it.available_variants, pick.selectedVarId) ||
+        findVariantById(it.available_variants, it.variant_id);
+      if ((v?.stock ?? 0) <= 0) continue;
+      if (it.qty > (v?.stock ?? 0)) continue;
+      total += it.total || it.price * it.qty;
+      count++;
     }
     return { total, count };
   }, [items, checked, pickState]);
@@ -316,8 +322,8 @@ export default function CartCard() {
 
   if (loading) {
     return (
-      <Box className="cart-wrap">
-        <Paper elevation={0} className="card-soft">
+      <Box sx={{ p: 2 }}>
+        <Paper elevation={0} sx={{ p: 2 }}>
           <LinearProgress />
           <Typography variant="body2" mt={2}>
             Đang tải giỏ hàng…
@@ -328,29 +334,44 @@ export default function CartCard() {
   }
   if (err) {
     return (
-      <Box className="cart-wrap">
+      <Box sx={{ p: 2 }}>
         <Alert severity="error">{err}</Alert>
       </Box>
     );
   }
 
   return (
-    <Box className="cart-page">
-      <Box className="cart-shell">
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {/* spacing lớn không ảnh hưởng, nhưng để mặc định cho gọn */}
-        <Grid container spacing={3} justifyContent="center">
+        <Grid
+          container
+          spacing={3}
+          justifyContent="center"
+          sx={{ flex: 1, alignItems: "center" }}
+        >
           <Grid item xs={12} lg={11} xl={10}>
             {/* QUAN TRỌNG: thêm class card-soft (đã override overflow trong CSS) */}
-            <Card className="card-soft">
-              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+            <Card
+              sx={{
+                overflow: "visible",
+                boxShadow: "none",
+              }}
+            >
+              <CardContent
+                sx={{
+                  p: { xs: 2, md: 3 },
+                  overflow: "visible",
+                }}
+              >
                 <Grid
                   container
                   spacing={3}
                   alignItems="flex-start"
-                  className="cart-grid"
+                  sx={{ overflow: "visible" }}
                 >
                   {/* LEFT: Items */}
-                  <Grid item xs={12} lg={7}>
+                  <Grid item xs={12} lg={7} sx={{ overflow: "visible" }}>
                     {/* header */}
                     <Stack
                       direction="row"
@@ -445,32 +466,86 @@ export default function CartCard() {
                         return (
                           <Paper
                             key={it._id}
-                            className="item-card"
                             variant="outlined"
+                            sx={{
+                              borderRadius: "14px",
+                              overflow: "hidden",
+                              borderColor: "primary.light",
+                              background: "#fff",
+                            }}
                           >
-                            <Box className="item-row">
-                              <Box className="left">
+                            <Box
+                              sx={{
+                                display: "grid",
+                                gridTemplateColumns: {
+                                  xs: "1fr",
+                                  md: "1fr auto",
+                                },
+                                gap: 1.5,
+                                alignItems: "stretch",
+                                p: 1.5,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  display: "grid",
+                                  gridTemplateColumns: "auto 88px 1fr",
+                                  alignItems: "center",
+                                  gap: 1.25,
+                                }}
+                              >
                                 <Checkbox
                                   color="primary"
                                   checked={checked.has(it._id)}
                                   onChange={() => toggleOne(it._id)}
                                   sx={{ mr: 1 }}
                                 />
-                                <Box className="thumb">
+                                <Box
+                                  sx={{
+                                    width: 88,
+                                    height: 88,
+                                    borderRadius: 2,
+                                    overflow: "hidden",
+                                    bgcolor: "primary.50",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
                                   {it.image ? (
-                                    <img src={it.image} alt={it.name} />
+                                    <Box
+                                      component="img"
+                                      src={it.image}
+                                      alt={it.name}
+                                      sx={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                      }}
+                                    />
                                   ) : (
-                                    <Box className="thumb noimg">
+                                    <Box
+                                      sx={{
+                                        color: "text.secondary",
+                                      }}
+                                    >
                                       <ImageNotSupported fontSize="small" />
                                     </Box>
                                   )}
                                 </Box>
-                                <Box className="meta">
+                                <Box>
                                   <Typography
                                     component={RouterLink}
                                     to={productHref}
-                                    className="link-unstyled"
                                     fontWeight={600}
+                                    sx={{
+                                      color: "inherit",
+                                      textDecoration: "none",
+                                      "&:hover": {
+                                        color: "primary.dark",
+                                        textDecoration: "underline",
+                                      },
+                                    }}
                                   >
                                     {it.name}
                                   </Typography>
@@ -496,7 +571,7 @@ export default function CartCard() {
                                     </Stack>
                                   )}
 
-                                  {/* Phân loại (thu gọn) */}
+                                  {/* Variant summary & change button */}
                                   <Stack
                                     direction="row"
                                     alignItems="center"
@@ -521,8 +596,11 @@ export default function CartCard() {
                                       variant="outlined"
                                       color="primary"
                                       endIcon={<ExpandMore />}
-                                      className="btn-soft"
                                       onClick={(e) => openVariantEditor(e, it)}
+                                      sx={{
+                                        borderRadius: "12px",
+                                        borderColor: "primary.light",
+                                      }}
                                     >
                                       Thay đổi
                                     </Button>
@@ -530,14 +608,20 @@ export default function CartCard() {
                                 </Box>
                               </Box>
 
-                              <Box className="right">
-                                {/* Qty & price */}
+                              <Box
+                                sx={{
+                                  justifyContent: {
+                                    xs: "space-between",
+                                    md: "flex-end",
+                                  },
+                                }}
+                              >
+                                {/* Qty + Price + Remove */}
                                 <Stack
                                   direction={{ xs: "column", sm: "row" }}
                                   spacing={1.25}
                                   alignItems={{ sm: "center" }}
                                   justifyContent="flex-end"
-                                  className="qty-price"
                                 >
                                   <Stack
                                     direction="row"
@@ -551,6 +635,7 @@ export default function CartCard() {
                                         handleQty(it, Math.max(1, it.qty - 1))
                                       }
                                       disabled={it.qty <= 1}
+                                      sx={{ borderRadius: "10px" }}
                                     >
                                       <Remove />
                                     </IconButton>
@@ -574,11 +659,17 @@ export default function CartCard() {
                                           )
                                         )
                                       }
+                                      sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                          borderRadius: "12px",
+                                        },
+                                      }}
                                     />
                                     <IconButton
                                       size="small"
                                       color="primary"
                                       onClick={() => handleQty(it, it.qty + 1)}
+                                      sx={{ borderRadius: "10px" }}
                                     >
                                       <Add />
                                     </IconButton>
@@ -610,6 +701,7 @@ export default function CartCard() {
                                     <IconButton
                                       color="error"
                                       onClick={() => removeItem(it)}
+                                      sx={{ borderRadius: "10px" }}
                                     >
                                       <DeleteOutline />
                                     </IconButton>
@@ -635,6 +727,7 @@ export default function CartCard() {
                         startIcon={<DeleteOutline />}
                         onClick={removeSelected}
                         disabled={!checked.size}
+                        sx={{ borderRadius: "12px" }}
                       >
                         Xoá đã chọn
                       </Button>
@@ -646,6 +739,7 @@ export default function CartCard() {
                           variant="text"
                           color="inherit"
                           onClick={clearCart}
+                          sx={{ borderRadius: "12px" }}
                         >
                           Xoá toàn bộ
                         </Button>
@@ -655,9 +749,34 @@ export default function CartCard() {
 
                   {/* RIGHT: Summary */}
                   <Grid item xs={12} lg={5}>
-                    <Box className="summary-sticky">
-                      <Paper elevation={0} className="summary-scroll">
-                        <Box className="summary-section">
+                    <Box
+                      sx={{
+                        position: { lg: "sticky" },
+                        top: { lg: "85px" },
+                        height: "max-content",
+                        alignSelf: "flex-start",
+                        zIndex: 5,
+                      }}
+                    >
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          maxHeight: {
+                            lg: "calc(100vh - 85px - 16px)",
+                          },
+                          overflow: { lg: "auto" },
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            background: "#fff",
+                            border: "1px solid",
+                            borderColor: "primary.light",
+                            borderRadius: "14px",
+                            p: 2,
+                            mb: 1.5,
+                          }}
+                        >
                           <Typography variant="h6" fontWeight={700} mb={1}>
                             Thông tin đơn hàng
                           </Typography>
@@ -692,8 +811,17 @@ export default function CartCard() {
                                 size="small"
                                 placeholder="Nhập mã voucher"
                                 inputProps={{ maxLength: 32 }}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    borderRadius: "12px",
+                                  },
+                                }}
                               />
-                              <Button variant="contained" color="primary">
+                              <Button
+                                variant="contained"
+                                color="primary"
+                                sx={{ borderRadius: "12px" }}
+                              >
                                 ÁP DỤNG
                               </Button>
                             </Stack>
@@ -709,7 +837,16 @@ export default function CartCard() {
                           </Stack>
                         </Box>
 
-                        <Box className="summary-section">
+                        <Box
+                          sx={{
+                            background: "#fff",
+                            border: "1px solid",
+                            borderColor: "primary.light",
+                            borderRadius: "14px",
+                            p: 2,
+                            mb: 1.5,
+                          }}
+                        >
                           <Stack
                             direction="row"
                             justifyContent="space-between"
@@ -728,7 +865,7 @@ export default function CartCard() {
                           <Button
                             fullWidth
                             size="large"
-                            sx={{ mt: 1.5 }}
+                            sx={{ mt: 1.5, borderRadius: "14px" }}
                             variant="contained"
                             color="primary"
                             startIcon={<ShoppingCartCheckout />}
@@ -760,84 +897,107 @@ export default function CartCard() {
         onClose={closeVariantEditor}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
-        PaperProps={{ className: "variant-popover" }}
+        PaperProps={{
+          sx: {
+            p: 2,
+            width: 320,
+            boxShadow: theme.shadows[3],
+            border: "1px solid",
+            borderColor: "grey.200",
+          },
+        }}
       >
         {vEditor.item &&
           (() => {
             const { optionGroups, orderedKeys } = groupVariantOptions(
               vEditor.item.available_variants
             );
+            const currentSelections = vEditor.temp;
             return (
-              <Box p={2} sx={{ minWidth: 320, maxWidth: 420 }}>
-                {orderedKeys.map((key) => {
-                  const values = optionGroups[key] || [];
-                  const cur = vEditor.temp?.[key] ?? "";
-                  const disabledMap = buildDisabledMap(
-                    vEditor.item.available_variants,
-                    key,
-                    values
-                  );
-                  return (
-                    <Box key={key} mb={1.25}>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mb: 0.75 }}
-                      >
-                        {titleize(key)}:
-                      </Typography>
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        flexWrap="wrap"
-                        useFlexGap
-                      >
-                        {values.map((val) => {
-                          const active = norm(val) === norm(cur);
-                          const disabled = disabledMap.get(val) === true;
-                          return (
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>
+                  Chọn phân loại
+                </Typography>
+                <Stack spacing={1.5}>
+                  {orderedKeys.map((key) => {
+                    const values = optionGroups[key] || [];
+                    const disabledMap = buildDisabledMap(
+                      vEditor.item.available_variants,
+                      key,
+                      values
+                    );
+                    return (
+                      <Box key={key}>
+                        <Typography
+                          variant="caption"
+                          display="block"
+                          color="text.secondary"
+                          mb={0.5}
+                        >
+                          {titleize(key)}
+                        </Typography>
+                        <Stack direction="row" flexWrap="wrap" gap={1}>
+                          {values.map((val) => (
                             <Chip
                               key={val}
+                              label={val}
                               size="small"
-                              label={String(val)}
-                              color={active ? "primary" : "default"}
-                              variant={active ? "filled" : "outlined"}
+                              variant={
+                                norm(currentSelections[key]) === norm(val)
+                                  ? "filled"
+                                  : "outlined"
+                              }
+                              color={
+                                norm(currentSelections[key]) === norm(val)
+                                  ? "primary"
+                                  : "default"
+                              }
                               onClick={() => pickTemp(key, val)}
-                              disabled={disabled}
-                              icon={active ? <Check fontSize="small" /> : null}
-                              className="chip-choice"
+                              disabled={disabledMap.get(val)}
+                              sx={{ borderRadius: "9999px" }}
                             />
-                          );
-                        })}
-                      </Stack>
-                    </Box>
-                  );
-                })}
-                <Stack
-                  direction="row"
-                  spacing={1.25}
-                  justifyContent="space-between"
-                  mt={1.5}
-                >
+                          ))}
+                        </Stack>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+                <Stack direction="row" spacing={1} mt={2}>
                   <Button
+                    size="small"
                     variant="outlined"
-                    color="primary"
                     onClick={closeVariantEditor}
+                    sx={{ borderRadius: "12px" }}
                   >
-                    TRỞ LẠI
+                    Huỷ
                   </Button>
                   <Button
+                    size="small"
                     variant="contained"
                     color="primary"
                     onClick={confirmVariant}
+                    sx={{ borderRadius: "12px" }}
                   >
-                    XÁC NHẬN
+                    Xác nhận
                   </Button>
                 </Stack>
               </Box>
             );
           })()}
       </Popover>
+
+      <Dialog open={confirmDialog.open} onClose={closeConfirmDialog}>
+        <DialogTitle>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{confirmDialog.content}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeConfirmDialog}>Huỷ</Button>
+          <Button onClick={confirmDialog.onConfirm} color="primary" autoFocus>
+            Xác nhận
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

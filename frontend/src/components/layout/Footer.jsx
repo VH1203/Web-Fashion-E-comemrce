@@ -1,4 +1,3 @@
-import React from "react";
 import { Link as RouterLink } from "react-router-dom";
 import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
@@ -25,7 +24,6 @@ export default function Footer() {
       component="footer"
       className="dfs-footer glass-footer"
       sx={{
-        mt: 8,
         color: "#fff",
         background:
           "linear-gradient(90deg, rgba(29,78,216,0.42), rgba(37,99,235,0.42))",
@@ -40,15 +38,24 @@ export default function Footer() {
       <Container
         maxWidth={false}
         disableGutters
-        sx={{ px: { xs: 1.5, sm: 2 }, py: { xs: 5, md: 7 }, maxWidth: "1440px", mx: "auto" }}
+        sx={{
+          px: { xs: 1.5, sm: 2 },
+          py: { xs: 5, md: 7 },
+          maxWidth: "1440px",
+          mx: "auto",
+        }}
       >
         <Grid container spacing={4}>
           {/* Brand + newsletter */}
           <Grid item xs={12} md={4}>
-            <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: .2, mb: 1 }}>
+            <Typography
+              variant="h5"
+              fontWeight={900}
+              sx={{ letterSpacing: 0.2, mb: 1 }}
+            >
               Daily Fit
             </Typography>
-            <Typography variant="body2" sx={{ opacity: .9, mb: 2 }}>
+            <Typography variant="body2" sx={{ opacity: 0.9, mb: 2 }}>
               Smart Fashion Commerce • Chất lượng & trải nghiệm là ưu tiên số 1.
             </Typography>
 
@@ -84,54 +91,54 @@ export default function Footer() {
             </Box>
 
             <Box sx={{ mt: 2, display: "flex", gap: 1 }}>
-  <IconButton
-    aria-label="Facebook"
-    className="footer-icon"
-    sx={{
-      color: "#1877F2",                 // Facebook brand
-      borderColor: "rgba(24, 119, 242, .35)",
-      "&:hover": {
-        filter: "brightness(1.1)",
-        boxShadow: "0 0 10px rgba(24, 119, 242, .35)",
-      },
-      "& svg": { fill: "currentColor" },
-    }}
-  >
-    <FacebookIcon />
-  </IconButton>
+              <IconButton
+                aria-label="Facebook"
+                className="footer-icon"
+                sx={{
+                  color: "#1877F2", // Facebook brand
+                  borderColor: "rgba(24, 119, 242, .35)",
+                  "&:hover": {
+                    filter: "brightness(1.1)",
+                    boxShadow: "0 0 10px rgba(24, 119, 242, .35)",
+                  },
+                  "& svg": { fill: "currentColor" },
+                }}
+              >
+                <FacebookIcon />
+              </IconButton>
 
-  <IconButton
-    aria-label="Instagram"
-    className="footer-icon"
-    sx={{
-      color: "#E4405F",                 // Instagram brand (solid)
-      borderColor: "rgba(228, 64, 95, .35)",
-      "&:hover": {
-        filter: "brightness(1.1)",
-        boxShadow: "0 0 10px rgba(228, 64, 95, .35)",
-      },
-      "& svg": { fill: "currentColor" },
-    }}
-  >
-    <InstagramIcon />
-  </IconButton>
+              <IconButton
+                aria-label="Instagram"
+                className="footer-icon"
+                sx={{
+                  color: "#E4405F", // Instagram brand (solid)
+                  borderColor: "rgba(228, 64, 95, .35)",
+                  "&:hover": {
+                    filter: "brightness(1.1)",
+                    boxShadow: "0 0 10px rgba(228, 64, 95, .35)",
+                  },
+                  "& svg": { fill: "currentColor" },
+                }}
+              >
+                <InstagramIcon />
+              </IconButton>
 
-  <IconButton
-    aria-label="YouTube"
-    className="footer-icon"
-    sx={{
-      color: "#FF0000",                 // YouTube brand
-      borderColor: "rgba(255, 0, 0, .35)",
-      "&:hover": {
-        filter: "brightness(1.1)",
-        boxShadow: "0 0 10px rgba(255, 0, 0, .35)",
-      },
-      "& svg": { fill: "currentColor" },
-    }}
-  >
-    <YouTubeIcon />
-  </IconButton>
-</Box>
+              <IconButton
+                aria-label="YouTube"
+                className="footer-icon"
+                sx={{
+                  color: "#FF0000", // YouTube brand
+                  borderColor: "rgba(255, 0, 0, .35)",
+                  "&:hover": {
+                    filter: "brightness(1.1)",
+                    boxShadow: "0 0 10px rgba(255, 0, 0, .35)",
+                  },
+                  "& svg": { fill: "currentColor" },
+                }}
+              >
+                <YouTubeIcon />
+              </IconButton>
+            </Box>
           </Grid>
 
           {/* Links 1 */}
@@ -168,8 +175,14 @@ export default function Footer() {
               icon={<LocationOnIcon fontSize="small" />}
               text="Đại học FPT"
             />
-            <FooterContact icon={<PhoneIcon fontSize="small" />} text="(028) 1234 5678" />
-            <FooterContact icon={<MailOutlineIcon fontSize="small" />} text="support@dailyfit.vn" />
+            <FooterContact
+              icon={<PhoneIcon fontSize="small" />}
+              text="(028) 1234 5678"
+            />
+            <FooterContact
+              icon={<MailOutlineIcon fontSize="small" />}
+              text="support@dailyfit.vn"
+            />
           </Grid>
         </Grid>
       </Container>
@@ -191,7 +204,7 @@ export default function Footer() {
             gap: 1.5,
           }}
         >
-          <Typography variant="body2" sx={{ opacity: .9 }}>
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
             © {new Date().getFullYear()} Daily Fit. All rights reserved.
           </Typography>
 
@@ -208,13 +221,13 @@ export default function Footer() {
 
 function FooterLink({ to, children }) {
   return (
-    <Typography variant="body2" sx={{ my: .5 }}>
+    <Typography variant="body2" sx={{ my: 0.5 }}>
       <Link
         component={RouterLink}
         to={to}
         underline="none"
         className="footer-link"
-        sx={{ color: "#fff", opacity: .92 }}
+        sx={{ color: "#fff", opacity: 0.92 }}
       >
         {children}
       </Link>
@@ -224,7 +237,15 @@ function FooterLink({ to, children }) {
 
 function FooterContact({ icon, text }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, opacity: .95, mb: .75 }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        opacity: 0.95,
+        mb: 0.75,
+      }}
+    >
       <Box sx={{ lineHeight: 0, color: "var(--primary-50)" }}>{icon}</Box>
       <Typography variant="body2">{text}</Typography>
     </Box>
@@ -238,7 +259,7 @@ function BottomLink({ to, children }) {
       to={to}
       underline="none"
       className="footer-link"
-      sx={{ color: "#fff", opacity: .92, fontSize: 14 }}
+      sx={{ color: "#fff", opacity: 0.92, fontSize: 14 }}
     >
       {children}
     </Link>

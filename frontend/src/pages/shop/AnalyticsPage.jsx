@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -18,6 +18,7 @@ import {
   getRevenueByMonth,
   getRevenueByCategory,
 } from "../../services/shopService";
+import { Box, Typography, Grid, Paper, CircularProgress } from "@mui/material";
 
 const AnalyticsPage = () => {
   const [stats, setStats] = useState({
@@ -61,38 +62,60 @@ const AnalyticsPage = () => {
     fetchChartData();
   }, []);
 
-  if (loading) return <p className="text-center mt-5">Đang tải dữ liệu...</p>;
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="80vh"
+      >
+        <CircularProgress />
+        <Typography ml={2}>Đang tải dữ liệu...</Typography>
+      </Box>
+    );
+  }
 
   return (
-    <div className="container-fluid py-3">
-      {/* Header */}
-      <div className="mb-4 ps-1">
-        <h1 className="h4 fw-bold text-dark mb-1">
-          👋 Chào mừng bạn quay lại!
-        </h1>
-        <p className="text-muted small">Tổng quan hiệu suất kinh doanh</p>
-      </div>
-
-      {/* Thống kê */}
-      <div className="mb-4">
-        <StatCardsGrid stats={stats} />
-      </div>
-
-      {/* Biểu đồ */}
-      <div className="row g-4">
-        {/* Biểu đồ đường */}
-        <div className="col-12 col-lg-8">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-body">
-              <div className="mb-3">
-                <h2 className="h6 fw-bold text-dark mb-1">
+    <Box sx={{ py: 3 }}>
+      <Paper elevation={2} sx={{ borderRadius: 2, p: 3 }}>
+        {/* Header */}
+        <Box sx={{ mb: 4, pl: 1 }}>
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            color="text.primary"
+            mb={1}
+          >
+            👋 Chào mừng bạn quay lại!
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Tổng quan hiệu suất kinh doanh
+          </Typography>
+        </Box>
+        {/* Thống kê */}
+        <Box sx={{ mb: 4 }}>
+          <StatCardsGrid stats={stats} />
+        </Box>
+        {/* Biểu đồ */}
+        <Grid container spacing={4}>
+          {/* Biểu đồ đường */}
+          <Grid size={6}>
+            <Paper elevation={3} sx={{ p: 3, height: "100%" }}>
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  color="text.primary"
+                  mb={0.5}
+                >
                   Biểu đồ doanh thu theo tháng
-                </h2>
-                <p className="text-muted small">
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
                   Tổng quan doanh thu 12 tháng gần nhất
-                </p>
-              </div>
-              <div style={{ width: "100%", height: 320 }}>
+                </Typography>
+              </Box>
+              <Box sx={{ width: "100%", height: 320 }}>
                 <ResponsiveContainer>
                   <LineChart data={revenueByMonth}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -116,21 +139,18 @@ const AnalyticsPage = () => {
                     />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Biểu đồ tròn */}
-        <div className="col-12 col-lg-4">
-          <div className="card shadow-sm border-0 h-100">
-            <div className="card-body">
-              <div className="mb-3">
-                <h2 className="h6 fw-bold text-dark">
+              </Box>
+            </Paper>
+          </Grid>
+          {/* Biểu đồ tròn */}
+          <Grid size={6} lg={4}>
+            <Paper elevation={3} sx={{ p: 3, height: "100%" }}>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" fontWeight="bold" color="text.primary">
                   Biểu đồ doanh thu theo danh mục
-                </h2>
-              </div>
-              <div style={{ width: "100%", height: 300 }}>
+                </Typography>
+              </Box>
+              <Box sx={{ width: "100%", height: 300 }}>
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie
@@ -155,36 +175,47 @@ const AnalyticsPage = () => {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
-
-              <div className="mt-3">
+              </Box>
+              <Box sx={{ mt: 3 }}>
                 {revenueByCategory.map((item, index) => (
-                  <div
+                  <Box
                     key={index}
-                    className="d-flex justify-content-between align-items-center small mb-2"
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 1.5,
+                    }}
                   >
-                    <div className="d-flex align-items-center">
-                      <div
-                        className="rounded-circle me-2"
-                        style={{
-                          width: "10px",
-                          height: "10px",
-                          backgroundColor: COLORS[index % COLORS.length],
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Box
+                        sx={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: "50%",
+                          bgcolor: COLORS[index % COLORS.length],
+                          mr: 1.5,
                         }}
-                      ></div>
-                      <span className="text-muted">{item.name}</span>
-                    </div>
-                    <span className="fw-semibold text-dark">
-                      {(item.value ?? 0).toLocaleString("vi-VN")}₫
-                    </span>
-                  </div>
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {item.category}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      fontWeight="medium"
+                      color="text.primary"
+                    >
+                      {item.totalRevenue.toLocaleString("vi-VN")}₫
+                    </Typography>
+                  </Box>
                 ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+              </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Paper>
+    </Box>
   );
 };
 

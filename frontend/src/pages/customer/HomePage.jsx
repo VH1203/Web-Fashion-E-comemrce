@@ -1,41 +1,70 @@
 import React, { useEffect, useRef, useState } from "react";
+import {
+  Container,
+  Box,
+  Typography,
+  CircularProgress,
+  Card,
+  CardActionArea,
+  Link,
+  IconButton,
+  Avatar,
+  Paper,
+  useTheme,
+} from "@mui/material";
+import {
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  ArrowForward as ArrowForwardIcon,
+} from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 import { homeService } from "../../services/homeService";
 import ProductCard from "../../components/home/ProductCard.jsx";
-import "../../assets/styles/Homepage.css";
 
 /* ===================== PAGE ===================== */
 
 export default function HomePage() {
-  const [data, setData] = useState();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    data,
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey: ["homepage"],
+    queryFn: () => homeService.fetchHomepage(),
+    select: (data) => normalizeHomepage(data),
+  });
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const payload = await homeService.fetchHomepage(); // FE service trả res.data.data
-        setData(normalizeHomepage(payload));
-      } catch (e) {
-        setError(e?.message || "Load homepage failed");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+  if (loading) {
+    return (
+      <Container sx={{ py: 4, textAlign: "center" }}>
+        <CircularProgress />
+        <Typography>Đang tải trang chủ…</Typography>
+      </Container>
+    );
+  }
 
-  if (loading) return <div className="hp-container">Đang tải trang chủ…</div>;
-  if (error) return <div className="hp-container error">{error}</div>;
-  if (!data)   return <div className="hp-container error">Không có dữ liệu.</div>;
+  if (error) {
+    return (
+      <Container sx={{ py: 4 }}>
+        <Typography color="error">{error.message}</Typography>
+      </Container>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Container sx={{ py: 4 }}>
+        <Typography color="error">Không có dữ liệu.</Typography>
+      </Container>
+    );
+  }
 
   const { banners, brands, categories, men, women, flashSale, unisex } = data;
 
   return (
-    <div className="hp-container">
-
+    <Container maxWidth="lg" sx={{ py: 2 }}>
       {/* ===== Banners (carousel rộng) ===== */}
-      {!!banners.__count && (
-        <BannerCarousel banners={banners} />
-      )}
+      {!!banners.__count && <BannerCarousel banners={banners} />}
 
       {/* ===== Category (carousel) ===== */}
       {!!categories.length && (
@@ -43,18 +72,9 @@ export default function HomePage() {
           title="Danh mục"
           viewAllHref="/categories"
           items={categories}
-          renderItem={(cat) => (
-            <a className="card category-card" href={`/category/${cat.slug}`}>
-              <div className="ic">
-                {cat.image_url
-                  ? <img src={cat.image_url} alt={cat.name} loading="lazy" />
-                  : <div className="ic-noimg">{cat.name?.[0] || "?"}</div>}
-              </div>
-              <div className="txt-16w">{cat.name}</div>
-            </a>
-          )}
+          renderItem={(cat) => <CategoryCard category={cat} />}
           itemWidth={220}
-          gap={16}
+          gap={2}
         />
       )}
 
@@ -64,18 +84,9 @@ export default function HomePage() {
         viewAllHref="/brands"
         items={brands}
         emptyText="Đang cập nhật thương hiệu…"
-        renderItem={(br) => (
-          <a className="card brand-card" href={`/brand/${br.slug || br._id || ""}`}>
-            <div className="brand-thumb">
-              {br.logo_url || br.image_url
-                ? <img src={br.logo_url || br.image_url} alt={br.name} loading="lazy" />
-                : <div className="brand-noimg">{br.name?.[0] || "?"}</div>}
-            </div>
-            <div className="txt-14w">{br.name}</div>
-          </a>
-        )}
+        renderItem={(br) => <BrandCard brand={br} />}
         itemWidth={160}
-        gap={12}
+        gap={1.5}
       />
 
       {/* ===== Flash Sale (carousel) ===== */}
@@ -85,14 +96,18 @@ export default function HomePage() {
           rightNode={
             <Countdown
               label={flashSale._upcoming ? "Bắt đầu sau" : "Kết thúc sau"}
-              endTime={flashSale._upcoming ? flashSale.start_time : flashSale.end_time}
+              endTime={
+                flashSale._upcoming ? flashSale.start_time : flashSale.end_time
+              }
             />
           }
           viewAllHref="/flash-sale"
           items={flashSale.items}
-          renderItem={(it) => <ProductCard item={normalizeFlashItem(it)} type="flash" />}
+          renderItem={(it) => (
+            <ProductCard item={normalizeFlashItem(it)} type="flash" />
+          )}
           itemWidth={220}
-          gap={12}
+          gap={1.5}
         />
       ) : null}
 
@@ -104,7 +119,7 @@ export default function HomePage() {
           items={men}
           renderItem={(p) => <ProductCard item={{ product: p }} />}
           itemWidth={220}
-          gap={12}
+          gap={1.5}
         />
       )}
 
@@ -116,23 +131,22 @@ export default function HomePage() {
           items={women}
           renderItem={(p) => <ProductCard item={{ product: p }} />}
           itemWidth={220}
-          gap={12}
+          gap={1.5}
         />
       )}
       {!!unisex?.length && (
-  <SectionCarousel
-    title="Unisex"
-    viewAllHref="/category/unisex"
-    items={unisex}
-    renderItem={(p) => <ProductCard item={{ product: p }} />}
-    itemWidth={220}
-    gap={12}
-  />
-)} 
-    </div>
+        <SectionCarousel
+          title="Unisex"
+          viewAllHref="/category/unisex"
+          items={unisex}
+          renderItem={(p) => <ProductCard item={{ product: p }} />}
+          itemWidth={220}
+          gap={1.5}
+        />
+      )}
+    </Container>
   );
 }
- 
 
 function normalizeHomepage(raw) {
   const banners = {
@@ -169,9 +183,100 @@ function normalizeFlashItem(it) {
   };
 }
 
+/* ===================== MUI CARDS ===================== */
+
+function CategoryCard({ category: cat }) {
+  return (
+    <Card
+      sx={{
+        height: "100%",
+        transition: "transform .15s ease, box-shadow .15s ease",
+        "&:hover": {
+          transform: "translateY(-5px)",
+          boxShadow: (theme) => theme.shadows[4],
+        },
+      }}
+    >
+      <CardActionArea
+        href={`/category/${cat.slug}`}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          p: 2,
+          height: "100%",
+        }}
+      >
+        <Avatar
+          src={cat.image_url}
+          alt={cat.name}
+          sx={{
+            width: 64,
+            height: 64,
+            mb: 1.5,
+            bgcolor: "grey.200",
+            fontSize: "2rem",
+          }}
+        >
+          {cat.name?.[0] || "?"}
+        </Avatar>
+        <Typography fontWeight="bold" textAlign="center">
+          {cat.name}
+        </Typography>
+      </CardActionArea>
+    </Card>
+  );
+}
+
+function BrandCard({ brand: br }) {
+  return (
+    <Card
+      sx={{
+        height: "100%",
+        transition: "transform .15s ease, box-shadow .15s ease",
+        "&:hover": {
+          transform: "translateY(-5px)",
+          boxShadow: (theme) => theme.shadows[4],
+        },
+      }}
+    >
+      <CardActionArea
+        href={`/brand/${br.slug || br._id || ""}`}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          p: 2,
+          height: "100%",
+        }}
+      >
+        <Avatar
+          variant="rounded"
+          src={br.logo_url || br.image_url}
+          alt={br.name}
+          sx={{
+            width: 72,
+            height: 72,
+            mb: 1.5,
+            bgcolor: "grey.100",
+            fontSize: "2.5rem",
+            img: { objectFit: "contain" },
+          }}
+        >
+          {br.name?.[0] || "?"}
+        </Avatar>
+        <Typography fontWeight={600} fontSize={14} textAlign="center">
+          {br.name}
+        </Typography>
+      </CardActionArea>
+    </Card>
+  );
+}
+
 /* ===================== GENERIC CAROUSEL ===================== */
 
 function useCarousel({ itemWidth, gap, perClick = 2 }) {
+  const theme = useTheme();
   const viewportRef = useRef(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(true);
@@ -199,10 +304,11 @@ function useCarousel({ itemWidth, gap, perClick = 2 }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const scrollByStep = (dir = 2) => {
+  const scrollByStep = (dir = 1) => {
     const el = viewportRef.current;
     if (!el) return;
-    const step = perClick * itemWidth + gap * perClick; 
+    const gapWidth = parseFloat(theme.spacing(gap));
+    const step = perClick * itemWidth + gapWidth * perClick;
     el.scrollBy({ left: dir * step, behavior: "smooth" });
   };
 
@@ -215,67 +321,136 @@ function useCarousel({ itemWidth, gap, perClick = 2 }) {
   };
 }
 
-
-function SectionCarousel({ title, rightNode, viewAllHref, items = [], renderItem, itemWidth = 220, gap = 12, emptyText }) {
-  const { viewportRef, canPrev, canNext, scrollPrev, scrollNext } = useCarousel({ itemWidth, gap });
+function SectionCarousel({
+  title,
+  rightNode,
+  viewAllHref,
+  items = [],
+  renderItem,
+  itemWidth = 220,
+  gap = 2,
+  emptyText,
+}) {
+  const { viewportRef, canPrev, canNext, scrollPrev, scrollNext } = useCarousel(
+    { itemWidth, gap }
+  );
 
   return (
-    <section className="hp-section">
-      <div className="hp-section-header">
-        <h2 className="ttl">{title}</h2>
+    <Box component="section" sx={{ mt: 3.5 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 1.5,
+        }}
+      >
+        <Typography variant="h4" component="h2" fontWeight="bold">
+          {title}
+        </Typography>
 
-        <div className="hdr-right">
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           {rightNode}
           {viewAllHref && (
-            <a className="view-all" href={viewAllHref}>
-              Xem tất cả <span className="arr">→</span>
-            </a>
+            <Link
+              href={viewAllHref}
+              underline="none"
+              color="text.secondary"
+              fontWeight="600"
+              sx={{ display: "flex", alignItems: "center" }}
+            >
+              Xem tất cả <ArrowForwardIcon sx={{ fontSize: "1rem", ml: 0.5 }} />
+            </Link>
           )}
-          <div className="nav-btns">
-            <button className="nav-btn" disabled={!canPrev} onClick={scrollPrev} aria-label="prev">‹</button>
-            <button className="nav-btn" disabled={!canNext} onClick={scrollNext} aria-label="next">›</button>
-          </div>
-        </div>
-      </div>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <IconButton
+              size="small"
+              disabled={!canPrev}
+              onClick={scrollPrev}
+              aria-label="prev"
+            >
+              <ChevronLeftIcon />
+            </IconButton>
+            <IconButton
+              size="small"
+              disabled={!canNext}
+              onClick={scrollNext}
+              aria-label="next"
+            >
+              <ChevronRightIcon />
+            </IconButton>
+          </Box>
+        </Box>
+      </Box>
 
       {!items.length ? (
-        emptyText ? <div className="brand-empty">{emptyText}</div> : null
+        emptyText ? (
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2,
+              textAlign: "center",
+              color: "text.secondary",
+              bgcolor: "grey.50",
+            }}
+          >
+            {emptyText}
+          </Paper>
+        ) : null
       ) : (
-        <div className="carousel">
-          <div className="carousel-viewport" ref={viewportRef}>
-            <div className="carousel-track" style={{ gap }}>
+        <Box sx={{ position: "relative" }}>
+          <Box
+            ref={viewportRef}
+            sx={{
+              overflow: "auto hidden",
+              scrollBehavior: "smooth",
+              "&::-webkit-scrollbar": { display: "none" },
+              py: 1, // Add padding-block
+              pl: 0.5, // Add padding-left
+              ml: -0.5, // Nudge back to align with container edge
+            }}
+          >
+            <Box sx={{ display: "flex", gap }}>
               {items.map((it, i) => (
-                <div
-                  className="carousel-item"
+                <Box
                   key={it._id || it.id || it.slug || i}
-                  style={{ width: itemWidth, minWidth: itemWidth }}
+                  sx={{
+                    width: itemWidth,
+                    minWidth: itemWidth,
+                    flex: "0 0 auto",
+                  }}
                 >
                   {renderItem(it)}
-                </div>
+                </Box>
               ))}
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
       )}
-    </section>
+    </Box>
   );
 }
 
 /* ===================== BANNER CAROUSEL ===================== */
 
 function BannerCarousel({ banners }) {
-  const rows = [banners.homepage_top, banners.homepage_mid, banners.homepage_bottom].filter(r => r?.length);
+  const rows = [
+    banners.homepage_top,
+    banners.homepage_mid,
+    banners.homepage_bottom,
+  ].filter((r) => r?.length);
   if (!rows.length) return null;
 
   const list = rows.flat();
-  const gap = 12;
+  const gap = 1.5; // theme.spacing unit
 
-  // đo đúng bề rộng của viewport (trong .hp-container)
-  const { viewportRef, canPrev, canNext, scrollPrev, scrollNext } = useCarousel({
-    itemWidth: 0, // sẽ set sau khi đo
-    gap,
-    perClick: 1,
-  });
+  const { viewportRef, canPrev, canNext, scrollPrev, scrollNext } = useCarousel(
+    {
+      itemWidth: 0, // will be set after measuring
+      gap,
+      perClick: 1,
+    }
+  );
 
   const [vw, setVw] = React.useState(0);
   React.useEffect(() => {
@@ -285,50 +460,95 @@ function BannerCarousel({ banners }) {
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    window.addEventListener("resize", update);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", update);
-    };
+    return () => ro.disconnect();
   }, [viewportRef]);
 
-  // NOTE: hack nhẹ: khi chưa đo xong, tạm dùng 1px để tránh nhảy layout
-  const itemW = vw || 1;
+  const itemW = vw || "100%";
 
   return (
-    <section className="hp-section">
-      <div className="hp-section-header">
-        <h2 className="ttl">Khuyến mãi nổi bật</h2>
-        <div className="hdr-right">
-          <div className="nav-btns">
-            <button className="nav-btn" disabled={!canPrev} onClick={scrollPrev} aria-label="prev">‹</button>
-            <button className="nav-btn" disabled={!canNext} onClick={scrollNext} aria-label="next">›</button>
-          </div>
-        </div>
-      </div>
+    <Box component="section" sx={{ mt: 3.5 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 1.5,
+        }}
+      >
+        <Typography variant="h4" component="h2" fontWeight="bold">
+          Khuyến mãi nổi bật
+        </Typography>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <IconButton
+            size="small"
+            disabled={!canPrev}
+            onClick={scrollPrev}
+            aria-label="prev"
+          >
+            <ChevronLeftIcon />
+          </IconButton>
+          <IconButton
+            size="small"
+            disabled={!canNext}
+            onClick={scrollNext}
+            aria-label="next"
+          >
+            <ChevronRightIcon />
+          </IconButton>
+        </Box>
+      </Box>
 
-      <div className="carousel">
-        <div className="carousel-viewport" ref={viewportRef}>
-          <div className="carousel-track" style={{ gap }}>
+      <Box sx={{ position: "relative" }}>
+        <Box
+          ref={viewportRef}
+          sx={{
+            overflow: "auto hidden",
+            scrollBehavior: "smooth",
+            "&::-webkit-scrollbar": { display: "none" },
+          }}
+        >
+          <Box sx={{ display: "flex", gap }}>
             {list.map((b, i) => {
               const src = b.image_url || b.image || b.url;
               if (!src) return null;
               const href = b.link || b.href || "#";
               return (
-                <a
+                <Box
                   key={b._id || b.id || `${src}-${i}`}
-                  className="banner-hero"
+                  component="a"
                   href={href}
-                  style={{ width: itemW, minWidth: itemW }}  // <<< rộng bằng viewport của container
+                  sx={{
+                    width: itemW,
+                    minWidth: itemW,
+                    flex: "0 0 auto",
+                    position: "relative",
+                    display: "block",
+                    borderRadius: 3.5,
+                    overflow: "hidden",
+                    minHeight: 160,
+                    aspectRatio: "1000 / 300", // Adjust based on typical banner aspect ratio
+                  }}
                 >
-                  <img src={src} alt={b.title || "Banner"} loading="lazy" />
-                </a>
+                  <Box
+                    component="img"
+                    src={src}
+                    alt={b.title || "Banner"}
+                    loading="lazy"
+                    sx={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                </Box>
               );
             })}
-          </div>
-        </div>
-      </div>
-    </section>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
@@ -345,7 +565,9 @@ function Countdown({ endTime, label = "Kết thúc sau" }) {
   const hh = String(Math.floor(left / 3600000)).padStart(2, "0");
   const mm = String(Math.floor((left % 3600000) / 60000)).padStart(2, "0");
   const ss = String(Math.floor((left % 60000) / 1000)).padStart(2, "0");
-  return <div className="countdown">{label} {hh}:{mm}:{ss}</div>;
+  return (
+    <Typography variant="subtitle2" fontWeight="bold" color="success.main">
+      {label} {hh}:{mm}:{ss}
+    </Typography>
+  );
 }
-
-

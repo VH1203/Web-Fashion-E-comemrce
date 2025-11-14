@@ -1,5 +1,12 @@
-// components/home/ProductCard.jsx
-import React from "react";
+import {
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  CardMedia,
+  Rating,
+  Typography,
+} from "@mui/material";
 import { formatCurrency } from "../../utils/formatCurrency";
 
 export default function ProductCard({ item, type }) {
@@ -12,20 +19,18 @@ export default function ProductCard({ item, type }) {
   const img = p?.images?.[0] || p?.image || p?.thumbnail;
 
   const basePrice = Number(p?.base_price ?? p?.price ?? 0) || 0;
-  const price = type === "flash" ? Number(item?.flash_price ?? basePrice) || 0 : basePrice;
+  const price =
+    type === "flash" ? Number(item?.flash_price ?? basePrice) || 0 : basePrice;
 
   const percent =
-    type === "flash" && basePrice > 0
+    type === "flash" && basePrice > 0 && basePrice > price
       ? Math.max(0, Math.round((1 - price / basePrice) * 100))
       : 0;
 
-  const rating = Number(
-    p?.rating_avg ?? p?.ratingAvg ?? p?.rating?.avg ?? 0
-  ) || 0;
+  const rating =
+    Number(p?.rating_avg ?? p?.ratingAvg ?? p?.rating?.avg ?? 0) || 0;
 
-  const sold = Number(
-    p?.sold_count ?? p?.soldCount ?? p?.sold ?? 0
-  ) || 0;
+  const sold = Number(p?.sold_count ?? p?.soldCount ?? p?.sold ?? 0) || 0;
 
   const formatSold = (n) => {
     if (!n) return "0";
@@ -33,53 +38,139 @@ export default function ProductCard({ item, type }) {
     return `${n}`;
   };
 
-  const renderStars = (val) => {
-    const v = Math.max(0, Math.min(5, Math.round((val || 0) * 2) / 2));
-    const full = Math.floor(v);
-    const half = v - full >= 0.5 ? 1 : 0;
-    const empty = 5 - full - half;
-    return (
-      <span className="stars" aria-label={`Đánh giá ${v}/5`}>
-        {"★".repeat(full)}
-        {half ? "☆" : ""}
-        {"☆".repeat(empty)}
-      </span>
-    );
-  };
-
   return (
-    <a className="card product-card" href={href}>
-      <div className="thumb">
-        {img ? (
-          <img src={img} alt={name} loading="lazy" />
-        ) : (
-          <div className="noimg">No Image</div>
-        )}
-        {type === "flash" && percent > 0 && (
-          <span className="badge">-{percent}%</span>
-        )}
-      </div>
-
-      <div className="p-info">
-        <div className="p-name" title={name}>
-          {name}
-        </div>
-
-        <div className="p-meta">
-          <span className="p-rating">
-            {renderStars(rating)} <b>{rating.toFixed(1)}</b>
-          </span>
-          <span className="dot">•</span>
-          <span className="p-sold">Đã bán {formatSold(sold)}</span>
-        </div>
-
-        <div className="p-price">
-          <span className="cur">{formatCurrency(price)}</span>
-          {type === "flash" && basePrice > 0 && (
-            <span className="base">{formatCurrency(basePrice)}</span>
+    <Card
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        transition: "transform .15s ease, box-shadow .15s ease",
+        "&:hover": {
+          transform: "translateY(-5px)",
+          boxShadow: (theme) => theme.shadows[4],
+        },
+      }}
+    >
+      <CardActionArea
+        href={href}
+        sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}
+      >
+        <Box sx={{ position: "relative", width: "100%", pt: "100%" }}>
+          <CardMedia
+            component="img"
+            image={img}
+            alt={name}
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+          {!img && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                display: "grid",
+                placeItems: "center",
+                bgcolor: "grey.200",
+                color: "text.secondary",
+              }}
+            >
+              <Typography variant="caption">No Image</Typography>
+            </Box>
           )}
-        </div>
-      </div>
-    </a>
+          {type === "flash" && percent > 0 && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: "8px",
+                left: "8px",
+                bgcolor: "error.main",
+                color: "white",
+                py: 0.25,
+                px: 0.75,
+                borderRadius: 1.5,
+                fontSize: "0.75rem",
+                fontWeight: "bold",
+              }}
+            >
+              -{percent}%
+            </Box>
+          )}
+        </Box>
+
+        <CardContent sx={{ width: "100%", p: 1.5 }}>
+          <Typography
+            gutterBottom
+            variant="body2"
+            component="div"
+            title={name}
+            sx={{
+              fontWeight: 500,
+              height: "40px", // 2 lines
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              "-webkit-line-clamp": "2",
+              "-webkit-box-orient": "vertical",
+            }}
+          >
+            {name}
+          </Typography>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              my: 0.5,
+            }}
+          >
+            <Rating
+              name="read-only"
+              value={rating}
+              precision={0.5}
+              readOnly
+              size="small"
+            />
+            <Typography variant="body2" color="text.secondary">
+              ({rating.toFixed(1)})
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              •
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ flexShrink: 0 }}
+            >
+              Đã bán {formatSold(sold)}
+            </Typography>
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+            <Typography color="text.primary" fontWeight="bold">
+              {formatCurrency(price)}
+            </Typography>
+            {type === "flash" && basePrice > price && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ textDecoration: "line-through" }}
+              >
+                {formatCurrency(basePrice)}
+              </Typography>
+            )}
+          </Box>
+        </CardContent>
+      </CardActionArea>
+    </Card>
   );
 }

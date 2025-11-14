@@ -25,7 +25,14 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
-import { Add, Edit, Delete, Visibility, Search, Close } from "@mui/icons-material";
+import {
+  Add,
+  Edit,
+  Delete,
+  Visibility,
+  Search,
+  Close,
+} from "@mui/icons-material";
 import { bannerApi } from "../../services/bannerService"; // ✅ file bannerApi
 
 const formatDate = (dateString) => {
@@ -43,7 +50,11 @@ const ManageBanner = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   const showMessage = (message, severity = "success") => {
     setSnackbar({ open: true, message, severity });
@@ -57,7 +68,10 @@ const ManageBanner = () => {
       setBanners(res.data || []);
       setTotalPages(res.pagination?.totalPages || 1);
     } catch (err) {
-      showMessage(err.response?.data?.message || "Failed to load banners!", "error");
+      showMessage(
+        err.response?.data?.message || "Failed to load banners!",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -71,7 +85,10 @@ const ManageBanner = () => {
       setMode("detail");
       setShowDialog(true);
     } catch (err) {
-      showMessage(err.response?.data?.message || "Failed to load banner details!", "error");
+      showMessage(
+        err.response?.data?.message || "Failed to load banner details!",
+        "error"
+      );
     }
   };
 
@@ -109,33 +126,41 @@ const ManageBanner = () => {
 
   // --- Save banner (create / edit) ---
   const handleSave = async () => {
-  try {
-    const payload = { ...selectedBanner };
+    try {
+      const payload = { ...selectedBanner };
 
-    // --- Nếu có file ảnh, upload trước ---
-    if (selectedBanner.image_file) {
-      const uploadRes = await bannerApi.uploadImage(selectedBanner.image_file);
-      payload.image_url = uploadRes.upload.url;
-      payload.image_public_id = uploadRes.upload.public_id;
-      delete payload.image_file; // Không gửi file nữa
-      delete payload.imagePreview;
+      // --- Nếu có file ảnh, upload trước ---
+      if (selectedBanner.image_file) {
+        const uploadRes = await bannerApi.uploadImage(
+          selectedBanner.image_file
+        );
+        payload.image_url = uploadRes.upload.url;
+        payload.image_public_id = uploadRes.upload.public_id;
+        delete payload.image_file; // Không gửi file nữa
+        delete payload.imagePreview;
+      }
+
+      // --- Create / Update banner ---
+      if (mode === "create") {
+        await bannerApi.create(payload);
+      } else if (mode === "edit") {
+        await bannerApi.update(selectedBanner._id, payload);
+      }
+
+      showMessage(
+        mode === "create"
+          ? "Banner created successfully!"
+          : "Banner updated successfully!"
+      );
+      handleCloseDialog();
+      fetchBanners(page, searchTerm);
+    } catch (err) {
+      showMessage(
+        err.response?.data?.message || "Failed to save banner!",
+        "error"
+      );
     }
-
-    // --- Create / Update banner ---
-    if (mode === "create") {
-      await bannerApi.create(payload);
-    } else if (mode === "edit") {
-      await bannerApi.update(selectedBanner._id, payload);
-    }
-
-    showMessage(mode === "create" ? "Banner created successfully!" : "Banner updated successfully!");
-    handleCloseDialog();
-    fetchBanners(page, searchTerm);
-  } catch (err) {
-    showMessage(err.response?.data?.message || "Failed to save banner!", "error");
-  }
-};
-
+  };
 
   // --- Delete banner ---
   const handleDelete = async (id) => {
@@ -145,19 +170,32 @@ const ManageBanner = () => {
       showMessage("Banner deleted successfully!");
       fetchBanners(page, searchTerm);
     } catch (err) {
-      showMessage(err.response?.data?.message || "Failed to delete banner!", "error");
+      showMessage(
+        err.response?.data?.message || "Failed to delete banner!",
+        "error"
+      );
     }
   };
 
   if (loading) return <Typography>Loading banners...</Typography>;
 
   return (
-    <Box sx={{ p: 4, bgcolor: "#f4f7fa", minHeight: "100vh" }}>
+    <Box>
       <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
         {/* HEADER */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={3}
+        >
           <Typography variant="h4">Banner Management</Typography>
-          <Box component="form" display="flex" gap={1} onSubmit={handleSearchSubmit}>
+          <Box
+            component="form"
+            display="flex"
+            gap={1}
+            onSubmit={handleSearchSubmit}
+          >
             <TextField
               size="small"
               placeholder="Search banners..."
@@ -167,7 +205,11 @@ const ManageBanner = () => {
             <Button type="submit" variant="contained" startIcon={<Search />}>
               Search
             </Button>
-            <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleCreate}
+            >
               Create
             </Button>
           </Box>
@@ -194,7 +236,12 @@ const ManageBanner = () => {
                   <TableRow key={b._id}>
                     <TableCell>{b.title}</TableCell>
                     <TableCell>
-                      <img src={b.image_url} alt={b.title} width="80" style={{ borderRadius: 6 }} />
+                      <img
+                        src={b.image_url}
+                        alt={b.title}
+                        width="80"
+                        style={{ borderRadius: 6 }}
+                      />
                     </TableCell>
                     <TableCell>{b.link}</TableCell>
                     <TableCell>{b.position}</TableCell>
@@ -203,12 +250,19 @@ const ManageBanner = () => {
                     <TableCell>{b.is_active ? "Yes" : "No"}</TableCell>
                     <TableCell>
                       <Stack direction="row" spacing={1}>
-                        <IconButton onClick={() => fetchBannerDetail(b._id)} sx={{ color: "#1976d2" }}>
+                        <IconButton
+                          onClick={() => fetchBannerDetail(b._id)}
+                          sx={{ color: "#1976d2" }}
+                        >
                           <Visibility />
                         </IconButton>
                         <IconButton
                           onClick={() => {
-                            setSelectedBanner({ ...b, imagePreview: b.image_url, image_file: null });
+                            setSelectedBanner({
+                              ...b,
+                              imagePreview: b.image_url,
+                              image_file: null,
+                            });
                             setMode("edit");
                             setShowDialog(true);
                           }}
@@ -216,7 +270,10 @@ const ManageBanner = () => {
                         >
                           <Edit />
                         </IconButton>
-                        <IconButton onClick={() => handleDelete(b._id)} sx={{ color: "#c62828" }}>
+                        <IconButton
+                          onClick={() => handleDelete(b._id)}
+                          sx={{ color: "#c62828" }}
+                        >
                           <Delete />
                         </IconButton>
                       </Stack>
@@ -235,15 +292,32 @@ const ManageBanner = () => {
         </TableContainer>
 
         <Box display="flex" justifyContent="center" mt={3}>
-          <Pagination count={totalPages} page={page} onChange={(e, val) => setPage(val)} color="primary" />
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(e, val) => setPage(val)}
+            color="primary"
+          />
         </Box>
       </Paper>
 
       {/* === DIALOG DETAIL / CREATE / EDIT === */}
-      <Dialog open={showDialog} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+      <Dialog
+        open={showDialog}
+        onClose={handleCloseDialog}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>
-          {mode === "detail" ? "Banner Detail" : mode === "create" ? "Create Banner" : "Edit Banner"}
-          <IconButton onClick={handleCloseDialog} sx={{ position: "absolute", right: 8, top: 8 }}>
+          {mode === "detail"
+            ? "Banner Detail"
+            : mode === "create"
+            ? "Create Banner"
+            : "Edit Banner"}
+          <IconButton
+            onClick={handleCloseDialog}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
             <Close />
           </IconButton>
         </DialogTitle>
@@ -256,7 +330,12 @@ const ManageBanner = () => {
                 label="Title"
                 fullWidth
                 value={selectedBanner.title}
-                onChange={(e) => setSelectedBanner({ ...selectedBanner, title: e.target.value })}
+                onChange={(e) =>
+                  setSelectedBanner({
+                    ...selectedBanner,
+                    title: e.target.value,
+                  })
+                }
                 InputProps={mode === "detail" ? { readOnly: true } : {}}
               />
 
@@ -267,28 +346,34 @@ const ManageBanner = () => {
                     <img
                       src={selectedBanner.imagePreview}
                       alt="Preview"
-                      style={{ maxWidth: "100%", borderRadius: 8, border: "1px solid #ddd" }}
+                      style={{
+                        maxWidth: "100%",
+                        borderRadius: 8,
+                        border: "1px solid #ddd",
+                      }}
                     />
                   </Box>
                 )}
                 {mode !== "detail" && (
                   <Button variant="contained" component="label">
-                    {selectedBanner.image_file ? "Change Image" : "Upload Image"}
+                    {selectedBanner.image_file
+                      ? "Change Image"
+                      : "Upload Image"}
                     <input
-                    type="file"
-                    accept="image/*"
-                    hidden
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        setSelectedBanner({
-                          ...selectedBanner,
-                          image_file: file,
-                          imagePreview: URL.createObjectURL(file),
-                        });
-                      }
-                    }}
-                  />
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setSelectedBanner({
+                            ...selectedBanner,
+                            image_file: file,
+                            imagePreview: URL.createObjectURL(file),
+                          });
+                        }
+                      }}
+                    />
                   </Button>
                 )}
               </Box>
@@ -298,7 +383,9 @@ const ManageBanner = () => {
                 label="Link"
                 fullWidth
                 value={selectedBanner.link}
-                onChange={(e) => setSelectedBanner({ ...selectedBanner, link: e.target.value })}
+                onChange={(e) =>
+                  setSelectedBanner({ ...selectedBanner, link: e.target.value })
+                }
                 InputProps={mode === "detail" ? { readOnly: true } : {}}
               />
 
@@ -308,7 +395,12 @@ const ManageBanner = () => {
                 <Select
                   value={selectedBanner.position}
                   label="Position"
-                  onChange={(e) => setSelectedBanner({ ...selectedBanner, position: e.target.value })}
+                  onChange={(e) =>
+                    setSelectedBanner({
+                      ...selectedBanner,
+                      position: e.target.value,
+                    })
+                  }
                   disabled={mode === "detail"}
                 >
                   <MenuItem value="homepage_top">Homepage Top</MenuItem>
@@ -325,7 +417,12 @@ const ManageBanner = () => {
                 fullWidth
                 InputLabelProps={{ shrink: true }}
                 value={selectedBanner.start_date?.split("T")[0] || ""}
-                onChange={(e) => setSelectedBanner({ ...selectedBanner, start_date: e.target.value })}
+                onChange={(e) =>
+                  setSelectedBanner({
+                    ...selectedBanner,
+                    start_date: e.target.value,
+                  })
+                }
                 InputProps={mode === "detail" ? { readOnly: true } : {}}
               />
               <TextField
@@ -334,7 +431,12 @@ const ManageBanner = () => {
                 fullWidth
                 InputLabelProps={{ shrink: true }}
                 value={selectedBanner.end_date?.split("T")[0] || ""}
-                onChange={(e) => setSelectedBanner({ ...selectedBanner, end_date: e.target.value })}
+                onChange={(e) =>
+                  setSelectedBanner({
+                    ...selectedBanner,
+                    end_date: e.target.value,
+                  })
+                }
                 InputProps={mode === "detail" ? { readOnly: true } : {}}
               />
 
@@ -344,7 +446,12 @@ const ManageBanner = () => {
                 <Select
                   value={selectedBanner.is_active}
                   label="Active"
-                  onChange={(e) => setSelectedBanner({ ...selectedBanner, is_active: e.target.value })}
+                  onChange={(e) =>
+                    setSelectedBanner({
+                      ...selectedBanner,
+                      is_active: e.target.value,
+                    })
+                  }
                   disabled={mode === "detail"}
                 >
                   <MenuItem value={true}>Yes</MenuItem>
@@ -372,7 +479,11 @@ const ManageBanner = () => {
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

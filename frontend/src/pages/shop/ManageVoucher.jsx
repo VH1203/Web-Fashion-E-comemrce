@@ -25,7 +25,14 @@ import {
   InputLabel,
   FormControl,
 } from "@mui/material";
-import { Add, Edit, Delete, Visibility, Search, Close } from "@mui/icons-material";
+import {
+  Add,
+  Edit,
+  Delete,
+  Visibility,
+  Search,
+  Close,
+} from "@mui/icons-material";
 import { voucherApi } from "../../services/voucherService";
 
 const formatDate = (dateString) => {
@@ -47,7 +54,11 @@ const ManageVoucher = () => {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   const showMessage = (message, severity = "success") => {
     setSnackbar({ open: true, message, severity });
@@ -60,7 +71,10 @@ const ManageVoucher = () => {
       setVouchers(res.data || []);
       setTotalPages(res.pagination?.totalPages || 1);
     } catch (err) {
-      const message = err.response?.data?.message || err.message || "Failed to load vouchers!";
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to load vouchers!";
       showMessage(message, "error");
     } finally {
       setLoading(false);
@@ -74,7 +88,10 @@ const ManageVoucher = () => {
       setMode("detail");
       setShowDetail(true);
     } catch (err) {
-      const message = err.response?.data?.message || err.message || "Failed to load voucher details!";
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to load voucher details!";
       showMessage(message, "error");
     }
   };
@@ -143,19 +160,24 @@ const ManageVoucher = () => {
       handleCloseDetail();
       fetchVouchers(page, searchTerm);
     } catch (err) {
-      const message = err.response?.data?.message || err.message || "Failed to save voucher!";
+      const message =
+        err.response?.data?.message || err.message || "Failed to save voucher!";
       showMessage(message, "error");
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this voucher?")) return;
+    if (!window.confirm("Are you sure you want to delete this voucher?"))
+      return;
     try {
       await voucherApi.delete(id);
       showMessage("Voucher deleted successfully!", "success");
       fetchVouchers(page, searchTerm);
     } catch (err) {
-      const message = err.response?.data?.message || err.message || "Failed to delete voucher!";
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to delete voucher!";
       showMessage(message, "error");
     }
   };
@@ -163,11 +185,22 @@ const ManageVoucher = () => {
   if (loading) return <Typography>Loading vouchers...</Typography>;
 
   return (
-    <Box sx={{ p: 4, bgcolor: "#f4f7fa", minHeight: "100vh" }}>
+    <Box>
       <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 2 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={3}
+        >
           <Typography variant="h4">Voucher Management</Typography>
-          <Box component="form" display="flex" alignItems="center" gap={1} onSubmit={handleSearchSubmit}>
+          <Box
+            component="form"
+            display="flex"
+            alignItems="center"
+            gap={1}
+            onSubmit={handleSearchSubmit}
+          >
             <TextField
               size="small"
               placeholder="Search vouchers..."
@@ -177,7 +210,11 @@ const ManageVoucher = () => {
             <Button type="submit" variant="contained" startIcon={<Search />}>
               Search
             </Button>
-            <Button variant="contained" startIcon={<Add />} onClick={handleCreate}>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleCreate}
+            >
               Create
             </Button>
           </Box>
@@ -212,7 +249,10 @@ const ManageVoucher = () => {
                     <TableCell>{v.is_active ? "Yes" : "No"}</TableCell>
                     <TableCell>
                       <Stack direction="row" spacing={1}>
-                        <IconButton onClick={() => fetchVoucherDetail(v._id)} sx={{ color: "#1976d2" }}>
+                        <IconButton
+                          onClick={() => fetchVoucherDetail(v._id)}
+                          sx={{ color: "#1976d2" }}
+                        >
                           <Visibility />
                         </IconButton>
                         <IconButton
@@ -225,7 +265,10 @@ const ManageVoucher = () => {
                         >
                           <Edit />
                         </IconButton>
-                        <IconButton onClick={() => handleDelete(v._id)} sx={{ color: "#c62828" }}>
+                        <IconButton
+                          onClick={() => handleDelete(v._id)}
+                          sx={{ color: "#c62828" }}
+                        >
                           <Delete />
                         </IconButton>
                       </Stack>
@@ -244,15 +287,29 @@ const ManageVoucher = () => {
         </TableContainer>
 
         <Box display="flex" justifyContent="center" mt={3}>
-          <Pagination count={totalPages} page={page} onChange={(e, value) => setPage(value)} color="primary" />
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(e, value) => setPage(value)}
+            color="primary"
+          />
         </Box>
       </Paper>
 
       {/* === DIALOG DETAIL === */}
-      <Dialog open={showDetail && mode === "detail"} onClose={handleCloseDetail} fullWidth maxWidth="sm">
+      <Dialog
+        open={showDetail && mode === "detail"}
+        onClose={handleCloseDetail}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>
           Voucher Detail
-          <IconButton aria-label="close" onClick={handleCloseDetail} sx={{ position: "absolute", right: 8, top: 8 }}>
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseDetail}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
             <Close />
           </IconButton>
         </DialogTitle>
@@ -287,15 +344,32 @@ const ManageVoucher = () => {
                   label: "Discount",
                   value:
                     selectedVoucher.discount_value +
-                    (selectedVoucher.discount_type === "percent" ? "%" : " VND"),
+                    (selectedVoucher.discount_type === "percent"
+                      ? "%"
+                      : " VND"),
                 },
-                { label: "Discount type", value: selectedVoucher.discount_type },
+                {
+                  label: "Discount type",
+                  value: selectedVoucher.discount_type,
+                },
                 { label: "Max Uses", value: selectedVoucher.max_uses },
                 { label: "Used", value: selectedVoucher.used_count || 0 },
-                { label: "Valid From", value: formatDate(selectedVoucher.valid_from) },
-                { label: "Valid To", value: formatDate(selectedVoucher.valid_to) },
-                { label: "Created At", value: formatDate(selectedVoucher.created_at) },
-                { label: "Updated At", value: formatDate(selectedVoucher.updated_at) },
+                {
+                  label: "Valid From",
+                  value: formatDate(selectedVoucher.valid_from),
+                },
+                {
+                  label: "Valid To",
+                  value: formatDate(selectedVoucher.valid_to),
+                },
+                {
+                  label: "Created At",
+                  value: formatDate(selectedVoucher.created_at),
+                },
+                {
+                  label: "Updated At",
+                  value: formatDate(selectedVoucher.updated_at),
+                },
               ].map((item, i) => (
                 <Box
                   key={i}
@@ -314,7 +388,9 @@ const ManageVoucher = () => {
                     },
                   }}
                 >
-                  <Typography sx={{ fontWeight: 600, color: "text.secondary" }}>{item.label}</Typography>
+                  <Typography sx={{ fontWeight: 600, color: "text.secondary" }}>
+                    {item.label}
+                  </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{item.value}</Typography>
                 </Box>
               ))}
@@ -324,10 +400,19 @@ const ManageVoucher = () => {
       </Dialog>
 
       {/* === DIALOG CREATE / EDIT === */}
-      <Dialog open={showDetail && (mode === "edit" || mode === "create")} onClose={handleCloseDetail} fullWidth maxWidth="sm">
+      <Dialog
+        open={showDetail && (mode === "edit" || mode === "create")}
+        onClose={handleCloseDetail}
+        fullWidth
+        maxWidth="sm"
+      >
         <DialogTitle>
           {mode === "create" ? "Create Voucher" : "Edit Voucher"}
-          <IconButton aria-label="close" onClick={handleCloseDetail} sx={{ position: "absolute", right: 8, top: 8 }}>
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseDetail}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
             <Close />
           </IconButton>
         </DialogTitle>
@@ -339,14 +424,24 @@ const ManageVoucher = () => {
                 label="Code"
                 fullWidth
                 value={selectedVoucher.code}
-                onChange={(e) => setSelectedVoucher({ ...selectedVoucher, code: e.target.value })}
+                onChange={(e) =>
+                  setSelectedVoucher({
+                    ...selectedVoucher,
+                    code: e.target.value,
+                  })
+                }
               />
               <FormControl fullWidth>
                 <InputLabel>Discount Type</InputLabel>
                 <Select
                   value={selectedVoucher.discount_type}
                   label="Discount Type"
-                  onChange={(e) => setSelectedVoucher({ ...selectedVoucher, discount_type: e.target.value })}
+                  onChange={(e) =>
+                    setSelectedVoucher({
+                      ...selectedVoucher,
+                      discount_type: e.target.value,
+                    })
+                  }
                 >
                   <MenuItem value="percent">Percent</MenuItem>
                   <MenuItem value="fixed">Fixed</MenuItem>
@@ -357,21 +452,36 @@ const ManageVoucher = () => {
                 type="number"
                 fullWidth
                 value={selectedVoucher.discount_value}
-                onChange={(e) => setSelectedVoucher({ ...selectedVoucher, discount_value: Number(e.target.value) })}
+                onChange={(e) =>
+                  setSelectedVoucher({
+                    ...selectedVoucher,
+                    discount_value: Number(e.target.value),
+                  })
+                }
               />
               <TextField
                 label="Max Uses"
                 type="number"
                 fullWidth
                 value={selectedVoucher.max_uses}
-                onChange={(e) => setSelectedVoucher({ ...selectedVoucher, max_uses: Number(e.target.value) })}
+                onChange={(e) =>
+                  setSelectedVoucher({
+                    ...selectedVoucher,
+                    max_uses: Number(e.target.value),
+                  })
+                }
               />
               <TextField
                 label="Usage Limit Per User"
                 type="number"
                 fullWidth
                 value={selectedVoucher.usage_limit_per_user}
-                onChange={(e) => setSelectedVoucher({ ...selectedVoucher, usage_limit_per_user: Number(e.target.value) })}
+                onChange={(e) =>
+                  setSelectedVoucher({
+                    ...selectedVoucher,
+                    usage_limit_per_user: Number(e.target.value),
+                  })
+                }
               />
               <TextField
                 label="Valid From"
@@ -379,7 +489,12 @@ const ManageVoucher = () => {
                 InputLabelProps={{ shrink: true }}
                 fullWidth
                 value={selectedVoucher.valid_from?.split("T")[0] || ""}
-                onChange={(e) => setSelectedVoucher({ ...selectedVoucher, valid_from: e.target.value })}
+                onChange={(e) =>
+                  setSelectedVoucher({
+                    ...selectedVoucher,
+                    valid_from: e.target.value,
+                  })
+                }
               />
               <TextField
                 label="Valid To"
@@ -387,14 +502,24 @@ const ManageVoucher = () => {
                 InputLabelProps={{ shrink: true }}
                 fullWidth
                 value={selectedVoucher.valid_to?.split("T")[0] || ""}
-                onChange={(e) => setSelectedVoucher({ ...selectedVoucher, valid_to: e.target.value })}
+                onChange={(e) =>
+                  setSelectedVoucher({
+                    ...selectedVoucher,
+                    valid_to: e.target.value,
+                  })
+                }
               />
               <TextField
                 label="Min Order Value"
                 type="number"
                 fullWidth
                 value={selectedVoucher.min_order_value}
-                onChange={(e) => setSelectedVoucher({ ...selectedVoucher, min_order_value: Number(e.target.value) })}
+                onChange={(e) =>
+                  setSelectedVoucher({
+                    ...selectedVoucher,
+                    min_order_value: Number(e.target.value),
+                  })
+                }
               />
               <TextField
                 label="Applicable Products (comma separated)"
@@ -403,7 +528,10 @@ const ManageVoucher = () => {
                 onChange={(e) =>
                   setSelectedVoucher({
                     ...selectedVoucher,
-                    applicable_products: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                    applicable_products: e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
                   })
                 }
               />
@@ -414,7 +542,10 @@ const ManageVoucher = () => {
                 onChange={(e) =>
                   setSelectedVoucher({
                     ...selectedVoucher,
-                    applicable_users: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                    applicable_users: e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
                   })
                 }
               />
@@ -423,7 +554,12 @@ const ManageVoucher = () => {
                 <Select
                   value={selectedVoucher.scope}
                   label="Scope"
-                  onChange={(e) => setSelectedVoucher({ ...selectedVoucher, scope: e.target.value })}
+                  onChange={(e) =>
+                    setSelectedVoucher({
+                      ...selectedVoucher,
+                      scope: e.target.value,
+                    })
+                  }
                 >
                   <MenuItem value="shop">Shop</MenuItem>
                   <MenuItem value="global">Global</MenuItem>
@@ -434,7 +570,12 @@ const ManageVoucher = () => {
                 <Select
                   value={selectedVoucher.is_active}
                   label="Active"
-                  onChange={(e) => setSelectedVoucher({ ...selectedVoucher, is_active: e.target.value })}
+                  onChange={(e) =>
+                    setSelectedVoucher({
+                      ...selectedVoucher,
+                      is_active: e.target.value,
+                    })
+                  }
                 >
                   <MenuItem value={true}>Yes</MenuItem>
                   <MenuItem value={false}>No</MenuItem>
@@ -458,7 +599,11 @@ const ManageVoucher = () => {
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

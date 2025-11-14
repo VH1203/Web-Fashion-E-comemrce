@@ -6,21 +6,22 @@ function normalizeBody(p = {}) {
   const source = String(p.schema || p.source || "63");
 
   const data = {
-    name:   String(p.name || "").trim(),
-    phone:  String(p.phone || "").trim(),
+    name: String(p.name || "").trim(),
+    phone: String(p.phone || "").trim(),
     street: String(p.street || "").trim(),
-    city:   String(p.city || "").trim(),
-    ward:   String(p.ward || "").trim(),
+    city: String(p.city || "").trim(),
+    ward: String(p.ward || "").trim(),
     // 34: district rỗng; 63: dùng như FE gửi
-    district: source === "34"
-      ? String(p.district || "").trim()
-      : String(p.district || "").trim(),
+    district:
+      source === "34"
+        ? String(p.district || "").trim()
+        : String(p.district || "").trim(),
 
     source,
 
     province_code: p.province_code ?? null,
-    district_code: source === "34" ? null : (p.district_code ?? null),
-    ward_code:     p.ward_code ?? null,
+    district_code: source === "34" ? null : p.district_code ?? null,
+    ward_code: p.ward_code ?? null,
 
     // is_default là tuỳ chọn
     is_default: p.is_default === true,
@@ -34,7 +35,9 @@ function assertRequired(data) {
   const commonMissing =
     !data.name || !data.phone || !data.city || !data.ward || !data.street;
   if (commonMissing) {
-    const e = new Error("Missing required fields: name, phone, city, ward, street");
+    const e = new Error(
+      "Missing required fields: name, phone, city, ward, street"
+    );
     e.status = 400;
     throw e;
   }
@@ -46,9 +49,7 @@ function assertRequired(data) {
 }
 
 exports.list = (userId) =>
-  Address.find({ user_id: userId })
-    .sort({ is_default: -1, createdAt: -1 })
-    .lean();
+  Address.find({ user_id: userId }).sort({ createdAt: -1 }).lean();
 
 exports.create = async (userId, p) => {
   const data = normalizeBody(p);

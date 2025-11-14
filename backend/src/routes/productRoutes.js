@@ -1,20 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const productController = require('../controllers/productController');
+const productController = require("../controllers/productController");
 
-
+router.post("/", productController.createProduct);
+router.get("/", productController.getProducts);
 router.get("/all-products", productController.getAllProducts);
 router.get("/search", productController.searchProducts);
 
-router.patch('/:id', productController.updateProduct);
-router.delete('/:id', productController.deleteProduct);
+router.patch("/:id", productController.updateProduct);
+router.delete("/:id", productController.deleteProduct);
 
-router.get('/:idOrSlug', productController.getDetail);
-router.get('/:idOrSlug/reviews', productController.getReviews);
-router.get('/:idOrSlug/ratings-summary', productController.getRatingsSummary);
-router.get('/:idOrSlug/related', productController.getRelated);
-
-
-
+router.get("/:idOrSlug", productController.getDetail);
+router.get("/:idOrSlug/reviews", productController.getReviews);
+router.get("/:idOrSlug/ratings-summary", productController.getRatingsSummary);
+router.get("/:idOrSlug/related", productController.getRelated);
 
 module.exports = router;

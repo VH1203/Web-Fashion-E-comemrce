@@ -10,11 +10,15 @@ const normalizeToArray = (d) => {
 };
 
 export const addressService = {
-  list: () => apiClient.get("/addresses").then(r => normalizeToArray(r?.data?.data)),
-  create: (payload) => apiClient.post("/addresses", payload).then(r => r.data.data),
-  update: (id, payload) => apiClient.put(`/addresses/${id}`, payload).then(r => r.data.data),
-  remove: (id) => apiClient.delete(`/addresses/${id}`).then(r => r.data),
-  setDefault: (id) => apiClient.post(`/addresses/${id}/default`).then(r => r.data.data),
+  list: () =>
+    apiClient.get("/addresses").then((r) => normalizeToArray(r?.data?.data)),
+  create: (payload) =>
+    apiClient.post("/addresses", payload).then((r) => r.data.data),
+  update: (id, payload) =>
+    apiClient.put(`/addresses/${id}`, payload).then((r) => r.data.data),
+  remove: (id) => apiClient.delete(`/addresses/${id}`).then((r) => r.data),
+  setDefault: (id) =>
+    apiClient.patch(`/addresses/${id}/default`).then((r) => r.data.data),
 };
 
 export default addressService;

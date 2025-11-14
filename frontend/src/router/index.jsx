@@ -1,4 +1,3 @@
-import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -11,9 +10,7 @@ import TermsAndPolicy from "../pages/support/TermsAndPolicy";
 
 // ===== Role Pages =====
 import HomePage from "../pages/customer/HomePage";
-import SystemConfig from "../pages/admin/SystemConfig";
 import SalesOrders from "../pages/sales/SalesOrders";
-import Tickets from "../pages/support/Tickets";
 import ProductDetail from "../pages/customer/ProductDetail";
 import ProfilePage from "../pages/customer/Profile";
 import NotFound from "../pages/errors/NotFound";
@@ -22,11 +19,17 @@ import Checkout from "../pages/customer/Checkout";
 import PaymentReturn from "../pages/customer/PaymentReturn";
 import OrderDetail from "../pages/customer/OrderDetail";
 import Orders from "../pages/customer/Orders";
-import Dashboard from "../pages/shop/Dashboard";
-import ManageProducts from "../pages/shop/ManageProducts1";
-import AddProduct from "../pages/shop/AddProduct";
-import ShopOwner from "../pages/shop/ShopOwner";
+import ManageProducts from "../pages/shop/ManageProducts";
+import ShopOwnerLayout from "../components/layout/ShopOwner";
 import ReviewPages from "../pages/customer/ReviewsPage/ReviewsPage";
+import AnalyticsPage from "../pages/shop/AnalyticsPage";
+import ManageVoucher from "../pages/shop/ManageVoucher";
+import ManageBanner from "../pages/shop/ManageBanner";
+import ManageFlashsale from "../pages/shop/ManageFlashsale";
+import CustomerLayout from "../components/layout/CustomerLayout";
+import ProductsByCategoryPage from "../pages/customer/ProductsByCategoryPage";
+import ProductsByBrandPage from "../pages/customer/ProductsByBrandPage";
+
 /** Đợi authReady để tránh redirect sớm */
 function ProtectedRoute({ children }) {
   const { isAuthenticated, authReady } = useAuth();
@@ -56,168 +59,113 @@ function RoleRoute({ children, roles = [], permAny = [], permAll = [] }) {
 export default function AppRouter() {
   return (
     <Routes>
-      {/* Public */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/legal/privacy" element={<TermsAndPolicy />} />
+      <Route element={<CustomerLayout />}>
+        {/* Public */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/legal/privacy" element={<TermsAndPolicy />} />
+        {/* Đổi mật khẩu: cần đăng nhập */}
+        <Route
+          path="/change-password"
+          element={
+            <ProtectedRoute>
+              <ChangePassword />
+            </ProtectedRoute>
+          }
+        />
+        {/* Customer */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/product/:idOrSlug" element={<ProductDetail />} />
+        <Route path="/category/:slug" element={<ProductsByCategoryPage />} />
+        <Route path="/brand/:slug" element={<ProductsByBrandPage />} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <Checkout />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment/return"
+          element={
+            <ProtectedRoute>
+              <PaymentReturn />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders/:id"
+          element={
+            <ProtectedRoute>
+              <OrderDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reviews"
+          element={
+            <ProtectedRoute>
+              <ReviewPages />
+            </ProtectedRoute>
+          }
+        />
+        {/* Shop: cho shop_owner/sales hoặc ai có shop:access */}
+        {/* Sales */}
+        <Route
+          path="/sales/orders"
+          element={
+            <RoleRoute roles={["sales"]}>
+              <SalesOrders />
+            </RoleRoute>
+          }
+        />
+      </Route>
 
-      {/* Đổi mật khẩu: cần đăng nhập */}
-      <Route
-        path="/change-password"
-        element={
-          <ProtectedRoute>
-            <ChangePassword />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Customer */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/product/:idOrSlug" element={<ProductDetail />} />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/cart"
-        element={
-          <ProtectedRoute>
-            <Cart />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/checkout"
-        element={
-          <ProtectedRoute>
-            <Checkout />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/payment/return"
-        element={
-          <ProtectedRoute>
-            <PaymentReturn />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/orders"
-        element={
-          <ProtectedRoute>
-            <Orders />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/orders/:id"
-        element={
-          <ProtectedRoute>
-            <OrderDetail />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/reviews"
-        element={
-          <ProtectedRoute>
-            <ReviewPages />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Shop: cho shop_owner/sales hoặc ai có shop:access */}
       <Route
         path="/shop"
         element={
           <RoleRoute roles={["shop_owner", "sales"]} permAny={["shop:access"]}>
-            <ShopOwner />
+            <ShopOwnerLayout />
           </RoleRoute>
         }
       >
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="shop-owner" element={<ShopOwner />} />
+        <Route index element={<AnalyticsPage />} />
+        <Route path="products" element={<ManageProducts />} />
+        <Route path="vouchers" element={<ManageVoucher />} />
+        <Route path="banners" element={<ManageBanner />} />
+        <Route path="flashsales" element={<ManageFlashsale />} />
       </Route>
 
-      <Route
-        path="/shop/dashboard"
-        element={
-          <ProtectedRoute>
-            <RoleRoute roles={["shop_owner", "role-shop-owner", "shop"]}>
-              <Dashboard />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/shop/admin/products"
-        element={
-          <ProtectedRoute>
-            <RoleRoute roles={["shop_owner", "sales", "system_admin"]}>
-              <ManageProducts />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/shop/admin/products/new"
-        element={
-          <ProtectedRoute>
-            <RoleRoute roles={["shop_owner", "sales", "system_admin"]}>
-              <AddProduct />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Alias/Redirect nếu trước đó từng dùng /shop/products */}
-      <Route
-        path="/shop/products"
-        element={<Navigate to="/shop/admin/products" replace />}
-      />
-      <Route
-        path="/shop/products/new"
-        element={<Navigate to="/shop/admin/products/new" replace />}
-      />
-
-      {/* Sales */}
-      <Route
-        path="/sales/orders"
-        element={
-          <RoleRoute roles={["sales"]}>
-            <SalesOrders />
-          </RoleRoute>
-        }
-      />
-
-      {/* Support */}
-      <Route
-        path="/support/tickets"
-        element={
-          <RoleRoute roles={["support"]}>
-            <Tickets />
-          </RoleRoute>
-        }
-      />
-
-      {/* Admin */}
-      <Route
-        path="/admin/system-config"
-        element={
-          <RoleRoute roles={["system_admin"]}>
-            <SystemConfig />
-          </RoleRoute>
-        }
-      />
-
       {/* 404 */}
-      <Route path="*" element={<NotFound />} />
+      <Route element={<CustomerLayout />}>
+        <Route path="*" element={<NotFound />} />
+      </Route>
     </Routes>
   );
 }

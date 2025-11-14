@@ -25,6 +25,8 @@ const shopRoutes = require("./routes/shopRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const productAdminRoutes = require("./routes/productAdminRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+const brandRoutes = require("./routes/brandRoutes");
 
 const FE_ORIGIN = process.env.FE_ORIGIN || "http://localhost:5173";
 
@@ -101,6 +103,8 @@ app.use(
 app.use("/api", homeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/brands", brandRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/banks", bankRoutes);

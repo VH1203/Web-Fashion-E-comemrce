@@ -1,17 +1,50 @@
-import React from "react";
-import {
-  BarChart2,
-  Activity,
-  TrendingDown,
-  DollarSign,
-  Menu,
-  X,
-  ShoppingCart,
-} from "lucide-react";
+import { BarChart2, Menu, X, ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import ImageIcon from "@mui/icons-material/Image";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import {
+  Box,
+  Paper,
+  Typography,
+  Avatar,
+  IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+} from "@mui/material";
+
+const menuItems = [
+  { id: "analytics", route: "/shop", name: "Analytics", icon: BarChart2 },
+  {
+    id: "manage_products",
+    route: "/shop/products",
+    name: "Manage Products",
+    icon: ShoppingCart,
+  },
+  {
+    id: "manage_vouchers",
+    route: "/shop/vouchers",
+    name: "Manage Voucher",
+    icon: LocalOfferIcon,
+  },
+  {
+    id: "manage_banners",
+    route: "/shop/banners",
+    name: "Manage Banner",
+    icon: ImageIcon,
+  },
+  {
+    id: "manage_flashsale",
+    route: "/shop/flashsales",
+    name: "Manage Flashsale",
+    icon: ImageIcon,
+  },
+];
 
 const Sidebar = ({
   activeMenu,
@@ -20,15 +53,7 @@ const Sidebar = ({
   setSidebarOpen,
 }) => {
   const { user } = useContext(AuthContext);
-
-  const menuItems = [
-    { id: "analytics", name: "Analytics", icon: BarChart2 },
-    { id: "manage_products", name: "Manage Products", icon: ShoppingCart },
-    { id: "manage_vouchers", name: "Manage Voucher", icon: LocalOfferIcon },
-    { id: "manage_banners", name: "Manage Banner", icon: ImageIcon },
-    // { id: "manage_orders", name: "Manage Orders", icon: Activity },
-    { id: "manage_flashsale", name: "Manage Flashsale", icon: ImageIcon },
-  ];
+  console.log("user", user);
 
   const userName = user?.name || user?.email || "User";
   const avatarUrl =
@@ -36,103 +61,132 @@ const Sidebar = ({
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
       userName
     )}&background=random`;
+
   return (
-    <div
-      className={`d-flex flex-column bg-white shadow ${
-        sidebarOpen ? "p-3" : "p-2"
-      }`}
-      style={{
-        width: sidebarOpen ? "16rem" : "5rem",
-        transition: "all 0.3s ease",
+    <Paper
+      elevation={4}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: sidebarOpen ? "18rem" : "5rem",
+        p: sidebarOpen ? 2 : 1,
+        transition: "width 0.3s ease, padding 0.3s ease",
+        height: "calc(100vh - 81px)",
       }}
     >
       {/* Header */}
-      <div className="d-flex align-items-center justify-content-between border-bottom pb-3 mb-3">
-        <div
-          className={`d-flex align-items-center ${
-            !sidebarOpen ? "justify-content-center w-100" : ""
-          }`}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          pb: 2,
+          mb: 2,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            ...(!sidebarOpen && { justifyContent: "center", width: "100%" }),
+          }}
         >
-          <div
-            className="d-flex align-items-center justify-content-center text-white fw-bold fs-4 rounded"
-            style={{
-              width: "40px",
-              height: "40px",
+          <Avatar
+            sx={{
+              bgcolor: "primary.main",
               background:
                 "linear-gradient(135deg, rgba(59,130,246,1) 0%, rgba(147,51,234,1) 100%)",
+              fontWeight: "bold",
             }}
           >
             {userName.charAt(0).toUpperCase()}
-          </div>
+          </Avatar>
           {sidebarOpen && (
-            <span className="ms-3 fw-bold fs-5 text-dark">Shop</span>
+            <Typography variant="h6" fontWeight="bold" sx={{ ml: 2 }}>
+              Cửa hàng của tôi
+            </Typography>
           )}
-        </div>
+        </Box>
 
         {sidebarOpen && (
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="btn btn-light btn-sm border-0"
-          >
+          <IconButton onClick={() => setSidebarOpen(!sidebarOpen)} size="small">
             <X size={20} />
-          </button>
+          </IconButton>
         )}
-      </div>
+      </Box>
 
       {/* User Info */}
-      <div className="mb-4">
-        <div className="d-flex align-items-center bg-light rounded px-2 py-2">
-          <img
-            src={avatarUrl}
-            alt="User"
-            className="rounded-circle"
-            style={{ width: "40px", height: "40px" }}
-          />
+      <Box sx={{ mb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            bgcolor: "action.hover",
+            borderRadius: 1,
+            p: 1,
+          }}
+        >
+          <Avatar src={avatarUrl} alt="User" />
           {sidebarOpen && (
-            <div className="ms-2">
-              <p className="mb-0 fw-semibold text-dark small">{userName}</p>
-              <p className="mb-0 text-muted small">
+            <Box sx={{ ml: 1.5 }}>
+              <Typography variant="subtitle2" fontWeight="bold">
+                {userName}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
                 {user?.role === "shop_owner"
-                  ? "Chu cua hang"
+                  ? "Chủ cửa hàng"
                   : "Hi, welcome back"}
-              </p>
-            </div>
+              </Typography>
+            </Box>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Menu */}
-      <nav className="flex-grow-1">
-        <div className="d-flex flex-column gap-2">
+      <Box component="nav" sx={{ flexGrow: 1 }}>
+        <List sx={{ p: 0 }}>
           {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveMenu(item.id)}
-              className={`btn d-flex align-items-center text-start ${
-                activeMenu === item.id
-                  ? "btn-primary text-white"
-                  : "btn-light text-secondary"
-              }`}
-            >
-              <item.icon size={20} />
-              {sidebarOpen && (
-                <span className="ms-3 fw-medium">{item.name}</span>
-              )}
-            </button>
+            <ListItem key={item.id} disablePadding>
+              <ListItemButton
+                component={Link}
+                to={item.route}
+                selected={activeMenu === item.id}
+                onClick={() => setActiveMenu(item.id)}
+                sx={{
+                  justifyContent: sidebarOpen ? "initial" : "center",
+                  px: 2,
+                  my: 0.5,
+                  borderRadius: 1,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: sidebarOpen ? 2 : "auto",
+                    justifyContent: "center",
+                    color: "inherit",
+                  }}
+                >
+                  <item.icon size={20} />
+                </ListItemIcon>
+                {sidebarOpen && <ListItemText primary={item.name} />}
+              </ListItemButton>
+            </ListItem>
           ))}
-        </div>
-      </nav>
+        </List>
+      </Box>
+
+      <Divider sx={{ my: 1 }} />
 
       {/* Toggle button when collapsed */}
-      {!sidebarOpen && (
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="btn btn-light mt-auto"
-        >
-          <Menu size={20} />
-        </button>
-      )}
-    </div>
+      <Box sx={{ textAlign: "center" }}>
+        <IconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
+          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </IconButton>
+      </Box>
+    </Paper>
   );
 };
 

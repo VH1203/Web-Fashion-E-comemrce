@@ -60,7 +60,9 @@ export default function ForgotPassword() {
       setLoading(true);
       await authService.resetPassword(form);
       setSeverity("success");
-      setMessage("🎉 Mật khẩu đã được đặt lại! Đang chuyển về trang đăng nhập…");
+      setMessage(
+        "🎉 Mật khẩu đã được đặt lại! Đang chuyển về trang đăng nhập…"
+      );
       navigate("/login", { replace: true });
       // hoặc: setTimeout(() => navigate("/login", { replace: true }), 1200);
     } catch (err) {
@@ -74,7 +76,6 @@ export default function ForgotPassword() {
   return (
     <Box
       sx={{
-        minHeight: "100dvh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -83,7 +84,10 @@ export default function ForgotPassword() {
           "radial-gradient(1000px 500px at 10% -10%, rgba(99,102,241,.08), transparent), radial-gradient(800px 400px at 100% 0, rgba(16,185,129,.08), transparent)",
       }}
     >
-      <Card elevation={8} sx={{ width: "100%", maxWidth: 480, borderRadius: 3 }}>
+      <Card
+        elevation={8}
+        sx={{ width: "100%", maxWidth: 480, borderRadius: 3 }}
+      >
         <CardContent sx={{ p: { xs: 4, sm: 6 } }}>
           {/* Header */}
           <Typography variant="h4" color="primary" sx={{ mb: 0.5 }}>

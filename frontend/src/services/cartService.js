@@ -3,10 +3,14 @@ import apiClient from "./apiClient";
 export const cartService = {
   get: async () => {
     const res = await apiClient.get("/cart");
-    return res.data.data;
+    return res.data;
   },
   add: async ({ product_id, variant_id, qty = 1 }) => {
-    const res = await apiClient.post("/cart/add", { product_id, variant_id, qty });
+    const res = await apiClient.post("/cart/add", {
+      product_id,
+      variant_id,
+      qty,
+    });
     return res.data.data;
   },
   updateItem: async (itemId, payload) => {

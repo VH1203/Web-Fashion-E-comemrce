@@ -39,7 +39,6 @@ async function createReview(userId, payload) {
     order_id,
     product_id,
     user_id: userId,
-    shop_id: order.shop_id,
     rating,
     comment,
     images,
@@ -70,20 +69,39 @@ async function createReview(userId, payload) {
   return review;
 }
 
-async function getReviewsByProduct(productId) {
-  const reviews = await Review.find({
+async function getReviewsByProduct(productId, page = 1, limit = 5, stars) {
+  const query = {
     product_id: productId,
     status: "visible",
-  })
-    .populate("user_id", "name avatar_url")
-    .sort({ created_at: -1 });
-  return reviews;
+  };
+
+  if (stars && Number(stars) >= 1 && Number(stars) <= 5) {
+    query.rating = Number(stars);
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [reviews, total] = await Promise.all([
+    Review.find(query)
+      .populate("user_id", "name avatar_url")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Review.countDocuments(query),
+  ]);
+
+  return {
+    items: reviews,
+    total,
+    page,
+    limit,
+  };
 }
 
 async function getMyReviews(userId) {
   const reviews = await Review.find({ user_id: userId })
     .populate("product_id", "name slug")
-    .sort({ created_at: -1 });
+    .sort({ createdAt: -1 });
   return reviews;
 }
 
@@ -102,7 +120,6 @@ async function getPendingReviews(userId) {
       order_id: order._id,
       product_id: it.product_id,
       product_name: it.name,
-      shop_id: order.shop_id,
       createdAt: order.createdAt,
     }))
   );
@@ -136,7 +153,6 @@ async function getPendingReviews(userId) {
   return pending.map((item) => ({
     order_id: item.order_id,
     product_id: item.product_id,
-    shop_id: item.shop_id,
     product_name: productMap[item.product_id]?.name || item.product_name,
     product_image: productMap[item.product_id]?.images?.[0] || null,
     price: productMap[item.product_id]?.base_price || null,

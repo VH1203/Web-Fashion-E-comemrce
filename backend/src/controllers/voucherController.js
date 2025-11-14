@@ -19,7 +19,7 @@ exports.getAllVouchers = async (req, res, next) => {
       .sort({ created_at: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
-console.log(vouchers);
+    console.log(vouchers);
     res.json({
       data: vouchers,
       pagination: {
@@ -38,10 +38,13 @@ console.log(vouchers);
 exports.getVoucherById = async (req, res, next) => {
   try {
     const voucher = await Voucher.findById(req.params.id);
-    if (!voucher) return res.status(404).json({ message: "Không tìm thấy voucher" });
+    if (!voucher)
+      return res.status(404).json({ message: "Không tìm thấy voucher" });
 
     if (voucher.created_by !== req.user._id) {
-      return res.status(403).json({ message: "Bạn không có quyền xem voucher này" });
+      return res
+        .status(403)
+        .json({ message: "Bạn không có quyền xem voucher này" });
     }
 
     res.json(voucher);
@@ -68,17 +71,32 @@ exports.createVoucher = async (req, res, next) => {
       valid_to,
     } = req.body;
 
-    if (!code || !discount_type || !discount_value || !max_uses || !valid_from || !valid_to) {
+    if (
+      !code ||
+      !discount_type ||
+      !discount_value ||
+      !max_uses ||
+      !valid_from ||
+      !valid_to
+    ) {
       return res.status(400).json({ message: "Thiếu thông tin bắt buộc" });
     }
 
     if (discount_type === "percent") {
-      if (typeof discount_value !== "number" || discount_value <= 0 || discount_value > 100) {
-        return res.status(400).json({ message: "Phần trăm giảm giá phải nằm trong khoảng 1-100" });
+      if (
+        typeof discount_value !== "number" ||
+        discount_value <= 0 ||
+        discount_value > 100
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Phần trăm giảm giá phải nằm trong khoảng 1-100" });
       }
     } else if (discount_type === "fixed") {
       if (typeof discount_value !== "number" || discount_value <= 0) {
-        return res.status(400).json({ message: "Giá trị giảm cố định phải là số dương" });
+        return res
+          .status(400)
+          .json({ message: "Giá trị giảm cố định phải là số dương" });
       }
     } else {
       return res.status(400).json({ message: "Loại giảm giá không hợp lệ" });
@@ -93,11 +111,15 @@ exports.createVoucher = async (req, res, next) => {
     }
 
     if (fromDate < now) {
-      return res.status(400).json({ message: "Ngày bắt đầu phải là hiện tại hoặc tương lai" });
+      return res
+        .status(400)
+        .json({ message: "Ngày bắt đầu phải là hiện tại hoặc tương lai" });
     }
 
     if (toDate <= fromDate) {
-      return res.status(400).json({ message: "Ngày kết thúc phải sau ngày bắt đầu" });
+      return res
+        .status(400)
+        .json({ message: "Ngày kết thúc phải sau ngày bắt đầu" });
     }
 
     const existingVoucher = await Voucher.findOne({ code });
@@ -113,7 +135,9 @@ exports.createVoucher = async (req, res, next) => {
       max_uses,
       usage_limit_per_user: usage_limit_per_user || 1,
       min_order_value: min_order_value || 0,
-      applicable_products: Array.isArray(applicable_products) ? applicable_products : [],
+      applicable_products: Array.isArray(applicable_products)
+        ? applicable_products
+        : [],
       applicable_users: Array.isArray(applicable_users) ? applicable_users : [],
       scope: scope || "shop",
       shop_id: scope === "shop" ? shop_id || req.user._id : null,
@@ -132,34 +156,115 @@ exports.createVoucher = async (req, res, next) => {
   }
 };
 
-// Cập nhật voucher (validate + quyền sở hữu)
+exports.applyVoucher = async (req, res, next) => {
+  try {
+    const { code, orderTotal } = req.body;
+
+    if (!code || orderTotal === undefined) {
+      return res
+        .status(400)
+        .json({ message: "Vui lòng cung cấp mã voucher và tổng đơn hàng." });
+    }
+
+    const voucher = await Voucher.findOne({ code });
+
+    if (!voucher) {
+      return res.status(404).json({ message: "Mã voucher không hợp lệ." });
+    }
+
+    const now = new Date();
+    if (
+      now < new Date(voucher.valid_from) ||
+      now > new Date(voucher.valid_to)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Voucher đã hết hạn hoặc chưa có hiệu lực." });
+    }
+
+    if (voucher.used_count >= voucher.max_uses) {
+      return res.status(400).json({ message: "Voucher đã hết lượt sử dụng." });
+    }
+
+    if (orderTotal < voucher.min_order_value) {
+      return res.status(400).json({
+        message: `Đơn hàng phải có giá trị tối thiểu là ${voucher.min_order_value} để áp dụng voucher này.`,
+      });
+    }
+
+    let discountAmount = 0;
+    if (voucher.discount_type === "fixed") {
+      discountAmount = voucher.discount_value;
+    } else if (voucher.discount_type === "percent") {
+      discountAmount = (orderTotal * voucher.discount_value) / 100;
+      if (
+        voucher.max_discount_value &&
+        discountAmount > voucher.max_discount_value
+      ) {
+        discountAmount = voucher.max_discount_value;
+      }
+    }
+
+    // Đảm bảo giảm giá không vượt quá tổng đơn hàng
+    discountAmount = Math.min(discountAmount, orderTotal);
+
+    res.json({
+      success: true,
+      message: "Áp dụng voucher thành công!",
+      discountAmount: Math.round(discountAmount),
+      voucherCode: voucher.code,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Sửa voucher
 exports.updateVoucher = async (req, res, next) => {
   try {
-    const { code, discount_percent, max_uses, valid_from, valid_to, conditions } = req.body;
+    const {
+      code,
+      discount_percent,
+      max_uses,
+      valid_from,
+      valid_to,
+      conditions,
+    } = req.body;
 
     const voucher = await Voucher.findById(req.params.id);
-    if (!voucher) return res.status(404).json({ message: "Không tìm thấy voucher" });
+    if (!voucher)
+      return res.status(404).json({ message: "Không tìm thấy voucher" });
 
     if (voucher.created_by !== req.user._id) {
-      return res.status(403).json({ message: "Bạn không có quyền sửa voucher này" });
+      return res
+        .status(403)
+        .json({ message: "Bạn không có quyền sửa voucher này" });
     }
 
     // Validate phần trăm giảm giá
     if (discount_percent && (discount_percent <= 0 || discount_percent > 100)) {
-      return res.status(400).json({ message: "Phần trăm giảm giá không hợp lệ" });
+      return res
+        .status(400)
+        .json({ message: "Phần trăm giảm giá không hợp lệ" });
     }
 
     // Validate ngày
     const now = new Date();
-    let fromDate = valid_from ? new Date(valid_from) : new Date(voucher.valid_from);
+    let fromDate = valid_from
+      ? new Date(valid_from)
+      : new Date(voucher.valid_from);
     let toDate = valid_to ? new Date(valid_to) : new Date(voucher.valid_to);
 
     if (valid_from && fromDate < now) {
-      return res.status(400).json({ message: "Ngày bắt đầu phải là hiện tại hoặc tương lai" });
+      return res
+        .status(400)
+        .json({ message: "Ngày bắt đầu phải là hiện tại hoặc tương lai" });
     }
 
     if (valid_to && toDate <= fromDate) {
-      return res.status(400).json({ message: "Ngày kết thúc phải sau ngày bắt đầu" });
+      return res
+        .status(400)
+        .json({ message: "Ngày kết thúc phải sau ngày bắt đầu" });
     }
 
     // Cập nhật dữ liệu
@@ -181,10 +286,13 @@ exports.updateVoucher = async (req, res, next) => {
 exports.deleteVoucher = async (req, res, next) => {
   try {
     const voucher = await Voucher.findById(req.params.id);
-    if (!voucher) return res.status(404).json({ message: "Không tìm thấy voucher" });
+    if (!voucher)
+      return res.status(404).json({ message: "Không tìm thấy voucher" });
 
     if (voucher.created_by !== req.user._id) {
-      return res.status(403).json({ message: "Bạn không có quyền xóa voucher này" });
+      return res
+        .status(403)
+        .json({ message: "Bạn không có quyền xóa voucher này" });
     }
 
     await voucher.deleteOne();

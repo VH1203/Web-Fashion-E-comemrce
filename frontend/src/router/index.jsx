@@ -19,6 +19,7 @@ import Checkout from "../pages/customer/Checkout";
 import PaymentReturn from "../pages/customer/PaymentReturn";
 import OrderDetail from "../pages/customer/OrderDetail";
 import Orders from "../pages/customer/Orders";
+import ManageOrders from "../pages/shop/ManageOrders";
 import ManageProducts from "../pages/shop/ManageProducts";
 import ShopOwnerLayout from "../components/layout/ShopOwner";
 import ReviewPages from "../pages/customer/ReviewsPage/ReviewsPage";
@@ -157,6 +158,7 @@ export default function AppRouter() {
       >
         <Route index element={<AnalyticsPage />} />
         <Route path="products" element={<ManageProducts />} />
+        <Route path="orders" element={<ManageOrders />} />
         <Route path="vouchers" element={<ManageVoucher />} />
         <Route path="banners" element={<ManageBanner />} />
         <Route path="flashsales" element={<ManageFlashsale />} />

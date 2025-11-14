@@ -7,7 +7,6 @@ const ReviewSchema = new mongoose.Schema(
     order_id: { type: String, ref: "Order", required: true },
     product_id: { type: String, ref: "Product", required: true },
     user_id: { type: String, ref: "User", required: true },
-    shop_id: { type: String, ref: "User" },
     rating: { type: Number, min: 1, max: 5, required: true },
     comment: { type: String, trim: true },
     images: [String],

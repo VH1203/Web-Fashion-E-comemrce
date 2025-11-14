@@ -447,7 +447,7 @@ export default function ProductDetail() {
   };
 
   const { mutate: addToCart, isPending: isAddingToCart } = useMutation({
-    mutationFn: (item) => addItemToCartMutation.mutateAsync(item),
+    mutationFn: addItemToCartMutation,
     onSuccess: () => {
       flyToCart();
       setToast({
@@ -470,9 +470,16 @@ export default function ProductDetail() {
   });
 
   const { mutate: buyNow, isPending: isBuyingNow } = useMutation({
-    mutationFn: (item) => addItemToCartMutation.mutateAsync(item),
-    onSuccess: () => {
-      navigate("/checkout");
+    mutationFn: addItemToCartMutation,
+    onSuccess: (data) => {
+      const newlyAddedItem = data.items?.find(
+        (item) => item.variant_id === (selectedVar._id || selectedVar.id)
+      );
+      navigate("/checkout", {
+        state: {
+          selected_item_ids: newlyAddedItem ? [newlyAddedItem._id] : [],
+        },
+      });
     },
     onError: (e) => {
       const msg =

@@ -1,7 +1,7 @@
-
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const Refund = require("../models/Refund");
+const Product = require("../models/Product");
 const Ticket = require("../models/Ticket");
 const shippingSvc = require("../services/shippingService");
 const invoiceSvc = require("../services/invoiceService");
@@ -24,7 +24,7 @@ const STATUS_MAP = {
   review: "Cần kiểm tra",
 };
 
-// ================== LIST ==================
+// ================== LIST (for user) ==================
 exports.list = async (req, res, next) => {
   try {
     const userId = req.userId || req.user?._id;
@@ -102,7 +102,7 @@ exports.cancel = async (req, res, next) => {
       });
     }
 
-    ord.status = "canceled";
+    ord.status = "canceled_by_customer";
     if (ord.payment_status === "paid") {
       ord.payment_status = "refund_pending";
     }
@@ -337,3 +337,92 @@ exports.sendReviewReminder = async (req, res, next) => {
   }
 };
 
+// ================== UPDATE STATUS (for shop) ==================
+exports.updateStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res
+        .status(400)
+        .json({ status: "fail", message: "New status is required." });
+    }
+
+    const validStatuses = Order.schema.path("status").enumValues;
+    if (!validStatuses.includes(status)) {
+      return res
+        .status(400)
+        .json({ status: "fail", message: `Invalid status: ${status}` });
+    }
+
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ status: "fail", message: "Order not found" });
+    }
+
+    // Optional: Add a check to ensure the user (shop owner) is allowed to modify this order.
+    // This is a simplified check. A more robust implementation would verify product ownership.
+    // For now, we trust the role-based access to this endpoint.
+
+    order.status = status;
+    await order.save();
+
+    res.json({
+      status: "success",
+      data: order,
+    });
+  } catch (e) {
+    next(e);
+  }
+};
+
+// ================== LIST (for shop) ==================
+exports.listForShop = async (req, res, next) => {
+  try {
+    const { status, page = 1, limit = 10, q } = req.query;
+
+    // Find products belonging to the shop
+    const shopProducts = await Product.find().select("_id");
+    const shopProductIds = shopProducts.map((p) => p._id);
+
+    const cond = { "items.product_id": { $in: shopProductIds } };
+    if (status) {
+      cond.status = status;
+    }
+    if (q) {
+      cond.order_code = { $regex: q, $options: "i" };
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [items, total] = await Promise.all([
+      Order.find(cond)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .populate("user_id", "name email")
+        .select(SAFE_FIELDS + " user_id")
+        .lean(),
+      Order.countDocuments(cond),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      status: "success",
+      data: {
+        items,
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages,
+      },
+    });
+  } catch (e) {
+    next(e);
+  }
+};

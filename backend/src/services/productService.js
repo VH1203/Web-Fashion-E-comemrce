@@ -184,7 +184,7 @@ async function getProductReviews(idOrSlug, page = 1, limit = 10) {
   const prod = await findProductByIdOrSlug(idOrSlug);
   if (!prod) return { total: 0, items: [] };
 
-  const query = { product_id: prod._id, status: "approved" };
+  const query = { product_id: prod._id, status: "visible" };
   const [total, items] = await Promise.all([
     Review.countDocuments(query),
     Review.find(query)

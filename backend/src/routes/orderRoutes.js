@@ -8,6 +8,7 @@ const { verifyToken } = require("../middlewares/authMiddleware");
 
 router.use(verifyToken);
 
+router.get("/shop", ctrl.listForShop);
 router.get("/", ctrl.list);
 
 // phan order cua shop
@@ -19,6 +20,7 @@ router.get(
 router.get("/:id", ctrl.detail);
 router.post("/:id/cancel", ctrl.cancel);
 router.post("/:id/reorder", ctrl.reorder);
+router.patch("/:id/status", ctrl.updateStatus);
 router.post("/:id/refund", ctrl.requestRefund);
 
 router.get("/:id/tracking", ctrl.tracking);

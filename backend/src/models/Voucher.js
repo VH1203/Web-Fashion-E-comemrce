@@ -9,8 +9,13 @@ const voucherSchema = new mongoose.Schema(
     code: { type: String, required: true, unique: true, trim: true },
 
     // Loại giảm giá & giá trị
-    discount_type: { type: String, enum: ["percent", "fixed"], default: "percent" },
+    discount_type: {
+      type: String,
+      enum: ["percent", "fixed"],
+      default: "percent",
+    },
     discount_value: { type: Number, required: true },
+    max_discount_value: { type: Number }, // Thêm giới hạn giảm giá tối đa cho loại percent
 
     // Giới hạn & đếm lượt
     max_uses: { type: Number, required: true },
@@ -48,7 +53,5 @@ voucherSchema.pre("save", function (next) {
   this.updated_at = new Date();
   next();
 });
-
-
 
 module.exports = mongoose.model("Voucher", voucherSchema);

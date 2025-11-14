@@ -32,4 +32,9 @@ export const voucherApi = {
     const res = await apiClient.delete(`/vouchers/${id}`);
     return res.data;
   },
+
+  applyVoucher: async (code, orderTotal) => {
+    const res = await apiClient.post("/vouchers/apply", { code, orderTotal });
+    return res.data;
+  },
 };

@@ -27,6 +27,12 @@ const menuItems = [
     icon: ShoppingCart,
   },
   {
+    id: "manage_orders",
+    route: "/shop/orders",
+    name: "Manage Orders",
+    icon: ShoppingCart,
+  },
+  {
     id: "manage_vouchers",
     route: "/shop/vouchers",
     name: "Manage Voucher",

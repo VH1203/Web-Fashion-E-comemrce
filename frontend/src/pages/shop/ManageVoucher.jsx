@@ -117,6 +117,7 @@ const ManageVoucher = () => {
       code: "",
       discount_type: "percent",
       discount_value: 0,
+      max_discount_value: 0,
       max_uses: 1,
       usage_limit_per_user: 1,
       min_order_value: 0,
@@ -140,6 +141,10 @@ const ManageVoucher = () => {
       const payload = {
         ...selectedVoucher,
         discount_value: Number(selectedVoucher.discount_value),
+        max_discount_value:
+          selectedVoucher.discount_type === "percent"
+            ? Number(selectedVoucher.max_discount_value)
+            : undefined,
         max_uses: Number(selectedVoucher.max_uses),
         usage_limit_per_user: Number(selectedVoucher.usage_limit_per_user),
         min_order_value: Number(selectedVoucher.min_order_value),
@@ -431,59 +436,65 @@ const ManageVoucher = () => {
                   })
                 }
               />
-              <FormControl fullWidth>
+              <FormControl fullWidth margin="dense">
                 <InputLabel>Discount Type</InputLabel>
                 <Select
+                  name="discount_type"
                   value={selectedVoucher.discount_type}
+                  onChange={handleChange}
                   label="Discount Type"
-                  onChange={(e) =>
-                    setSelectedVoucher({
-                      ...selectedVoucher,
-                      discount_type: e.target.value,
-                    })
-                  }
+                  disabled={mode === "detail"}
                 >
-                  <MenuItem value="percent">Percent</MenuItem>
-                  <MenuItem value="fixed">Fixed</MenuItem>
+                  <MenuItem value="percent">Percentage</MenuItem>
+                  <MenuItem value="fixed">Fixed Amount</MenuItem>
                 </Select>
               </FormControl>
               <TextField
+                margin="dense"
+                name="discount_value"
                 label="Discount Value"
                 type="number"
                 fullWidth
                 value={selectedVoucher.discount_value}
-                onChange={(e) =>
-                  setSelectedVoucher({
-                    ...selectedVoucher,
-                    discount_value: Number(e.target.value),
-                  })
-                }
+                onChange={handleChange}
+                disabled={mode === "detail"}
               />
+              {selectedVoucher.discount_type === "percent" && (
+                <TextField
+                  margin="dense"
+                  name="max_discount_value"
+                  label="Max Discount Value"
+                  type="number"
+                  fullWidth
+                  value={selectedVoucher.max_discount_value || ""}
+                  onChange={handleChange}
+                  disabled={mode === "detail"}
+                  helperText="Maximum discount amount for percentage-based vouchers. 0 for no limit."
+                />
+              )}
               <TextField
+                margin="dense"
+                name="max_uses"
                 label="Max Uses"
                 type="number"
                 fullWidth
                 value={selectedVoucher.max_uses}
-                onChange={(e) =>
-                  setSelectedVoucher({
-                    ...selectedVoucher,
-                    max_uses: Number(e.target.value),
-                  })
-                }
+                onChange={handleChange}
+                disabled={mode === "detail"}
               />
               <TextField
+                margin="dense"
+                name="usage_limit_per_user"
                 label="Usage Limit Per User"
                 type="number"
                 fullWidth
                 value={selectedVoucher.usage_limit_per_user}
-                onChange={(e) =>
-                  setSelectedVoucher({
-                    ...selectedVoucher,
-                    usage_limit_per_user: Number(e.target.value),
-                  })
-                }
+                onChange={handleChange}
+                disabled={mode === "detail"}
               />
               <TextField
+                margin="dense"
+                name="valid_from"
                 label="Valid From"
                 type="date"
                 InputLabelProps={{ shrink: true }}
@@ -495,8 +506,11 @@ const ManageVoucher = () => {
                     valid_from: e.target.value,
                   })
                 }
+                disabled={mode === "detail"}
               />
               <TextField
+                margin="dense"
+                name="valid_to"
                 label="Valid To"
                 type="date"
                 InputLabelProps={{ shrink: true }}
@@ -508,18 +522,17 @@ const ManageVoucher = () => {
                     valid_to: e.target.value,
                   })
                 }
+                disabled={mode === "detail"}
               />
               <TextField
+                margin="dense"
+                name="min_order_value"
                 label="Min Order Value"
                 type="number"
                 fullWidth
                 value={selectedVoucher.min_order_value}
-                onChange={(e) =>
-                  setSelectedVoucher({
-                    ...selectedVoucher,
-                    min_order_value: Number(e.target.value),
-                  })
-                }
+                onChange={handleChange}
+                disabled={mode === "detail"}
               />
               <TextField
                 label="Applicable Products (comma separated)"
@@ -534,6 +547,7 @@ const ManageVoucher = () => {
                       .filter(Boolean),
                   })
                 }
+                disabled={mode === "detail"}
               />
               <TextField
                 label="Applicable Users (comma separated)"
@@ -548,6 +562,7 @@ const ManageVoucher = () => {
                       .filter(Boolean),
                   })
                 }
+                disabled={mode === "detail"}
               />
               <FormControl fullWidth>
                 <InputLabel>Scope</InputLabel>
@@ -560,6 +575,7 @@ const ManageVoucher = () => {
                       scope: e.target.value,
                     })
                   }
+                  disabled={mode === "detail"}
                 >
                   <MenuItem value="shop">Shop</MenuItem>
                   <MenuItem value="global">Global</MenuItem>
@@ -576,6 +592,7 @@ const ManageVoucher = () => {
                       is_active: e.target.value,
                     })
                   }
+                  disabled={mode === "detail"}
                 >
                   <MenuItem value={true}>Yes</MenuItem>
                   <MenuItem value={false}>No</MenuItem>

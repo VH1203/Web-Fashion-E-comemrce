@@ -16,10 +16,14 @@ import {
   Box,
   Typography,
   Chip,
+  IconButton,
+  Avatar,
+  Stack,
 } from "@mui/material";
-import { Add, Delete } from "@mui/icons-material";
+import { Add, Delete, Close } from "@mui/icons-material";
 import { categoryService } from "../services/categoryService";
 import VariantFormModal from "./VariantFormModal";
+import ImageUploader from "./common/ImageUploader";
 
 const emptyProduct = {
   name: "",
@@ -99,6 +103,21 @@ const ProductFormModal = ({ open, onClose, product, onSave }) => {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }));
     }
+  };
+
+  const handleImagesUploaded = (uploadedImages) => {
+    const newImages = uploadedImages.map((img) => img.url);
+    setEditedProduct((prev) => ({
+      ...prev,
+      images: [...(prev.images || []), ...newImages],
+    }));
+  };
+
+  const handleRemoveImage = (index) => {
+    setEditedProduct((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
   };
 
   const validate = () => {
@@ -227,6 +246,40 @@ const ProductFormModal = ({ open, onClose, product, onSave }) => {
             onChange={(e) => handleChange("description", e.target.value)}
             sx={{ mb: 2 }}
           />
+
+          <Box sx={{ my: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Ảnh sản phẩm
+            </Typography>
+            <ImageUploader
+              folder="dfs/products"
+              onUploaded={handleImagesUploaded}
+            />
+            <Stack direction="row" spacing={1} sx={{ mt: 2 }} flexWrap="wrap">
+              {(editedProduct.images || []).map((image, index) => (
+                <Box key={index} sx={{ position: "relative" }}>
+                  <Avatar
+                    src={image}
+                    variant="rounded"
+                    sx={{ width: 80, height: 80 }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveImage(index)}
+                    sx={{
+                      position: "absolute",
+                      top: -5,
+                      right: -5,
+                      bgcolor: "rgba(255, 255, 255, 0.7)",
+                      "&:hover": { bgcolor: "rgba(255, 255, 255, 1)" },
+                    }}
+                  >
+                    <Close sx={{ fontSize: 14 }} />
+                  </IconButton>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
 
           {editedProduct.variants?.length === 0 && (
             <>

@@ -6,13 +6,19 @@ import {
   DialogTitle,
   Button,
   TextField,
+  Box,
+  Avatar,
+  IconButton,
 } from "@mui/material";
+import ImageUploader from "./common/ImageUploader";
+import { Close } from "@mui/icons-material";
 
 const emptyVariant = {
   sku: "",
   price: 0,
   stock: 0,
   variant_attributes: { color: "", size: "" },
+  images: [],
 };
 
 const VariantFormModal = ({ open, onClose, onSave, variant }) => {
@@ -42,6 +48,21 @@ const VariantFormModal = ({ open, onClose, onSave, variant }) => {
     if (errors[attr]) {
       setErrors((prev) => ({ ...prev, [attr]: null }));
     }
+  };
+
+  const handleImagesUploaded = (uploadedImages) => {
+    const newImageUrls = uploadedImages.map((img) => img.url);
+    setEditedVariant((prev) => ({
+      ...prev,
+      images: [...(prev.images || []), ...newImageUrls],
+    }));
+  };
+
+  const handleRemoveImage = (index) => {
+    setEditedVariant((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
   };
 
   const validate = () => {
@@ -147,6 +168,36 @@ const VariantFormModal = ({ open, onClose, onSave, variant }) => {
           helperText={errors.stock}
           InputProps={{ inputProps: { min: 0, step: 1 } }}
         />
+        <Box mt={2}>
+          <ImageUploader
+            folder="dfs/products"
+            onUploaded={handleImagesUploaded}
+          />
+          <Box display="flex" flexWrap="wrap" gap={1} mt={2}>
+            {(editedVariant.images || []).map((imageUrl, index) => (
+              <Box key={index} position="relative">
+                <Avatar
+                  src={imageUrl}
+                  alt={`variant-img-${index}`}
+                  variant="rounded"
+                  sx={{ width: 80, height: 80 }}
+                />
+                <IconButton
+                  size="small"
+                  onClick={() => handleRemoveImage(index)}
+                  sx={{
+                    position: "absolute",
+                    top: -10,
+                    right: -10,
+                    bgcolor: "rgba(255,255,255,0.7)",
+                  }}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              </Box>
+            ))}
+          </Box>
+        </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Hủy</Button>

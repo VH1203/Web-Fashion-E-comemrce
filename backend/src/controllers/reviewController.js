@@ -23,7 +23,13 @@ exports.createReviewController = async (req, res) => {
 exports.getReviewsByProductController = async (req, res) => {
   try {
     const { product_id } = req.params;
-    const data = await reviewService.getReviewsByProduct(product_id);
+    const { page = 1, limit = 5, stars } = req.query;
+    const data = await reviewService.getReviewsByProduct(
+      product_id,
+      page,
+      limit,
+      stars
+    );
 
     res.status(200).json({
       success: true,

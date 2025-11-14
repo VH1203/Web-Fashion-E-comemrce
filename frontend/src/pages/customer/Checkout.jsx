@@ -28,6 +28,7 @@ import { addressService } from "../../services/addressService";
 import { checkoutService } from "../../services/checkoutService";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { useToast } from "../../components/common/ToastProvider";
+import { voucherApi } from "../../services/voucherService";
 
 import AddressDialog from "../../components/AddressDialog";
 import AddressDialogPicker from "../../components/AddressDialogPicker";
@@ -98,7 +99,8 @@ export default function Checkout() {
   const [openAddrForm, setOpenAddrForm] = useState(false);
   const [editAddr, setEditAddr] = useState(null);
   const [shipper, setShipper] = useState("GHN");
-  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherInput, setVoucherInput] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [note, setNote] = useState("");
   const [method, setMethod] = useState("COD");
 
@@ -125,14 +127,19 @@ export default function Checkout() {
   } = useQuery({
     queryKey: [
       "checkout-preview",
-      { selectedIds, addressId, shipper, voucherCode },
+      {
+        selectedIds,
+        addressId,
+        shipper,
+        voucherCode: appliedVoucher?.voucherCode,
+      },
     ],
     queryFn: () =>
       checkoutService.preview({
         selected_item_ids: selectedIds,
         address_id: addressId,
         shipping_provider: shipper,
-        voucher_code: voucherCode || undefined,
+        voucher_code: appliedVoucher?.voucherCode || undefined,
       }),
     enabled: false, // Initially disabled, will be triggered manually
     keepPreviousData: true,
@@ -147,7 +154,22 @@ export default function Checkout() {
     if (addressId && selectedIds.length > 0) {
       runPreview();
     }
-  }, [addressId, shipper, voucherCode, runPreview, selectedIds]);
+  }, [addressId, shipper, appliedVoucher, runPreview, selectedIds]);
+
+  const applyVoucherMutation = useMutation({
+    mutationFn: ({ code, orderTotal }) =>
+      voucherApi.applyVoucher(code, orderTotal),
+    onSuccess: (data) => {
+      setAppliedVoucher(data);
+      toast.success(data.message || "Áp dụng voucher thành công!");
+    },
+    onError: (error) => {
+      setAppliedVoucher(null);
+      const message =
+        error.response?.data?.message || "Áp dụng voucher thất bại";
+      toast.error(message);
+    },
+  });
 
   // ===== Mutations =====
   const { mutate: placeOrder, isLoading: loadingPay } = useMutation({
@@ -210,7 +232,7 @@ export default function Checkout() {
       address_id: addressId,
       note,
       shipping_provider: shipper,
-      voucher_code: voucherCode || undefined,
+      voucher_code: appliedVoucher?.voucherCode || undefined,
       payment_method: method,
       return_urls: {
         success: `${window.location.origin}/payment/return?status=success`,
@@ -218,6 +240,25 @@ export default function Checkout() {
         momo: `${window.location.origin}/payment/return?momo=1`,
       },
     });
+  };
+
+  const handleApplyVoucher = () => {
+    if (!voucherInput.trim()) {
+      return toast.error("Vui lòng nhập mã voucher.");
+    }
+    if (!preview?.subtotal) {
+      return toast.error("Không thể áp dụng voucher khi chưa có tạm tính.");
+    }
+    applyVoucherMutation.mutate({
+      code: voucherInput,
+      orderTotal: preview.subtotal,
+    });
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null);
+    setVoucherInput("");
+    toast.info("Đã gỡ voucher.");
   };
 
   const payBtnText =
@@ -488,25 +529,40 @@ export default function Checkout() {
                   <TextField
                     size="small"
                     placeholder="Nhập mã voucher"
-                    value={voucherCode}
-                    onChange={(e) => setVoucherCode(e.target.value)}
+                    value={voucherInput}
+                    onChange={(e) => setVoucherInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") runPreview();
+                      if (e.key === "Enter") handleApplyVoucher();
                     }}
                     sx={{ flex: 1 }}
+                    disabled={!!appliedVoucher}
                   />
                   <Button
                     variant="outlined"
-                    onClick={() => runPreview()}
-                    disabled={loadingPreview}
+                    onClick={handleApplyVoucher}
+                    disabled={
+                      loadingPreview ||
+                      applyVoucherMutation.isLoading ||
+                      !!appliedVoucher
+                    }
                   >
-                    Áp dụng
+                    {applyVoucherMutation.isLoading ? "Đang..." : "Áp dụng"}
                   </Button>
                 </Stack>
-                <Typography variant="body2" color="text.secondary" mt={1}>
-                  Giảm:{" "}
-                  {preview ? `${formatCurrency(preview.discount)} VND` : "—"}
-                </Typography>
+                {appliedVoucher ? (
+                  <Chip
+                    label={`Đang áp dụng: ${appliedVoucher.voucherCode}`}
+                    size="small"
+                    onDelete={handleRemoveVoucher}
+                    color="success"
+                    sx={{ mt: 1, alignSelf: "flex-start" }}
+                  />
+                ) : (
+                  <Typography variant="body2" color="text.secondary" mt={1}>
+                    Giảm:{" "}
+                    {preview ? `${formatCurrency(preview.discount)} VND` : "—"}
+                  </Typography>
+                )}
               </Stack>
 
               {/* Note */}

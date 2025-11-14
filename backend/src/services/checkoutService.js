@@ -27,21 +27,57 @@ async function applyVoucher(voucherCode, userId, subtotal) {
   if (!voucherCode) return { voucher: null, discount: 0 };
   const v = await Voucher.findOne({ code: voucherCode, is_active: true });
   if (!v) return { voucher: null, discount: 0 };
-  const discount = Math.min(
-    v.type === "percent" ? Math.round((subtotal * v.value) / 100) : v.value,
-    v.max_discount || Infinity
-  );
-  return { voucher: v, discount: Math.max(0, discount) };
+
+  // Basic validation checks from your voucherController
+  const now = new Date();
+  if (now < new Date(v.valid_from) || now > new Date(v.valid_to)) {
+    console.warn(`Voucher ${v.code} is not valid at this time.`);
+    return { voucher: null, discount: 0 };
+  }
+  if (v.used_count >= v.max_uses) {
+    console.warn(`Voucher ${v.code} has reached its usage limit.`);
+    return { voucher: null, discount: 0 };
+  }
+  if (subtotal < v.min_order_value) {
+    console.warn(
+      `Order subtotal ${subtotal} is less than voucher's min_order_value ${v.min_order_value}.`
+    );
+    return { voucher: null, discount: 0 };
+  }
+
+  let discount = 0;
+  if (v.discount_type === "fixed") {
+    discount = v.discount_value;
+  } else if (v.discount_type === "percent") {
+    discount = (subtotal * v.discount_value) / 100;
+    if (v.max_discount_value && discount > v.max_discount_value) {
+      discount = v.max_discount_value;
+    }
+  }
+
+  // Ensure discount does not exceed subtotal
+  discount = Math.min(discount, subtotal);
+
+  return { voucher: v, discount: Math.max(0, Math.round(discount)) };
 }
 
-exports.preview = async ({ userId, selected_item_ids, address, address_id, ship_provider, voucher_code }) => {
+exports.preview = async ({
+  userId,
+  selected_item_ids,
+  address,
+  address_id,
+  ship_provider,
+  voucher_code,
+}) => {
   if (!userId) throw Object.assign(new Error("Unauthorized"), { status: 401 });
 
   const cart = await Cart.findOne({ user_id: userId }).lean();
-  if (!cart || !cart.items?.length) throw Object.assign(new Error("Giỏ hàng trống"), { status: 400 });
+  if (!cart || !cart.items?.length)
+    throw Object.assign(new Error("Giỏ hàng trống"), { status: 400 });
 
   const items = toOrderItems(cart.items, selected_item_ids);
-  if (!items.length) throw Object.assign(new Error("Chưa chọn sản phẩm"), { status: 400 });
+  if (!items.length)
+    throw Object.assign(new Error("Chưa chọn sản phẩm"), { status: 400 });
 
   const subtotal = items.reduce((s, it) => s + it.total, 0);
   const shipping_fee = await shippingSvc.calculate(
@@ -51,7 +87,11 @@ exports.preview = async ({ userId, selected_item_ids, address, address_id, ship_
     items
   );
 
-  const { voucher, discount } = await applyVoucher(voucher_code, userId, subtotal);
+  const { voucher, discount } = await applyVoucher(
+    voucher_code,
+    userId,
+    subtotal
+  );
   const total = Math.max(0, subtotal + shipping_fee - discount);
 
   return {
@@ -68,9 +108,15 @@ exports.preview = async ({ userId, selected_item_ids, address, address_id, ship_
 
 // VNPay env guard
 function ensureVNPayEnv() {
-  const ok = !!(process.env.VNPAY_TMN_CODE && process.env.VNPAY_HASH_SECRET && (process.env.VNPAY_URL || process.env.VNPAY_PAY_URL));
+  const ok = !!(
+    process.env.VNPAY_TMN_CODE &&
+    process.env.VNPAY_HASH_SECRET &&
+    (process.env.VNPAY_URL || process.env.VNPAY_PAY_URL)
+  );
   if (!ok) {
-    const err = new Error("Thiếu cấu hình VNPay (VNPAY_TMN_CODE, VNPAY_HASH_SECRET, VNPAY_URL).");
+    const err = new Error(
+      "Thiếu cấu hình VNPay (VNPAY_TMN_CODE, VNPAY_HASH_SECRET, VNPAY_URL)."
+    );
     err.status = 400;
     throw err;
   }
@@ -89,7 +135,8 @@ exports.confirm = async ({
   return_urls,
 }) => {
   if (!userId) throw Object.assign(new Error("Unauthorized"), { status: 401 });
-  if (!address_id) throw Object.assign(new Error("Thiếu địa chỉ nhận hàng"), { status: 400 });
+  if (!address_id)
+    throw Object.assign(new Error("Thiếu địa chỉ nhận hàng"), { status: 400 });
 
   const pv = await exports.preview({
     userId,
@@ -99,7 +146,10 @@ exports.confirm = async ({
     voucher_code,
   });
 
-  const orderCode = `ORD${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${uuidv4().slice(0, 6).toUpperCase()}`;
+  const orderCode = `ORD${new Date()
+    .toISOString()
+    .slice(2, 10)
+    .replace(/-/g, "")}-${uuidv4().slice(0, 6).toUpperCase()}`;
 
   const order = await Order.create({
     order_code: orderCode,
@@ -135,9 +185,16 @@ exports.confirm = async ({
 
     if (payment_method === "VNPAY") {
       ensureVNPayEnv();
-      const feNext = return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`;
-      const returnUrl = `${process.env.API_URL}/api/payment/vnpay/return?next=${encodeURIComponent(feNext)}`;
-      const bankCode = String(payment_extra?.vnpay_mode || "").toUpperCase() === "CARD" ? "VNBANK" : undefined; // QR mặc định
+      const feNext =
+        return_urls?.vnpay ||
+        `${process.env.FRONTEND_URL}/payment/return?vnpay=1`;
+      const returnUrl = `${
+        process.env.API_URL
+      }/api/payment/vnpay/return?next=${encodeURIComponent(feNext)}`;
+      const bankCode =
+        String(payment_extra?.vnpay_mode || "").toUpperCase() === "CARD"
+          ? "VNBANK"
+          : undefined; // QR mặc định
       redirectUrl = paymentGw.buildVNPayUrl({
         amount: pv.total,
         orderId: order.order_code, // vnp_TxnRef
@@ -147,8 +204,12 @@ exports.confirm = async ({
       });
     } else if (payment_method === "CARD" || payment_method === "BANK") {
       ensureVNPayEnv();
-      const feNext = return_urls?.vnpay || `${process.env.FRONTEND_URL}/payment/return?vnpay=1`;
-      const returnUrl = `${process.env.API_URL}/api/payment/vnpay/return?next=${encodeURIComponent(feNext)}`;
+      const feNext =
+        return_urls?.vnpay ||
+        `${process.env.FRONTEND_URL}/payment/return?vnpay=1`;
+      const returnUrl = `${
+        process.env.API_URL
+      }/api/payment/vnpay/return?next=${encodeURIComponent(feNext)}`;
       redirectUrl = paymentGw.buildVNPayUrl({
         amount: pv.total,
         orderId: order.order_code,
@@ -157,7 +218,9 @@ exports.confirm = async ({
         bankCode: "VNBANK",
       });
     } else if (payment_method === "MOMO") {
-      const feNext = return_urls?.momo || `${process.env.FRONTEND_URL}/payment/return?momo=1`;
+      const feNext =
+        return_urls?.momo ||
+        `${process.env.FRONTEND_URL}/payment/return?momo=1`;
       const momo = await paymentGw.createMoMoPayment({
         amount: pv.total,
         orderId: order.order_code,
@@ -171,13 +234,17 @@ exports.confirm = async ({
       err.status = 400;
       throw err;
     } else {
-      const err = new Error(`Phương thức thanh toán không hỗ trợ: ${payment_method}`);
+      const err = new Error(
+        `Phương thức thanh toán không hỗ trợ: ${payment_method}`
+      );
       err.status = 400;
       throw err;
     }
 
     if (!redirectUrl) {
-      const err = new Error("Không tạo được link thanh toán (redirectUrl trống).");
+      const err = new Error(
+        "Không tạo được link thanh toán (redirectUrl trống)."
+      );
       err.status = 502;
       throw err;
     }
@@ -186,7 +253,12 @@ exports.confirm = async ({
       order_id: order._id,
       user_id: userId,
       shop_id: order.shop_id,
-      gateway: payment_method === "MOMO" ? "MOMO" : (payment_method === "VNPAY" || payment_method === "CARD") ? "VNPAY" : "BANK",
+      gateway:
+        payment_method === "MOMO"
+          ? "MOMO"
+          : payment_method === "VNPAY" || payment_method === "CARD"
+          ? "VNPAY"
+          : "BANK",
       method: payment_method === "WALLET" ? "wallet" : "bank_transfer",
       amount: pv.total,
       currency: "VND",
@@ -198,10 +270,20 @@ exports.confirm = async ({
       gateway_txn_id: null,
     });
 
-    return { order_id: order._id, order_code: order.order_code, pay_url: redirectUrl };
+    return {
+      order_id: order._id,
+      order_code: order.order_code,
+      pay_url: redirectUrl,
+    };
   } catch (err) {
     console.error("PAYMENT_CREATE_OR_URL_ERROR:", err);
     const status = Number.isInteger(err.status) ? err.status : 500;
-    throw Object.assign(new Error(err.message || "Không tạo được link thanh toán. Vui lòng thử lại hoặc chọn COD."), { status });
+    throw Object.assign(
+      new Error(
+        err.message ||
+          "Không tạo được link thanh toán. Vui lòng thử lại hoặc chọn COD."
+      ),
+      { status }
+    );
   }
 };

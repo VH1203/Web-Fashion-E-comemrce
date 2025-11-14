@@ -13,7 +13,6 @@ const OrderSchema = new mongoose.Schema(
     _id: { type: String, default: () => `ord-${uuidv4()}` },
     order_code: { type: String, required: true, unique: true },
     user_id: { type: String, ref: "User", required: true },
-    shop_id: { type: String, ref: "User", required: true },
 
     items: [OrderItemSchema],
 

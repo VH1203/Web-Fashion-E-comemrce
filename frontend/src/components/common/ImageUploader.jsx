@@ -1,9 +1,21 @@
-import React, { useRef, useState } from 'react';
-import { uploadApi } from '../../services/uploadService';
-import { useAuth } from '../../hooks/useAuth'; // nếu anh có hook này
+import React, { useRef, useState } from "react";
+import { uploadApi } from "../../services/uploadService";
+import { useAuth } from "../../context/AuthContext";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  Paper,
+} from "@mui/material";
+import { Close } from "@mui/icons-material";
 // props: folder ('dfs/products','dfs/banners','dfs/users/avatars'), onUploaded(list)
 
-export default function ImageUploader({ folder = 'dfs/misc', multiple = true, onUploaded }) {
+export default function ImageUploader({
+  folder = "dfs/misc",
+  multiple = true,
+  onUploaded,
+}) {
   const inputRef = useRef(null);
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
@@ -15,7 +27,7 @@ export default function ImageUploader({ folder = 'dfs/misc', multiple = true, on
   const onChange = (e) => {
     const fls = [...e.target.files];
     setFiles(fls);
-    setPreviews(fls.map(f => URL.createObjectURL(f)));
+    setPreviews(fls.map((f) => URL.createObjectURL(f)));
   };
 
   const onUpload = async () => {
@@ -26,22 +38,57 @@ export default function ImageUploader({ folder = 'dfs/misc', multiple = true, on
         ? await uploadApi.uploadMany(files, folder, token)
         : [await uploadApi.uploadSingle(files[0], folder, token)];
       onUploaded?.(data); // [{url, public_id}, ...]
-    } catch (e) { alert(e.message); }
-    finally { setLoading(false); }
+      setFiles([]);
+      setPreviews([]);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div style={{ border: '1px dashed #cbd5e1', padding: 16, borderRadius: 8 }}>
-      <input ref={inputRef} type="file" accept="image/*" multiple={multiple} hidden onChange={onChange}/>
-      <button type="button" onClick={onPick}>Chọn ảnh</button>
-      <button type="button" onClick={onUpload} disabled={!files.length || loading} style={{ marginLeft: 8 }}>
-        {loading ? 'Đang upload...' : 'Tải lên'}
-      </button>
-      <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
+    <Paper
+      variant="outlined"
+      sx={{ p: 2, borderStyle: "dashed", borderColor: "grey.400" }}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple={multiple}
+        hidden
+        onChange={onChange}
+      />
+      <Button variant="outlined" onClick={onPick}>
+        Chọn ảnh
+      </Button>
+      <Button
+        variant="contained"
+        onClick={onUpload}
+        disabled={!files.length || loading}
+        sx={{ ml: 1 }}
+        startIcon={loading && <CircularProgress size={20} color="inherit" />}
+      >
+        Tải lên
+      </Button>
+      <Box sx={{ display: "flex", gap: 1.5, mt: 1.5, flexWrap: "wrap" }}>
         {previews.map((src, i) => (
-          <img key={i} src={src} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e7eb' }}/>
+          <Box key={i} sx={{ position: "relative" }}>
+            <img
+              src={src}
+              alt=""
+              style={{
+                width: 120,
+                height: 120,
+                objectFit: "cover",
+                borderRadius: 8,
+                border: "1px solid #e5e7eb",
+              }}
+            />
+          </Box>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Paper>
   );
 }

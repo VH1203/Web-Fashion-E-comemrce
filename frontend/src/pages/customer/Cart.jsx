@@ -39,6 +39,8 @@ import { cartService } from "../../services/cartService";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { useCart } from "../../context/CartContext";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { voucherApi } from "../../services/voucherService";
+import { Snackbar } from "@mui/material";
 
 /* ===== Variant helpers ===== */
 const norm = (s) =>
@@ -127,6 +129,32 @@ export default function CartCard() {
   const theme = useTheme();
   const { cart: data, loading, error: err, fetchCart } = useCart();
   const queryClient = useQueryClient();
+
+  const [voucherCode, setVoucherCode] = useState("");
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [toast, setToast] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  const applyVoucherMutation = useMutation({
+    mutationFn: ({ code, total }) => voucherApi.applyVoucher(code, total),
+    onSuccess: (data) => {
+      setAppliedVoucher(data);
+      setToast({
+        open: true,
+        message: "Áp dụng voucher thành công!",
+        severity: "success",
+      });
+    },
+    onError: (error) => {
+      setAppliedVoucher(null);
+      const message =
+        error.response?.data?.message || "Áp dụng voucher thất bại";
+      setToast({ open: true, message, severity: "error" });
+    },
+  });
 
   const updateItemMutation = useMutation({
     mutationFn: ({ itemId, payload }) =>
@@ -318,7 +346,29 @@ export default function CartCard() {
     return { total, count };
   }, [items, checked, pickState]);
 
+  const finalTotal = useMemo(() => {
+    if (appliedVoucher) {
+      return Math.max(0, selectedSummary.total - appliedVoucher.discountAmount);
+    }
+    return selectedSummary.total;
+  }, [selectedSummary.total, appliedVoucher]);
+
   const canCheckout = selectedSummary.count > 0;
+
+  const handleApplyVoucher = () => {
+    if (!voucherCode.trim()) {
+      setToast({
+        open: true,
+        message: "Vui lòng nhập mã voucher",
+        severity: "warning",
+      });
+      return;
+    }
+    applyVoucherMutation.mutate({
+      code: voucherCode,
+      total: selectedSummary.total,
+    });
+  };
 
   if (loading) {
     return (
@@ -811,6 +861,8 @@ export default function CartCard() {
                                 size="small"
                                 placeholder="Nhập mã voucher"
                                 inputProps={{ maxLength: 32 }}
+                                value={voucherCode}
+                                onChange={(e) => setVoucherCode(e.target.value)}
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     borderRadius: "12px",
@@ -821,10 +873,40 @@ export default function CartCard() {
                                 variant="contained"
                                 color="primary"
                                 sx={{ borderRadius: "12px" }}
+                                onClick={handleApplyVoucher}
+                                disabled={applyVoucherMutation.isPending}
                               >
-                                ÁP DỤNG
+                                {applyVoucherMutation.isPending
+                                  ? "Đang áp dụng..."
+                                  : "ÁP DỤNG"}
                               </Button>
                             </Stack>
+                            {appliedVoucher && (
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                sx={{ color: "success.main" }}
+                              >
+                                <Typography variant="body2">
+                                  Giảm giá (
+                                  <Chip
+                                    label={appliedVoucher.voucherCode}
+                                    size="small"
+                                    onDelete={() => {
+                                      setAppliedVoucher(null);
+                                      setVoucherCode("");
+                                    }}
+                                  />
+                                  )
+                                </Typography>
+                                <Typography fontWeight={600}>
+                                  -{" "}
+                                  {formatCurrency(
+                                    appliedVoucher.discountAmount
+                                  )}
+                                </Typography>
+                              </Stack>
+                            )}
                             <Stack
                               direction="row"
                               justifyContent="space-between"
@@ -856,7 +938,7 @@ export default function CartCard() {
                               Tổng thanh toán
                             </Typography>
                             <Typography fontWeight={900} fontSize={18}>
-                              {formatCurrency(selectedSummary.total)} {currency}
+                              {formatCurrency(finalTotal)} {currency}
                             </Typography>
                           </Stack>
                           <Typography variant="caption" color="text.secondary">
@@ -998,6 +1080,20 @@ export default function CartCard() {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4000}
+        onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+          severity={toast.severity}
+          sx={{ width: "100%" }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

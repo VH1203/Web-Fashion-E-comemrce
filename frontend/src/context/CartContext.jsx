@@ -23,7 +23,7 @@ export const CartProvider = ({ children }) => {
   });
 
   const { mutateAsync: addItemToCart } = useMutation({
-    mutationFn: (item) => cartService.addItem(item),
+    mutationFn: (item) => cartService.add(item),
     onSuccess: (data) => {
       queryClient.setQueryData(["cart"], (oldData) => {
         if (!oldData) return { data };

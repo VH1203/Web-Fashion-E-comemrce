@@ -28,9 +28,9 @@ export const productService = {
     });
     return res.data.data;
   },
-  async getReviews(idOrSlug, page = 1, limit = 10) {
-    const res = await apiClient.get(`/products/${idOrSlug}/reviews`, {
-      params: withNoCache({ page, limit }),
+  async getReviews(idOrSlug, page = 1, limit = 10, stars) {
+    const res = await apiClient.get(`/reviews/product/${idOrSlug}`, {
+      params: withNoCache({ page, limit, stars }),
     });
     return res.data.data;
   },

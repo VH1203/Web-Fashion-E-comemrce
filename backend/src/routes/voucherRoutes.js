@@ -7,6 +7,7 @@ const voucherCtrl = require("../controllers/voucherController");
 router.get("/", verifyToken, voucherCtrl.getAllVouchers);
 router.get("/:id", verifyToken, voucherCtrl.getVoucherById);
 router.post("/", verifyToken, voucherCtrl.createVoucher);
+router.post("/apply", verifyToken, voucherCtrl.applyVoucher);
 router.put("/:id", verifyToken, voucherCtrl.updateVoucher);
 router.delete("/:id", verifyToken, voucherCtrl.deleteVoucher);
 

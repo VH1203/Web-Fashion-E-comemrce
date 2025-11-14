@@ -75,7 +75,7 @@ const MyReviewsTab = () => {
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Ngày:{" "}
-                    {new Date(review.created_at).toLocaleDateString("vi-VN")}
+                    {new Date(review.createdAt).toLocaleDateString("vi-VN")}
                   </Typography>
                 </Box>
               </Stack>

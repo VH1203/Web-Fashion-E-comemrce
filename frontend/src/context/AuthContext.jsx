@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 // ✅ Dùng 1 key duy nhất, thống nhất với apiClient
 export const TOKEN_KEY = "DFS_TOKEN";
@@ -131,7 +131,7 @@ export const AuthProvider = ({ children }) => {
     if (role === "sales")        return navigate("/sales/orders", { replace: true });
     if (role === "support")      return navigate("/support/tickets", { replace: true });
     if (role === "shop_owner" || perms.includes("shop:access"))
-      return navigate("/shop", { replace: true });
+      return navigate("/shop/dashboard", { replace: true });
     return navigate("/", { replace: true });
   };
 
@@ -157,4 +157,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
-

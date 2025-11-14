@@ -1,43 +1,7 @@
 /* global css */ 
-:root { --font-body: "Tinos", serif; }
-
-html, body, #root {
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Bảo đảm tất cả control thừa kế font */
-*, *::before, *::after { font-family: inherit; }
-
-/* (Tuỳ chọn) số trong giá hiển thị đẹp, đều chiều rộng */
-.price-cur, .pd-price .cur, .pd-price .base {
-  font-variant-numeric: lining-nums tabular-nums;
-}
-.tinos-regular {
-  font-family: "Tinos", serif;
-  font-weight: 400;
-  font-style: normal;
-}
-.tinos-bold {
-  font-family: "Tinos", serif;
-  font-weight: 700;
-  font-style: normal;
-}
-.tinos-regular-italic {
-  font-family: "Tinos", serif;
-  font-weight: 400;
-  font-style: italic;
-}
-.tinos-bold-italic {
-  font-family: "Tinos", serif;
-  font-weight: 700;
-  font-style: italic;
-}
-
-/* body {
+body {
   font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
-} */
+}
 :root{
   --radius-xl: 18px;
   --radius-2xl: 22px;

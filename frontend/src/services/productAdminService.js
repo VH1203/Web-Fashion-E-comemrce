@@ -21,9 +21,10 @@ export const productAdminService = {
     createCategory: (d) => apiClient.post("/shop/admin/categories", d).then(r => r.data.data),
     updateCategory: (id, d) => apiClient.put(`/shop/admin/categories/${id}`, d).then(r => r.data.data),
     deleteCategory: (id) => apiClient.delete(`/shop/admin/categories/${id}`).then(r => r.data.data),
-    categoryTree: () => apiClient.get("/shop/admin/categories/tree").then(r => r.data.data),
-    createVariantsBulk: (pid, rows) => apiClient.post(`/shop/admin/products/${pid}/variants/bulk`, { rows }).then(r => r.data.data),
-
+    categoryTree: (depth = 3) =>
+        apiClient.get("/shop/admin/categories/tree", { params: { depth } }).then(r => r.data.data),
+    createVariantsBulk: (pid, rows) =>
+        apiClient.post(`/shop/admin/products/${pid}/variants/bulk`, { rows }).then(r => r.data.data),
 
     // media
     uploadImages: async (files) => {
@@ -45,5 +46,6 @@ export const productAdminService = {
         return res.data.data;
     },
 
-    lowStock: (threshold = 5) => apiClient.get("/shop/admin/inventory/low-stock", { params: { threshold } }).then(r => r.data.data),
+    lowStock: (threshold = 5) =>
+        apiClient.get("/shop/admin/inventory/low-stock", { params: { threshold } }).then(r => r.data.data),
 };

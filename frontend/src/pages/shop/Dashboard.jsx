@@ -1,103 +1,119 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Box, Stack, Button, Grid, Paper, Typography } from "@mui/material";
-import Download from "@mui/icons-material/Download";
-import DashboardCards from "../../components/DashboardCards";
-import RevenueLineChart from "../../components/charts/RevenueLineChart";
-import OrderStatusPie from "../../components/charts/OrderStatusPie";
-import TopProductsTable from "../../components/TopProductsTable";
-import TopCustomersTable from "../../components/TopCustomersTable";
-import { dashboardService } from "../../services/dashboardService";
-import useSocket from "../../hooks/useSocket";
-import { useAuth } from "../../context/AuthContext";
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob); const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
-}
+import React, { useEffect, useState } from "react";
+import { analyticsService } from "../../services/analyticsService";
+import { Line, Doughnut, Bar } from "react-chartjs-2";
+import { saveAs } from "file-saver";
+import dayjs from "dayjs";
+import {
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, BarElement, Tooltip, Legend
+} from "chart.js";
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, BarElement, Tooltip, Legend);
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const [kpis, setKpis] = useState();
-  const [rev, setRev] = useState([]);
+  const [ov, setOv] = useState();
+  const [series, setSeries] = useState([]);
   const [status, setStatus] = useState([]);
-  const [topProducts, setTopProducts] = useState([]);
-  const [topCustomers, setTopCustomers] = useState([]);
-  const [forecast, setForecast] = useState([]);
-
-  const sock = useSocket(user?._id);
+  const [topP, setTopP] = useState([]);
+  const [topC, setTopC] = useState([]);
+  const [fc, setFc] = useState();
 
   useEffect(() => {
     (async () => {
-      const [k, r, s, tp, tc, fc] = await Promise.all([
-        dashboardService.kpis(),
-        dashboardService.revenue({ granularity: "day" }),
-        dashboardService.orderStatus(),
-        dashboardService.topProducts(10),
-        dashboardService.topCustomers(10),
-        dashboardService.forecast(14),
+      const [o, s, r, tp, tc, f] = await Promise.all([
+        analyticsService.overview(),
+        analyticsService.statusSummary(),
+        analyticsService.revenueSeries("day", 30),
+        analyticsService.topProducts(10),
+        analyticsService.topCustomers(10),
+        analyticsService.forecast("day", 90, 14),
       ]);
-      setKpis(k); setRev(r); setStatus(s); setTopProducts(tp); setTopCustomers(tc); setForecast(fc);
+      setOv(o); setStatus(s); setSeries(r); setTopP(tp); setTopC(tc); setFc(f);
     })();
   }, []);
 
-  useEffect(() => {
-    const s = sock.current;
-    if (!s) return;
-    const onUpd = (payload) => {
-      // Simple strategy: refetch KPIs + status
-      dashboardService.kpis().then(setKpis);
-      dashboardService.orderStatus().then(setStatus);
-    };
-    s.on("order:update", onUpd);
-    return () => s.off("order:update", onUpd);
-  }, [sock]);
-
-  const exportExcel = async () => {
-    const res = await dashboardService.exportExcel();
-    downloadBlob(res.data, `dfs-dashboard-${Date.now()}.xlsx`);
+  const lineData = {
+    labels: series.map(r => r.x),
+    datasets: [{ label: "Doanh thu (ngày)", data: series.map(r=>r.revenue) }]
   };
-  const exportPdf = async () => {
-    const res = await dashboardService.exportPdf();
-    downloadBlob(res.data, `dfs-dashboard-${Date.now()}.pdf`);
+
+  const doughnutData = {
+    labels: status.map(s=>s.status),
+    datasets: [{ data: status.map(s=>s.count) }]
+  };
+
+  const topBar = {
+    labels: topP.map(p => p.product?.name || p._id),
+    datasets: [{ label: "SL bán", data: topP.map(p=>p.qty) }]
+  };
+
+  const downloadExcel = async () => {
+    const res = await analyticsService.exportExcel();
+    saveAs(new Blob([res.data]), "dfs_analytics.xlsx");
+  };
+  const downloadPdf = async () => {
+    const res = await analyticsService.exportPdf();
+    saveAs(new Blob([res.data], { type: "application/pdf" }), "dfs_analytics.pdf");
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Stack direction={{ xs: "column", md: "row" }} justifyContent="space-between" alignItems={{ xs: "stretch", md: "center" }} sx={{ mb: 2 }}>
-        <Typography variant="h5" fontWeight={800}>Bảng điều khiển</Typography>
-        <Stack direction="row" spacing={1}>
-          <Button variant="outlined" startIcon={<Download/>} onClick={exportExcel}>Xuất Excel</Button>
-          <Button variant="contained" startIcon={<Download/>} onClick={exportPdf}>Xuất PDF</Button>
-        </Stack>
-      </Stack>
+    <div>
+      <h1>Dashboard</h1>
 
-      <DashboardCards kpis={kpis} />
+      {/* KPIs */}
+      <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12}}>
+        <KpiCard title="Doanh thu hôm nay" value={formatVND(ov?.today_revenue)} />
+        <KpiCard title="Đơn đang xử lý" value={ov?.processing_orders} />
+        <KpiCard title="Tổng đơn hàng" value={ov?.total_orders} />
+        <KpiCard title="Tổng khách hàng" value={ov?.total_customers} />
+      </div>
 
-      <Grid container spacing={2} sx={{ mt: 1 }}>
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ p: 2, height: 360, borderRadius: 3, boxShadow: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>Doanh thu theo ngày + dự báo</Typography>
-            <div style={{ height: 300 }}>
-              <RevenueLineChart rows={rev} forecast={forecast} />
-            </div>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: 360, borderRadius: 3, boxShadow: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>Trạng thái đơn hàng</Typography>
-            <div style={{ height: 300 }}>
-              <OrderStatusPie rows={status} />
-            </div>
-          </Paper>
-        </Grid>
+      {/* Charts */}
+      <div style={{display:"grid", gridTemplateColumns:"2fr 1fr", gap:12, marginTop:12}}>
+        <div className="card"><Line data={lineData}/></div>
+        <div className="card"><Doughnut data={doughnutData}/></div>
+      </div>
 
-        <Grid item xs={12} md={6}>
-          <TopProductsTable rows={topProducts} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TopCustomersTable rows={topCustomers} />
-        </Grid>
-      </Grid>
-    </Box>
+      <div style={{marginTop:12}} className="card">
+        <h3>Top sản phẩm</h3>
+        <Bar data={topBar}/>
+      </div>
+
+      {/* Forecast preview */}
+      <div style={{marginTop:12}} className="card">
+        <h3>Dự báo (preview)</h3>
+        <Line data={{
+          labels: [
+            ...fc?.history?.map(x=>x.x) || [],
+            ...(fc?.forecast?.map((_,i)=>`F+${i+1}`) || [])
+          ],
+          datasets: [
+            { label:"Lịch sử", data: fc?.history?.map(x=>x.revenue) || [] },
+            { label:"Dự báo", data: fc?.forecast?.map(x=>x.revenue) || [] }
+          ]
+        }}/>
+        <small>* Sơ bộ bằng hồi quy tuyến tính. Có thể thay bằng Prophet (Python) sau.</small>
+      </div>
+
+      {/* Exports */}
+      <div style={{marginTop:12, display:"flex", gap:10}}>
+        <button onClick={downloadExcel}>Xuất Excel</button>
+        <button onClick={downloadPdf}>Xuất PDF</button>
+      </div>
+
+      {/* Gợi ý thêm:
+          - Bộ lọc ngày/tháng/quý
+          - Bản đồ địa lý đơn hàng (nếu có address)
+          - Tỷ lệ chuyển đổi kênh
+          - Real-time order feed (SSE/Socket) */}
+    </div>
   );
 }
+
+function KpiCard({ title, value }) {
+  return (
+    <div className="card" style={{padding:12}}>
+      <div style={{fontSize:13, color:"#666"}}>{title}</div>
+      <div style={{fontSize:22, fontWeight:700}}>{value ?? "-"}</div>
+    </div>
+  );
+}
+function formatVND(n){ n=Number(n||0); return n.toLocaleString("vi-VN") + " ₫"; }

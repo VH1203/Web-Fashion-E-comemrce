@@ -23,7 +23,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const shippingRoutes = require("./routes/shippingRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const transactionRoutes = require("./routes/transactionRoutes");
-const dashboardRoutes = require("./routes/dashboardRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 const productAdminRoutes = require("./routes/productAdminRoutes");
 
 const FE_ORIGIN = process.env.FE_ORIGIN || "http://localhost:5173";
@@ -33,24 +33,10 @@ const app = express();
 /* ==== Security & CORS ==== */
 app.use(
   helmet({
-    // Không bật CSP mặc định để tránh chặn ảnh từ CDN.
     contentSecurityPolicy: false,
   })
 );
 
-// Nếu bạn muốn bật CSP nghiêm ngặt, dùng block dưới và sửa domain ảnh cho đúng:
-/*
-app.use(
-  helmet.contentSecurityPolicy({
-    useDefaults: true,
-    directives: {
-      "img-src": ["'self'", "data:", "https:", "http:", "https://cdn.dfs-demo.com", "https://cdn.hstatic.net"],
-    },
-  })
-);
-*/
-
-// Cho phép ảnh cross-origin nếu cần hiển thị từ CDN
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 const flashSaleRoutes = require("./routes/flashSaleRoutes");
 const productVariant = require("./routes/productVariantRoutes");
@@ -119,7 +105,7 @@ app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoi
 // app.use("/api/tickets", ticketRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/transactions", transactionRoutes);
-app.use("/api/shop/dashboard", dashboardRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use("/api/shop/admin", productAdminRoutes);
 
 app.use("/static/invoices", express.static(path.join(__dirname, "../public/invoices")));

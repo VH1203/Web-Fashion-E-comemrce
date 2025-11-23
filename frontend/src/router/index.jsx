@@ -2,58 +2,73 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-// ===== Auth Pages =====
+/* ===== Auth Pages ===== */
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ChangePassword from "../pages/auth/ChangePassword";
 import TermsAndPolicy from "../pages/support/TermsAndPolicy";
 
-// ===== Role Pages =====
+/* ===== Customer Pages ===== */
 import HomePage from "../pages/customer/HomePage";
-import SystemConfig from "../pages/admin/SystemConfig";
-import SalesOrders from "../pages/sales/SalesOrders";
-import Tickets from "../pages/support/Tickets";
 import ProductDetail from "../pages/customer/ProductDetail";
 import ProfilePage from "../pages/customer/Profile";
-import NotFound from "../pages/errors/NotFound";
 import Cart from "../pages/customer/Cart";
 import Checkout from "../pages/customer/Checkout";
 import PaymentReturn from "../pages/customer/PaymentReturn";
 import OrderDetail from "../pages/customer/OrderDetail";
 import Orders from "../pages/customer/Orders";
-import Dashboard from "../pages/shop/Dashboard";
-import ManageProducts from "../pages/shop/ManageProducts1";
-import AddProduct from "../pages/shop/AddProduct";
 
+/* ===== Shop (Seller) Pages ===== */
+import ShopLayout from "../pages/shop/ShopLayout";          // <- layout chung có sidebar/header + <Outlet/>
+import Dashboard from "../pages/shop/Dashboard";            // bảng điều khiển
+import ManageProducts from "../pages/shop/ManageProducts";  // ĐỔI tên file từ ManageProducts1 -> ManageProducts
+import AddProduct from "../pages/shop/AddProduct";          // tạo/sửa sản phẩm
+// Các trang mới khuyến nghị có sẵn (placeholder nếu chưa tạo)
+import LowStockPage from "../pages/shop/LowStockPage";     // hàng sắp hết
+// import CategoriesPage from "../pages/shop/catalog/CategoriesPage";   // CRUD danh mục
+// import AttributesPage from "../pages/shop/catalog/AttributesPage";   // CRUD thuộc tính
+// import BrandsPage from "../pages/shop/catalog/BrandsPage";           // CRUD brand
+// import VariantsPage from "../pages/shop/VariantsPage";               // quản lý biến thể theo sản phẩm
 
-// ==== Shop ======
-import ShopOwner from "../pages/shop/ShopOwner";
+/* ===== Other Roles ===== */
+import SystemConfig from "../pages/admin/SystemConfig";
+import SalesOrders from "../pages/sales/SalesOrders";
+import Tickets from "../pages/support/Tickets";
+import NotFound from "../pages/errors/NotFound";
 
-/** Đợi authReady để tránh redirect sớm */
+/* ===== Guards ===== */
 function ProtectedRoute({ children }) {
   const { isAuthenticated, authReady } = useAuth();
-  if (!authReady) return null; // hoặc spinner
+  if (!authReady) return null;
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-/** Kiểm tra theo role_name và/hoặc permissions */
 function RoleRoute({ children, roles = [], permAny = [], permAll = [] }) {
   const { user, authReady } = useAuth();
-  if (!authReady) return null; // hoặc spinner
+  if (!authReady) return null;
   if (!user) return <Navigate to="/login" replace />;
 
-  const roleName = user.role_name;
+  // role_name/permissions chuẩn
+  const roleName = user.role_name || user.role || user.role_id; // fallback nếu backend set khác
   const perms = Array.isArray(user.permissions) ? user.permissions : [];
 
   const roleOK = roles.length === 0 ? true : roles.includes(roleName);
-  const permAnyOK =
-    permAny.length === 0 ? true : permAny.some((p) => perms.includes(p));
-  const permAllOK =
-    permAll.length === 0 ? true : permAll.every((p) => perms.includes(p));
+  const permAnyOK = permAny.length === 0 ? true : permAny.some((p) => perms.includes(p));
+  const permAllOK = permAll.length === 0 ? true : permAll.every((p) => perms.includes(p));
 
-  const allowed = roleOK && permAnyOK && permAllOK;
-  return allowed ? children : <Navigate to="/" replace />;
+  return roleOK && permAnyOK && permAllOK ? children : <Navigate to="/" replace />;
+}
+
+/* Gộp guard cho toàn bộ khu /shop */
+function ShopGuard({ children }) {
+  return (
+    <ProtectedRoute>
+      <RoleRoute roles={["shop_owner", "sales"]} permAny={["shop:access"]}>
+        {children}
+      </RoleRoute>
+    </ProtectedRoute>
+  );
 }
 
 export default function AppRouter() {
@@ -127,53 +142,40 @@ export default function AppRouter() {
         }
       />
 
-      {/* Shop: cho shop_owner/sales hoặc ai có shop:access */}
+      {/* ======= SHOP AREA (một layout, một guard) ======= */}
       <Route
         path="/shop"
         element={
-          <RoleRoute roles={["shop_owner", "sales"]} permAny={["shop:access"]}>
-            <ShopOwner />
-          </RoleRoute>
+          <ShopGuard>
+            <ShopLayout />
+          </ShopGuard>
         }
       >
+        {/* index -> dashboard */}
         <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="shop-owner" element={<ShopOwner />} />
+
+        {/* Dashboard */}
+        <Route path="dashboard" element={<Dashboard />} />
+
+        {/* Products */}
+        <Route path="admin/products" element={<ManageProducts />} />
+        <Route path="admin/products/new" element={<AddProduct />} />
+        <Route path="admin/products/:id" element={<AddProduct mode="edit" />} />
+        <Route path="admin/products/:id/variants" element={<VariantsPage />} />
+
+        {/* Inventory */}
+        <Route path="inventory/low-stock" element={<LowStockPage />} />
+
+        {/* Catalog */}
+        <Route path="catalog/categories" element={<CategoriesPage />} />
+        <Route path="catalog/attributes" element={<AttributesPage />} />
+        <Route path="catalog/brands" element={<BrandsPage />} />
       </Route>
 
-      <Route
-        path="/shop/dashboard"
-        element={
-          <ProtectedRoute>
-            <RoleRoute roles={["shop_owner", "role-shop-owner", "shop"]}>
-              <Dashboard />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      />
-<Route
-        path="/shop/admin/products"
-        element={
-          <ProtectedRoute>
-            <RoleRoute roles={["shop_owner", "sales", "system_admin"]}>
-              <ManageProducts />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/shop/admin/products/new"
-        element={
-          <ProtectedRoute>
-            <RoleRoute roles={["shop_owner", "sales", "system_admin"]}>
-              <AddProduct />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Alias/Redirect nếu trước đó từng dùng /shop/products */}
+      {/* Aliases/Redirects cũ (giữ tương thích) */}
       <Route path="/shop/products" element={<Navigate to="/shop/admin/products" replace />} />
       <Route path="/shop/products/new" element={<Navigate to="/shop/admin/products/new" replace />} />
+      <Route path="/shop/dashboard" element={<Navigate to="/shop" replace />} />
 
       {/* Sales */}
       <Route

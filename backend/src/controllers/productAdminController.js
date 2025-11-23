@@ -92,14 +92,17 @@ exports.lowStock = async (req, res, next) => {
     catch (e) { next(e); }
 };
 exports.categoryTree = async (req, res, next) => {
-  try { const depth = Number(req.query.depth || 3);
-        res.json({ success: true, data: await categorySvc.getTree(depth) }); }
-  catch (e) { next(e); }
+    try {
+        const depth = Number(req.query.depth || 3);
+        const data = await categorySvc.getTree(depth);
+        res.json({ success: true, data });
+    } catch (e) { next(e); }
 };
 
-// Tạo biến thể hàng loạt (ma trận)
 exports.createVariantsBulk = async (req, res, next) => {
-  try { const { rows } = req.body; // [{ sku, price, stock, variant_attributes }]
-        res.json({ success: true, data: await svc.createVariantsBulk(req.params.id, rows, req.user._id) }); }
-  catch (e) { next(e); }
+    try {
+        const { rows } = req.body; 
+        res.json({ success: true, data: await svc.createVariantsBulk(req.params.id, rows, req.user._id) });
+    }
+    catch (e) { next(e); }
 };

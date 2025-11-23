@@ -7,7 +7,14 @@ const Brand = require("../models/Brand");
 const { uploadImages, uploadVideo } = require("./mediaService");
 const { importProductsFromExcel } = require("./importService");
 
-/* ===== Products ===== */
+const slugify = (s) => String(s||"").toLowerCase().trim().replace(/[^\w\-]+/g,"-").replace(/\-+/g,"-");
+exports.getProduct = async (id, shopId) => {
+  const p = await Product.findOne({ _id: id, shop_id: shopId }).lean();
+  if (!p) return null;
+  const vars = await ProductVariant.find({ product_id: id, shop_id: shopId }).lean();
+  return { ...p, variants: vars };
+};
+
 exports.listProducts = async ({ shopId, q, page=1, limit=20, category_id, status }) => {
   const filter = { shop_id: shopId };
   if (q) filter.name = { $regex: q, $options: "i" };
@@ -30,20 +37,23 @@ exports.listProducts = async ({ shopId, q, page=1, limit=20, category_id, status
 };
 
 exports.createProduct = async (payload, shopId) => {
-  let category_path = [];
-  if (payload.category_id) {
-    const cat = await Category.findById(payload.category_id).lean();
-    if (cat) category_path = [...(cat.path||[]), cat.slug];
+  const doc = { ...payload, shop_id: shopId };
+  if (!doc.slug && doc.name) doc.slug = slugify(doc.name);
+  if (doc.category_id) {
+    const cat = await Category.findById(doc.category_id).lean();
+    doc.category_path = cat ? [ ...(cat.path||[]), cat.slug ] : [];
   }
-  return Product.create({ ...payload, shop_id: shopId, category_path });
+  return Product.create(doc);
 };
 
 exports.updateProduct = async (id, payload, shopId) => {
-  if (payload.category_id) {
-    const cat = await Category.findById(payload.category_id).lean();
-    payload.category_path = cat ? [...(cat.path||[]), cat.slug] : [];
+  const patch = { ...payload };
+  if (!patch.slug && patch.name) patch.slug = slugify(patch.name);
+  if (patch.category_id) {
+    const cat = await Category.findById(patch.category_id).lean();
+    patch.category_path = cat ? [ ...(cat.path||[]), cat.slug ] : [];
   }
-  return Product.findOneAndUpdate({ _id: id, shop_id: shopId }, { $set: payload }, { new: true });
+  return Product.findOneAndUpdate({ _id: id, shop_id: shopId }, { $set: patch }, { new: true });
 };
 
 /* ===== Variants single ===== */

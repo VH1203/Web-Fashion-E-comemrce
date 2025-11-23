@@ -1,46 +1,34 @@
-import React from "react";
-import { Drawer, List, ListSubheader, ListItemButton, ListItemText, Divider } from "@mui/material";
+// frontend/src/components/shop/ShopSideNav.jsx
+import { Drawer, List, ListSubheader, ListItemButton, ListItemText } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const groups = [
-  { title: "Quản Lý Đơn Hàng", items: [
-    { label:"Tất cả", path:"/shop/orders" },
-    { label:"Giao Hàng Loạt", path:"/shop/orders/batch" },
-    { label:"Bàn Giao Đơn Hàng", path:"/shop/orders/hand-over" },
-    { label:"Đơn Trả/Hoàn/Huỷ", path:"/shop/returns" },
-    { label:"Cài Đặt Vận Chuyển", path:"/shop/shipping/settings" },
+  { title: "Tổng quan", items: [{t:"Bảng điều khiển", to:"/shop/dashboard"}] },
+  { title: "Sản phẩm", items: [
+    {t:"Tất cả sản phẩm", to:"/shop/products"},
+    {t:"Thêm sản phẩm", to:"/shop/products/new"},
+    {t:"Hàng sắp hết", to:"/shop/inventory/low-stock"},
   ]},
-  { title: "Quản Lý Sản Phẩm", items: [
-    { label:"Tất Cả Sản Phẩm", path:"/shop/products" },
-    { label:"Thêm Sản Phẩm", path:"/shop/products/new" },
-    { label:"Quản lý danh mục", path:"/shop/categories" },
-    { label:"Khuyến Mãi của Shop", path:"/shop/promotions" },
-    { label:"Flash Sale Của Shop", path:"/shop/flash-sale" },
-    { label:"Mã Giảm Giá Của Shop", path:"/shop/vouchers" },
+  { title: "Danh mục & Thuộc tính", items: [
+    {t:"Danh mục", to:"/shop/catalog/categories"},
+    {t:"Thuộc tính", to:"/shop/catalog/attributes"},
+    {t:"Brand", to:"/shop/catalog/brands"},
   ]},
-  { title: "Chăm sóc khách hàng", items: [
-    { label:"Quản lý Chat", path:"/shop/chat" },
-    { label:"Quản lý Đánh Giá", path:"/shop/reviews" },
-  ]},
-  { title: "Tài Chính", items: [
-    { label:"Doanh Thu", path:"/shop/wallet/revenue" },
-    { label:"Số dư TK Shop", path:"/shop/wallet" },
-    { label:"Tài Khoản Ngân Hàng", path:"/shop/banks" },
-  ]},
+  { title: "Dữ liệu", items: [{t:"Import Excel", to:"/shop/products#import"}] },
 ];
 
-export default function SellerSideNav({ open, onClose }) {
+export default function ShopSideNav({ open, onClose }) {
   const nav = useNavigate();
   return (
-    <Drawer anchor="left" open={open} onClose={onClose} sx={{ '& .MuiDrawer-paper': { width: 300 } }}>
-      {groups.map((g, idx) => (
-        <List key={idx} subheader={<ListSubheader>{g.title}</ListSubheader>}>
-          {g.items.map((it) => (
-            <ListItemButton key={it.path} onClick={() => { nav(it.path); onClose?.(); }}>
-              <ListItemText primary={it.label} />
+    <Drawer open={open} onClose={onClose} variant="temporary" anchor="left"
+      sx={{ "& .MuiDrawer-paper": { width: 280 } }}>
+      {groups.map(g=>(
+        <List key={g.title} subheader={<ListSubheader>{g.title}</ListSubheader>}>
+          {g.items.map(it=>(
+            <ListItemButton key={it.t} onClick={()=>{ nav(it.to); onClose?.(); }}>
+              <ListItemText primary={it.t}/>
             </ListItemButton>
           ))}
-          <Divider />
         </List>
       ))}
     </Drawer>

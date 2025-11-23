@@ -38,5 +38,6 @@ const ProductVariantSchema = new mongoose.Schema(
 
 // Tối ưu tra cứu biến thể theo thuộc tính
 ProductVariantSchema.index({ product_id: 1, "variant_attributes.color": 1, "variant_attributes.size": 1 });
+ProductVariantSchema.index({ shop_id: 1, product_id: 1, sku: 1 }, { unique: true });
 
 module.exports = mongoose.model("ProductVariant", ProductVariantSchema);
